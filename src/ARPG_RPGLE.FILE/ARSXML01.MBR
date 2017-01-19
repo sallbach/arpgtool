@@ -1,0 +1,208 @@
+**Free
+       ctl-opt nomain;
+      /DEFINE POINT
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCXMLR
+      /COPY ARPG_H,ARCQLGUSR
+      /COPY ARPG_H,ARCFCNTL
+      /COPY ARPG_H,ARCSTRING
+
+      //---------------------------------------------------------------*
+      // global variables
+      //---------------------------------------------------------------*
+       dcl-s gArQSearch char(1) dim(5) ctdata perrcd(5);
+       dcl-s gArQRpl    char(7) dim(5) ctdata perrcd(1);
+       dcl-s gPtQRpl    pointer inz(%addr(gArQRpl));
+       dcl-ds gDsQRpl qualified dim(5) based(gPtQRpl);
+         InLen zoned(1);
+         AnRpl char(6);
+       end-ds;
+
+      //---------------------------------------------------------------*
+      //  XmlIanaToCcsid
+      //---------------------------------------------------------------*
+      //* Convert IANA name to CCSID.
+      //*
+      //* @param pAnIana - Name like UTF-8 or ISO-8859-1
+      //*
+      //* @return CCSID. E.g. UTF-8 = 1208
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @see QlgCvtTextDescToDesc() - Convert Text Descriptor API
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc XmlIanaToCcsid export;
+         dcl-pi *N int(10);
+           pAnIana char(30) const;
+         end-pi;
+
+         dcl-s pAnCcsid char(5);
+
+         if QlgCvtTextDescToDesc(11 // IANA
+                                :0  // CCSID
+                                :pAnIana
+                                :%size(pAnIana)
+                                :pAnCcsid
+                                :%size(pAnCcsid)
+                                :CCSID_JOB) < 1;
+           return 0;
+         endif;
+
+         return atoi(pAnCcsid);
+
+       end-proc XmlIanaToCcsid;
+      //---------------------------------------------------------------*
+      //  XmlCcsidToIana
+      //---------------------------------------------------------------*
+      //* Convert CCSID to IANA name
+      //*
+      //* @param pAnIana - Name like UTF-8 or ISO-8859-1
+      //*
+      //* @return CCSID. E.g. UTF-8 = 1208
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @see QlgCvtTextDescToDesc() - Convert Text Descriptor API
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc XmlCcsidToIana export;
+         dcl-pi *N varchar(30);
+           pInCcsid int(10) const;
+         end-pi;
+
+         dcl-s pAnCcsid char(5);
+         dcl-s pAnIana  char(50);
+
+         evalr pAnCcsid = %editc(PInCcsid:'X');
+
+         if QlgCvtTextDescToDesc(0  // CCSID
+                                :11 // IANA
+                                :pAnCcsid
+                                :%size(pAnCcsid)
+                                :pAnIana
+                                :%size(pAnIana)
+                                :CCSID_JOB) < 1;
+
+
+           return '';
+         endif;
+
+         pAnIana = %xlate('_':'-':pAnIana);
+         if %scan(':':pAnIana) > 1;
+           pAnIana = %subst(pAnIana:1:%scan(':':pAnIana)-1);
+         endif;
+
+         return %trim(%str(%addr(pAnIana)));
+
+       end-proc XmlCcsidToIana;
+      //---------------------------------------------------------------*
+      // XmlNumber
+      //---------------------------------------------------------------*
+      //* Convert number to xml conform string.
+      //*
+      //* @param pNuNum - Number.
+      //*
+      //* @return xml confirm number string.
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc XmlNumber export;
+         dcl-pi *N varchar(35);
+           pNuNum packed (31:11) const;
+         end-pi;
+
+         dcl-s pAnNum varchar(35);
+
+         pAnNum = %trim(%char(pNuNum));
+         if %checkr('0':pAnNum) > 1;
+           pAnNum = %subst(pAnNum:1:%checkr('0':pAnNum));
+         endif;
+
+         if %subst(pAnNum:%len(pAnNum):1) = '.';
+           pAnNum = %subst(pAnNum:1:%len(pAnNum)-1);
+         endif;
+
+         return pAnNum;
+
+       end-proc XmlNumber;
+      //---------------------------------------------------------------*
+      // XmlQuote
+      //---------------------------------------------------------------*
+      //* Quote special xml characters.
+      //* <P>
+      //* The function allways gives a new pointer with a copy of the given data.
+      //* You have to deallocate this pointer !
+      //*
+      //* @param pPtString pointer const;
+      //* @param pInLen int(10);
+      //* @param pInCcsid int(10) const;
+      //*
+      //* @return a pointer with a copy of the given data.
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc XmlQuote export;
+         dcl-pi *N pointer;
+           pPtString pointer const;
+           pInLen like(size_t);
+         end-pi;
+
+         dcl-s pPtSearch pointer;
+         dcl-s pAnSearch char(1) based(pPtSearch);
+
+         dcl-s pPtRes pointer;
+         dcl-s pPtDst pointer;
+         dcl-s pAnDst char(6) based(pPtDst);
+         dcl-s pInRes like(size_t);
+
+         dcl-s s like(size_t);
+         dcl-s d like(size_t);
+         dcl-s i like(size_t);
+
+         if pPtString = *Null or pInLen = 0;
+           return *Null;
+         endif;
+
+         pInRes = pInLen;
+         pPtRes = %alloc(pInLen);
+
+         d = 0;
+         for s=0 by 1 to pInLen-1;
+           pPtDst = pPtRes + d;
+           pPtSearch = pPtString + s;
+           i = %lookup(pAnSearch:gArQSearch);
+           if i > 0;
+             pInRes += gDsQRpl(i).InLen - 1;
+             pPtRes = %realloc(pPtRes:pInRes);
+             pPtDst = pPtRes + d;
+             %subst(pAnDst:1:gDsQRpl(i).InLen) = gDsQRpl(i).AnRpl;
+             d += gDsQRpl(i).InLen;
+           else;
+             %subst(pAnDst:1:1) = pAnSearch;
+             d += 1;
+           endif;
+         endfor;
+
+         pInLen = pInRes;
+         return pPtRes;
+
+       end-proc XmlQuote;
+      //---------------------------------------------------------------*
+** gArQSearch
+<>&'"
+** gArQRpl
+4&lt;
+4&gt;
+5&amp;
+6&apos;
+6&quot;

@@ -1,0 +1,24 @@
+      /IF DEFINED (AR_QUSEC__)
+      /EOF
+      /ENDIF
+
+      /DEFINE AR_QUSEC__
+
+      //---------------------------------------------------------------*
+      // QUSec - suppress exceptions
+      //---------------------------------------------------------------*
+       dcl-ds QUSecF qualified;
+         BytP int(10) inz(%size(QUSecF));
+         BytA int(10);
+         Excp char(7);
+         Resv char(256);
+       end-ds;
+      //---------------------------------------------------------------*
+      // QUSec - throw exceptions
+      //---------------------------------------------------------------*
+       dcl-ds QUSecExcp qualified;
+         BytP int(10) inz(0);
+         BytA int(10);
+         Excp char(7);
+         Resv char(1);
+       end-ds;

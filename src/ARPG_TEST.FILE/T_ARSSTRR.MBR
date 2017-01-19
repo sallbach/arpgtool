@@ -1,0 +1,43 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCXMLR
+      /COPY ARPG_H,ARCSTRR
+      /COPY ARPG_H,ARCSTRING
+      /COPY ARPG_H,ARCFCNTL
+
+      /COPY RPGUNIT1,TESTCASE
+
+      //---------------------------------------------------------------*
+      // test_iconv_utf8
+      //---------------------------------------------------------------*
+       dcl-proc test_iconv_utf8 export;
+
+         dcl-s pUiRes like(size_t);
+         dcl-s pPtRes pointer;
+
+         dcl-s pAnIn  char(7) inz('abcäöüß');
+         dcl-s pAnOut char(11) inz(x'616263c3a4c3b6c3bcc39f');
+
+         pPtRes = StrIConv(pAnIn:CCSID_JOB:CCSID_UTF8:pUiRes);
+         aEqual(pAnOut:%str(pPtRes:pUiRes));
+
+       end-proc test_iconv_utf8;
+      //---------------------------------------------------------------*
+      // test_iconv_latin1
+      //---------------------------------------------------------------*
+       dcl-proc test_iconv_latin1 export;
+
+         dcl-s pUiRes like(size_t);
+         dcl-s pPtRes pointer;
+
+         dcl-s pAnIn  char(7) inz('abcäöüß');
+         dcl-s pAnOut char(11) inz(x'616263e4f6fcdf');
+
+         pPtRes = StrIConv(pAnIn:CCSID_JOB:CCSID_ASCII:pUiRes);
+         aEqual(pAnOut:%str(pPtRes:pUiRes));
+
+       end-proc test_iconv_latin1;

@@ -1,0 +1,28 @@
+/*----------------------------------------------------------------------------*/
+/* Build all objects in the source library as debuggable version.             */
+/*----------------------------------------------------------------------------*/
+/* Please add the source library to your library list or make it the current  */
+/* library.                                                                   */
+/*                                                                            */
+/* If want to create the objects in a different library, you can give the     */
+/* object library as first parameter.                                         */
+/*----------------------------------------------------------------------------*/
+             PGM        PARM(&LIB)
+
+             DCL        VAR(&LIB) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LIBSRC) TYPE(*CHAR) LEN(10) VALUE(*CURLIB)
+             DCL        VAR(&LIBOBJ) TYPE(*CHAR) LEN(10) VALUE(*CURLIB)
+
+/* retrieve source lib */
+             RTVOBJD    OBJ(ARPG_BUILD) OBJTYPE(*FILE) RTNLIB(&LIBSRC)
+
+/* set object lib */
+             CHGVAR     VAR(&LIBOBJ) VALUE(&LIB)
+             MONMSG     MSGID(CPF0000) EXEC(CHGVAR VAR(&LIBOBJ) +
+                          VALUE(&LIBSRC))
+
+             CRTBNDCL   PGM(&LIBSRC/B_ALL_LST) +
+                          SRCFILE(&LIBSRC/ARPG_BUILD)
+             CALL       PGM(B_ALL_LST) PARM(*DEBUG &LIBSRC &LIBOBJ)
+
+             ENDPGM

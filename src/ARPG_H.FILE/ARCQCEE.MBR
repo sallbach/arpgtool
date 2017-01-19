@@ -1,0 +1,106 @@
+      /IF DEFINED (AR_QCEE__)
+      /EOF
+      /ENDIF
+
+      /DEFINE AR_QCEE__
+
+      //---------------------------------------------------------------
+      // Construct a Condition Token (CEENCOD) API
+      //---------------------------------------------------------------
+       dcl-pr CeeConstConTok ExtProc('CEENCOD');
+         MsgSeverity int(5);
+         MsgNumber   int(5);
+         Case        int(5);
+         Severity    int(5);
+         Controle    int(5);
+         FacilityID  char(3);
+         MsgKey      char(4);
+         NewToken    char(12);
+         Feedback    char(12) options(*Omit);
+       end-pr;
+
+      //---------------------------------------------------------------
+      // Register a User-Written Condition Handler (CEEHDLR) API
+      //---------------------------------------------------------------
+       dcl-pr CeeRegConHdl ExtProc('CEEHDLR');
+         CondHdlr pointer(*proc) const;
+         Sds      pointer  const;
+         Feedback char(12) options(*Omit);
+       end-pr;
+
+      //---------------------------------------------------------------
+      // Unregister a User-Written Condition Handler (CEEHDLU) API
+      //---------------------------------------------------------------
+       dcl-pr CeeUnRegConHdl ExtProc('CEEHDLU');
+         CondHdlr pointer(*proc) const;
+         Feedback char(12) options(*Omit);
+       end-pr;
+
+      //---------------------------------------------------------------
+      // Register Activation Group Exit Procedure (CEE4RAGE) API
+      //---------------------------------------------------------------
+       dcl-pr CeeRegActGrpExit ExtProc('CEE4RAGE');
+         Procedure pointer(*proc) const;
+         Feedback  char(12) options(*Omit);
+       end-pr;
+
+      //---------------------------------------------------------------
+      // Get Heap Storage (CEEGTST) API
+      //---------------------------------------------------------------
+      // Interface to the CEEGTST API (Get Heap Storage).
+      //  1) HeapId = Id of the heap.
+      //  2) Size   = Number of bytes to allocate
+      //  3) RetAddr= Return address of the allocated storage
+      //  4) *OMIT  = The feedback parameter.  Specifying *OMIT here
+      //              means that we will receive an exception from
+      //              the API if it cannot satisfy our request.
+      //              Since we do not monitor for it, the calling
+      //              procedure will receive the exception.
+      //---------------------------------------------------------------
+       dcl-pr CeeGetHeap ExtProc('CEEGTST');
+         HeapId   int(10)  const;
+         HeapSize int(10)  const;
+         HeapAddr pointer;
+         Feedback char(12) options(*Omit);
+       end-pr;
+
+      //---------------------------------------------------------------
+      // Create Heap (CEECRHP) API
+      //---------------------------------------------------------------
+      // Interface to the CEECRHP API (Create Heap).
+      //  1) HeapId     = Id of the heap.
+      //  2) InitSize   = Initial size of the heap.
+      //  3) Incr       = Number of bytes to increment if heap must be
+      //                  enlarged.
+      //  4) AllocStrat = Allocation strategy for this heap.  We will
+      //                  specify a value of 0 which allows the system
+      //                  to choose the optimal strategy.
+      //  5) *OMIT      = The feedback parameter.  Specifying *OMIT here
+      //                  means that we will receive an exception from
+      //                  the API if it cannot satisfy our request.
+      //                  Since we do not monitor for it, the calling
+      //                  procedure will receive the exception.
+      //---------------------------------------------------------------
+       dcl-pr CeeCreateHeap ExtProc('CEECRHP');
+         HeapId     int(10);
+         HeapSize   int(10)  const options(*omit);
+         Increment  int(10)  const options(*omit);
+         AllocStrat int(10)  const options(*omit);
+         Feedback   char(12) options(*Omit);
+       end-pr;
+
+      //---------------------------------------------------------------
+      // Discard Heap (CEEDSHP) API
+      //---------------------------------------------------------------
+      // Interface to the CEEDSHP API (Discard Heap).
+      //  1) HeapId     = Id of the heap.
+      //  2) *OMIT      = The feedback parameter.  Specifying *OMIT here
+      //                  means that we will receive an exception from
+      //                  the API if it cannot satisfy our request.
+      //                  Since we do not monitor for it, the calling
+      //                  procedure will receive the exception.
+      //---------------------------------------------------------------
+       dcl-pr CeeDiscardHeap ExtProc('CEEDSHP');
+         HeapId   int(10)  const;
+         Feedback char(12) options(*Omit);
+       end-pr;

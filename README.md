@@ -1,2 +1,4 @@
-# arpgtool
-IBM i RPG developer tools (AS/400 iSeries)
+# aRPGtool
+Useful IBM i ILE-RPG developer tools (AS/400 / iSeries / System i)
+
+

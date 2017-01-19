@@ -1,0 +1,22 @@
+      /IF DEFINED (AR_DOCR__)
+      /EOF
+      /ENDIF
+
+      /DEFINE AR_DOCR__
+      /INCLUDE ARPG_H,ARCTYPES
+
+      //---------------------------------------------------------------*
+      // DocProgramnNew
+      //---------------------------------------------------------------*
+       dcl-pr DocProgramnNew int(10) extproc(*dclcase);
+           pAnPgm  char(10) const;
+           pAnType char(10) const;
+       end-pr;
+
+
+      //---------------------------------------------------------------*
+      // DocProgramFree
+      //---------------------------------------------------------------*
+       dcl-pr DocProgramFree int(10) extproc(*dclcase);
+         pInPgm int(10) const;
+       end-pr;

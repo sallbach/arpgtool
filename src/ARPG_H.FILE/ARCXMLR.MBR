@@ -1,0 +1,112 @@
+      /IF DEFINED (AR_XMLR__)
+      /EOF
+      /ENDIF
+
+      /DEFINE AR_XMLR__
+      /INCLUDE ARPG_H,ARCTYPES
+
+      //---------------------------------------------------------------*
+      // XmlDocument
+      //---------------------------------------------------------------*
+       dcl-pr XmlDocument int(10) extproc(*dclcase);
+         pInCcsid int(10) const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlPrettyPrint
+      //---------------------------------------------------------------*
+       dcl-pr XmlPrettyPrint extproc(*dclcase);
+         pBoPretty ind const;
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlNode
+      //---------------------------------------------------------------*
+       dcl-pr XmlNode int(10) extproc(*dclcase);
+         pPtName pointer const options(*string);
+         pPtData pointer const options(*string:*nopass);
+         pInCcsid int(10) const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlNodeNum
+      //---------------------------------------------------------------*
+       dcl-pr XmlNodeNum int(10) extproc(*dclcase);
+         pPtName pointer const options(*string);
+         pNuNum  packed(31:11) const;
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlNodeB64
+      //---------------------------------------------------------------*
+       dcl-pr XmlNodeB64 int(10) extproc(*dclcase);
+         pPtName pointer const options(*string);
+         pPtData pointer const;
+         pInLen  like(size_t) const;
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlNodeEnd
+      //---------------------------------------------------------------*
+       dcl-pr XmlNodeEnd int(10) extproc(*dclcase);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlAttribute
+      //---------------------------------------------------------------*
+       dcl-pr XmlAttribute int(10) extproc(*dclcase);
+         pPtName pointer const options(*string);
+         pPtData pointer const options(*string);
+         pInCcsid int(10) const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlAttributeNum
+      //---------------------------------------------------------------*
+       dcl-pr XmlAttributeNum int(10) extproc(*dclcase);
+         pPtName pointer const options(*string);
+         pNuNum  packed(31:11) const;
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlToString
+      //---------------------------------------------------------------*
+       dcl-pr XmlToString pointer extproc(*dclcase);
+         pInLen like(size_t) options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlToStmf
+      //---------------------------------------------------------------*
+       dcl-pr XmlToStmf int(10) extproc(*dclcase);
+         pAnFile pointer const options(*string);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlIanaToCcsid
+      //---------------------------------------------------------------*
+       dcl-pr XmlIanaToCcsid int(10) extproc(*dclcase);
+         pAnIana char(30) const;
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlCcsidToIana
+      //---------------------------------------------------------------*
+       dcl-pr XmlCcsidToIana varchar(30) extproc(*dclcase);
+         pInCcsid int(10) const;
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlNumber
+      //---------------------------------------------------------------*
+       dcl-pr XmlNumber varchar(35) extproc(*dclcase);
+         pNuNum packed (31:11) const;
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlQuote
+      //---------------------------------------------------------------*
+       dcl-pr XmlQuote pointer extproc(*dclcase);
+         pPtString pointer const;
+         pInLen like(size_t);
+       end-pr;

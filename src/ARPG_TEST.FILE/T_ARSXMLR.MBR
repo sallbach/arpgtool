@@ -1,0 +1,118 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCXMLR
+      /COPY ARPG_H,ARCSTRING
+
+      /COPY RPGUNIT1,TESTCASE
+
+      //---------------------------------------------------------------*
+      // XmlNode
+      //---------------------------------------------------------------*
+       dcl-proc test_Xml_Node export;
+
+       dcl-s pPtString pointer;
+
+       XmlPrettyPrint(*off);
+       XmlDocument(37);
+       XmlNode('root');
+         XmlNode('child1');
+           XmlNode('child1.2':'data 1.2');
+         XmlNodeEnd();
+         XmlNode('child2':'data 2');
+         XmlNode('child3':'data 3');
+         XmlNode('child4':'');
+       XmlNodeEnd();
+       pPtString = XmlToString();
+
+       aEqual('<?xml version="1.0" encoding="IBM037"?>'
+             + '<root>'
+               + '<child1>'
+                 + '<child1.2>data 1.2</child1.2>'
+               + '</child1>'
+               + '<child2>data 2</child2>'
+               + '<child3>data 3</child3>'
+               + '<child4 />'
+               +'</root>'
+             :%str(pPtString));
+
+       dealloc pPtString;
+
+       end-proc test_Xml_Node;
+      //---------------------------------------------------------------*
+      // XmlAttr
+      //---------------------------------------------------------------*
+       dcl-proc test_Xml_Attr export;
+
+       dcl-s pPtString pointer;
+
+       XmlPrettyPrint(*on);
+       XmlDocument(37);
+       XmlNode('root');
+         XmlNode('child1');
+           XmlNode('child1.2':'data 1.2');
+           XmlAttribute('atr1':'value 1xxx');
+           XmlAttributeNum('atr2':1.23);
+           XmlAttribute('atr3':'value 3xxx');
+         XmlNodeEnd();
+         XmlNode('child2':'data 2&3');
+         XmlNodeNum('child3':22.333);
+         XmlNode('child4':'');
+         XmlAttribute('atr1':'value "1xxx"');
+         XmlAttribute('atr2':'value 2xxx');
+       XmlNodeEnd();
+       pPtString = XmlToString();
+
+       aEqual('<?xml version="1.0" encoding="IBM037"?>' + LF
+             + '<root>' + LF
+               + '  <child1>' + LF
+                 + '    <child1.2 '
+                          + 'atr1="value 1xxx" '
+                          + 'atr2="1.23" '
+                          + 'atr3="value 3xxx"'
+                 + '>data 1.2</child1.2>' + LF
+               + '  </child1>' + LF
+               + '  <child2>data 2&amp;3</child2>' + LF
+               + '  <child3>22.333</child3>' + LF
+               + '  <child4 '
+                       + 'atr1="value &quot;1xxx&quot;" '
+                       + 'atr2="value 2xxx"'
+                  + ' />' + LF
+               +'</root>'
+             :%str(pPtString));
+
+       dealloc pPtString;
+
+       end-proc test_Xml_Attr;
+      //---------------------------------------------------------------*
+      // iana to ccsid
+      //---------------------------------------------------------------*
+       dcl-proc test_Xml_iana_ccsid export;
+
+       iEqual(1208:XmlIanaToCcsid('UTF-8'));
+       iEqual(819:XmlIanaToCcsid('ISO-8859-1'));
+
+       end-proc test_Xml_iana_ccsid;
+      //---------------------------------------------------------------*
+      // ccsid to inana
+      //---------------------------------------------------------------*
+       dcl-proc test_Xml_ccsid_iana export;
+
+       aEqual('UTF-8':XmlCcsidToIana(1208));
+       aEqual('ISO-8859-1':XmlCcsidToIana(819));
+
+       end-proc test_Xml_ccsid_iana;
+      //---------------------------------------------------------------*
+      // test xmlNumber
+      //---------------------------------------------------------------*
+       dcl-proc test_Xml_number export;
+
+       aEqual('123.43':XmlNumber(123.43));
+       aEqual('-123.43':XmlNumber(-123.43));
+       aEqual('123':XmlNumber(123));
+       aEqual('0':XmlNumber(0));
+
+       end-proc test_Xml_number;

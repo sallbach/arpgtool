@@ -1,0 +1,38 @@
+             PGM        PARM(&TYPE1 &LIBSRC1 &LIBOBJ1)
+
+             DCL        VAR(&TYPE1) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LIBSRC1) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LIBOBJ1) TYPE(*CHAR) LEN(10)
+
+             DCL        VAR(&TYPE) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LIBSRC) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LIBOBJ) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&DBG) TYPE(*CHAR) LEN(10) VALUE(*NONE)
+             DCL        VAR(&DBGSQL) TYPE(*CHAR) LEN(10) VALUE(*NONE)
+             DCL        VAR(&OPTIMIZE) TYPE(*CHAR) LEN(10) VALUE(*FULL)
+             DCL        VAR(&DEFINE) TYPE(*CHAR) LEN(10) VALUE(*NONE)
+             DCL        VAR(&COMPILEOPT) TYPE(*CHAR) LEN(10) +
+                          VALUE(*NONE)
+
+             CHGVAR     VAR(&TYPE) VALUE(&TYPE1)
+             MONMSG     MSGID(CPF0000) EXEC(CHGVAR VAR(&TYPE) +
+                          VALUE(*DEBUG))
+
+             CHGVAR     VAR(&LIBSRC) VALUE(&LIBSRC1)
+             MONMSG     MSGID(CPF0000) EXEC(CHGVAR VAR(&LIBSRC) +
+                          VALUE(*CURLIB))
+
+             CHGVAR     VAR(&LIBOBJ) VALUE(&LIBOBJ1)
+             MONMSG     MSGID(CPF0000) EXEC(CHGVAR VAR(&LIBOBJ) +
+                          VALUE(*CURLIB))
+
+/* Still under development ? */
+             IF         COND(&TYPE = '*DEBUG') THEN(DO)
+               CHGVAR     VAR(&DBG) VALUE(*LIST)
+               CHGVAR     VAR(&DBGSQL) VALUE(*SOURCE)
+               CHGVAR     VAR(&OPTIMIZE) VALUE(*NONE)
+               CHGVAR     VAR(&DEFINE) VALUE('DEBUG')
+               CHGVAR     VAR(&COMPILEOPT) VALUE('DEFINE(DEBUG)')
+             ENDDO
+
+DIST:

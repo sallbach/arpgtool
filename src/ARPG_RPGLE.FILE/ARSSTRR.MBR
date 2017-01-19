@@ -1,0 +1,179 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCSTRR
+      /COPY ARPG_H,ARCSTRING
+      /COPY ARPG_H,ARCICONV
+
+      //---------------------------------------------------------------*
+      //  StrIConv
+      //---------------------------------------------------------------*
+      //* Convert String from one CCSID to another.
+      //*
+      //* @param pAnRef - Program reference. You should use the field
+      //*                 "program name" of the system data structure (SDS).
+      //* @param pPtRef - Pointer &lt;&gt; *Null of the referenced data.
+      //*
+      //* @return pointer to the new data.
+      //*         ou have to deallocate this pointer !
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc StrIConv export;
+         dcl-pi *N pointer;
+           pPtStr    pointer value options(*string);
+           pInFrom   int(10) const;
+           pInTo     int(10) const;
+           pUiOutLen like(size_t) options(*omit:*nopass);
+           pUiLen    like(size_t) value options(*nopass);
+         end-pi;
+
+         dcl-s pUiLen_      like(size_t);
+         dcl-s pUiOutLen_   like(size_t);
+         dcl-s pPtRes       pointer;
+         dcl-s pUiResLen    like(size_t);
+         dcl-s pPtInBuf     pointer;
+         dcl-s pUiInBufLen  like(size_t);
+         dcl-s pPtOutBuf    pointer;
+         dcl-s pUiOutBufLen like(size_t);
+
+        // iconv()
+         dcl-ds pDsFromCode likeds(QtqCode_T);
+         dcl-ds pDsToCode   likeds(QtqCode_T);
+         dcl-ds pDsIconv    likeds(iconv_t);
+
+         if %parms() >= %parmnum(pUiOutLen);
+           pUiOutLen = 0;
+         endif;
+
+         // No String ?
+         if pPtStr = *Null;
+           return *Null;
+         endif;
+
+       // Check length
+       if %parms() >= %parmnum(pUiLen) And %Addr(pUiLen) <> *Null;
+         pUiLen_ = pUiLen;
+       else;
+         pUiLen_ = strlen(pPtStr);
+       endif;
+
+       // empty string ?
+       if pUiLen_ = *Zeros;
+         pPtRes = %alloc(1);
+         memset(pPtRes:NULL:1);
+         return pPtRes;
+       endif;
+
+       //- init iconv()
+       pDsFromCode.CcsId = pInFrom;
+       pDsFromCode.cnv_alternative = 0;
+       pDsFromCode.subs_alternative = 0;
+       pDsFromCode.shift_alternative = 1;
+       pDsFromCode.length_option = 0;
+       pDsFromCode.mx_error_option = 0;
+       pDsFromCode.reserved = *allx'00';
+
+       pDsToCode.CcsId = pInTo;
+       pDsToCode.cnv_alternative = 0;
+       pDsToCode.subs_alternative = 0;
+       pDsToCode.shift_alternative = 0;
+       pDsToCode.length_option = 0;
+       pDsToCode.mx_error_option = 0;
+       pDsToCode.reserved = *allx'00';
+
+       // iconv open
+       pDsIconv = QtqIconvOpen(pDsToCode:pDsFromCode);
+       if pDsIconv.return_value = -1;
+         // MSG
+         return *Null;
+       endif;
+
+       // Speicher für Rückgabe reservieren
+       pUiResLen = (pUiLen_ * 1.5) + 1;
+       pPtRes = %alloc(pUiResLen + 1);
+       if pPtRes = *Null;
+         // MSG
+         return *Null;
+       endif;
+
+       // Hilfsvariablen für iconv setzen
+       pPtInBuf     = pPtStr;
+       pUiInBufLen  = pUiLen_;
+       pPtOutBuf    = pPtRes;
+       pUiOutBufLen = pUiResLen - 1;
+
+       dow 1=1;
+         if iconv(pDsIconv
+                 :pPtInBuf
+                 :pUiInBufLen
+                 :pPtOutBuf
+                 :pUiOutBufLen) = -1;
+           // MSG
+           iconv_close(pDsIconv);
+           dealloc pPtRes;
+           return *Null;
+         endif;
+
+         // Ergebnis hat in Zielspeicher gepasst => fertig
+         if pUiInBufLen = 0;
+           leave;
+         endif;
+
+         pUiOutBufLen = pPtOutBuf - pPtRes;
+
+         // Ziel war zu klein => mehr Speicher allozieren
+         pUiResLen += (pUiInBufLen * 1.5) + 1;
+         pPtRes = %realloc(pPtRes:pUiResLen + 1);
+         if pPtRes = *Null;
+           // MSG
+           iconv_close(pDsIconv);
+           return *Null;
+         endif;
+
+         pPtOutBuf    = pPtRes + pUiOutBufLen;
+         pUiOutBufLen = pUiResLen - pUiOutBufLen - 1;
+       enddo;
+
+       // iconv schließen
+       iconv_close(pDsIconv);
+
+       // Abschließende NULL
+       pUiOutLen_ = pPtOutBuf - pPtRes;
+       memset(pPtRes + pUiOutLen_:NULL:1);
+
+       if %parms() >= %parmnum(pUiOutLen) And %Addr(pUiOutLen) <> *Null;
+         pUiOutLen = pUiOutLen_;
+       endif;
+
+       return PPtRes;
+
+       end-proc StrIConv;
+      //---------------------------------------------------------------*
+      //  StrAtoD
+      //---------------------------------------------------------------*
+      //* Save the given object in memory and returns a unique identifier.
+      //*
+      //* @param pAnRef - Program reference. You should use the field
+      //*                 "program name" of the system data structure (SDS).
+      //* @param pPtRef - Pointer &lt;&gt; *Null of the referenced data.
+      //*
+      //* @return &gt;0 - eine valid reference, else -1.
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc StrAtoD export;
+         dcl-pi *N packed(31:11);
+           pAnStr      varchar(100) const;
+           PAnDecPoint varchar(1)   const options(*nopass:*omit);
+         end-pi;
+
+         return 0;
+       end-proc StrAtoD;

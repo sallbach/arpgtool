@@ -1,0 +1,24 @@
+/*----------------------------------------------------------------------------*/
+/* Build all objects in the list                                              */
+/*----------------------------------------------------------------------------*/
+             PGM        PARM(&TYPE &LIBSRC &LIBOBJ)
+
+             DCL        VAR(&TYPE)   TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LIBSRC) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LIBOBJ) TYPE(*CHAR) LEN(10)
+
+             DCLF       FILE(QAFDMBRL)
+
+ LOOP:       RCVF       RCDFMT(QWHFDML)
+             MONMSG     MSGID(CPF0864) EXEC(GOTO CMDLBL(END))
+
+             IF         COND(%SST(&MLNAME 1 5) = 'B_ALL' *OR &MLNAME +
+                          = 'B_INCLUDE' *OR &MLNAME = 'B_METADATA') +
+                          THEN(GOTO CMDLBL(LOOP))
+
+             CRTBNDCL   PGM(&MLLIB/&MLNAME) SRCFILE(&MLLIB/&MLFILE)
+             CALL       PGM(&MLLIB/&MLNAME) PARM(&TYPE &LIBSRC &LIBOBJ)
+
+             GOTO       CMDLBL(LOOP)
+
+ END:        ENDPGM

@@ -1,0 +1,20 @@
+/*----------------------------------------------------------------------------*/
+/* Build all objects in the source library.                                   */
+/*----------------------------------------------------------------------------*/
+             PGM        PARM(&TYPE &LIBSRC &LIBOBJ)
+
+             DCL        VAR(&TYPE)   TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LIBSRC) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LIBOBJ) TYPE(*CHAR) LEN(10)
+
+             DSPFD      FILE(&LIBSRC/ARPG_BUILD) TYPE(*MBRLIST) +
+                          OUTPUT(*OUTFILE) OUTFILE(QTEMP/BUILDLST)
+
+             OVRDBF     FILE(QAFDMBRL) TOFILE(QTEMP/BUILDLST) +
+                          OVRSCOPE(*CALLLVL)
+
+             CRTBNDCL   PGM(&LIBSRC/B_ALL_EXC) +
+                          SRCFILE(&LIBSRC/ARPG_BUILD)
+             CALL       PGM(B_ALL_EXC) PARM(&TYPE &LIBSRC &LIBOBJ)
+
+             ENDPGM

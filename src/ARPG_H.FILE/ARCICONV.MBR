@@ -1,0 +1,56 @@
+      /IF DEFINED (AR_ICONV__)
+      /EOF
+      /ENDIF
+
+      /DEFINE AR_ICONV__
+      /INCLUDE ARPG_H,ARCTYPES
+
+      // definition of iconv_t type
+       dcl-ds iconv_t qualified align template;
+         return_value int(10);
+         cd int(10) dim(12);
+       end-ds;
+
+       dcl-ds QtqCode_T qualified align template;
+         CCSID int(10);
+         cnv_alternative int(10);
+         subs_alternative int(10);
+         shift_alternative int(10);
+         length_option int(10);
+         mx_error_option int(10);
+         reserved char(8);
+       end-ds;
+
+      //---------------------------------------------------------------*
+      //  iconv()--Code Conversion API
+      //---------------------------------------------------------------*
+       dcl-pr iconv like(size_t) extproc(*dclcase);
+         cd           likeds(iconv_t) value;
+         inbuf        pointer;
+         inbytesleft  like(size_t);
+         outbuf       pointer;
+         outbytesleft like(size_t);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      //  iconv_open()--Code Conversion Allocation API
+      //---------------------------------------------------------------*
+       dcl-pr iconv_open likeds(iconv_t) extproc(*dclcase);
+         tocode    pointer value options(*string);
+         fromcode  pointer value options(*string);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      //  QtqIconvOpen()--Code Conversion Allocation API
+      //---------------------------------------------------------------*
+       dcl-pr QtqIconvOpen likeds(iconv_t) extproc(*dclcase);
+         tocode    const likeds(QtqCode_T);
+         fromcode  const likeds(QtqCode_T);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      //  iconv_close()--Code Conversion Deallocation API
+      //---------------------------------------------------------------*
+       dcl-pr iconv_close int(10) extproc(*dclcase);
+         cd value like(iconv_t);
+       end-pr;
