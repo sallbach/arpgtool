@@ -1,0 +1,121 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCXMLR
+      /COPY ARPG_H,ARCB64R
+      /COPY ARPG_H,ARCSTRING
+
+      /COPY RPGUNIT1,TESTCASE
+
+       dcl-c testString123 x'74657374537472696e67313233-
+74657374537472696e67313233-
+74657374537472696e67313233-
+74657374537472696e67313233-
+74657374537472696e67313233-
+74657374537472696e67313233-
+74657374537472696e67313233-
+74657374537472696e67313233-
+74657374537472696e67313233-
+74657374537472696e67313233';
+
+       dcl-c testString123b64 'dGVzdFN0cmluZzEyM3Rlc3RTdHJpbmcx-
+MjN0ZXN0U3RyaW5nMTIzdGVzdFN0cmluZzEyM3Rlc3RTdHJpbmcxMjN0ZXN0U3R-
+yaW5nMTIzdGVzdFN0cmluZzEyM3Rlc3RTdHJpbmcxMjN0ZXN0U3RyaW5nMTIzdG-
+VzdFN0cmluZzEyMw==';
+
+      dcl-s gInPos int(10) inz(0);
+
+      //---------------------------------------------------------------*
+      // base64
+      //---------------------------------------------------------------*
+       dcl-proc test_base64 export;
+
+         dcl-s pPtDst pointer;
+         dcl-s pAnDst char(200) based(pPtDst);
+         dcl-s pAnCmp char(200);
+
+         pPtDst = B64StringEncode(teststring123);
+         pAnCmp = %subst(teststring123b64:1:76)
+                + x'0D25'
+                + %subst(teststring123b64:77:76)
+                + x'0D25'
+                + %trimr(%subst(teststring123b64:153))
+                + x'0D25';
+         aEqual(%trimr(pAnCmp):%str(pPtDst));
+         dealloc pPtDst;
+
+       end-proc test_base64;
+      //---------------------------------------------------------------*
+      // base64
+      //---------------------------------------------------------------*
+       dcl-proc test_base64_big export;
+
+         dcl-s pPtTmp pointer;
+         dcl-s pPtDst pointer;
+         dcl-s pAnDst char(2000000) based(pPtDst);
+         dcl-s pAnCmp char(2000000);
+         dcl-s i int(10);
+
+         for i=1 by %size(teststring123) to
+                    %size(pAnCmp) - %size(teststring123) - 1;
+           %subst(pAnCmp:i:%size(teststring123)+1) = teststring123 + NULL;
+         endfor;
+
+         pPtTmp = B64StringEncode(pAnCmp);
+         pPtDst = B64StringDecode(pPtTmp);
+
+         assert(%str(%addr(pAnCmp))=%str(pPtDst):'Error base64');
+
+         dealloc pPtDst;
+         dealloc pPtTmp;
+
+       end-proc test_base64_big;
+      //---------------------------------------------------------------*
+      // base64
+      //---------------------------------------------------------------*
+       dcl-proc test_base64_2 export;
+
+         dcl-s pPtDst pointer;
+         dcl-s pAnDst char(200) based(pPtDst);
+         dcl-s pAnCmp char(200);
+
+         pPtDst = B64StringEncode(teststring123);
+         pAnCmp = %subst(teststring123b64:1:76)
+                + x'0D25'
+                + %subst(teststring123b64:77:76)
+                + x'0D25'
+                + %trimr(%subst(teststring123b64:153))
+                + x'0D25';
+         aEqual(%trimr(pAnCmp):%str(pPtDst));
+         dealloc pPtDst;
+
+       end-proc test_base64_2;
+      //---------------------------------------------------------------*
+       dcl-proc intB64Reader;
+         dcl-pi *N int(10);
+           pInHdl     int(10) value;
+           pPtData    pointer value;
+           pInLen     int(10) value;
+         end-pi;
+
+         dcl-c RLEN 50;
+         dcl-s pAnBinary char(500);
+         dcl-s pPtBinary pointer inz(%Addr(pAnBinary));
+         dcl-s pInLen_ int(10);
+
+         pAnBinary = teststring123 + teststring123 + teststring123;
+
+         pInLen_ = RLEN;
+         if gInPos + pInLen_ > 3*%size(teststring123);
+           pInLen_ = 3*%size(teststring123) - gInPos;
+         endif;
+
+         memcpy(pPtData:pPtBinary + gInPos:pInLen_);
+         gInPos += pInLen_;
+
+         return pInLen_;
+
+       end-proc intB64Reader;

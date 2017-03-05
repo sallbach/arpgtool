@@ -15,10 +15,10 @@
       //*
       //* @param pAnRef - Program reference. You should use the field
       //*                 "program name" of the system data structure (SDS).
-      //* @param pPtRef - Pointer &lt;&gt; *Null of the referenced data.
+      //* @param pPtRef - Pointer <> *Null of the referenced data.
       //*
       //* @return pointer to the new data.
-      //*         ou have to deallocate this pointer !
+      //*         you have to deallocate this pointer !
       //*
       //* @diag messageCode to be defined
       //*
@@ -94,7 +94,7 @@
          return *Null;
        endif;
 
-       // Speicher f¸r R¸ckgabe reservieren
+       // Allocate memory for result
        pUiResLen = (pUiLen_ * 1.5) + 1;
        pPtRes = %alloc(pUiResLen + 1);
        if pPtRes = *Null;
@@ -102,7 +102,7 @@
          return *Null;
        endif;
 
-       // Hilfsvariablen f¸r iconv setzen
+       // Set helper variables for iconv
        pPtInBuf     = pPtStr;
        pUiInBufLen  = pUiLen_;
        pPtOutBuf    = pPtRes;
@@ -120,14 +120,14 @@
            return *Null;
          endif;
 
-         // Ergebnis hat in Zielspeicher gepasst => fertig
+         // There is enough memory => finish
          if pUiInBufLen = 0;
            leave;
          endif;
 
          pUiOutBufLen = pPtOutBuf - pPtRes;
 
-         // Ziel war zu klein => mehr Speicher allozieren
+         // Memory to small => allocate more menory
          pUiResLen += (pUiInBufLen * 1.5) + 1;
          pPtRes = %realloc(pPtRes:pUiResLen + 1);
          if pPtRes = *Null;
@@ -140,10 +140,9 @@
          pUiOutBufLen = pUiResLen - pUiOutBufLen - 1;
        enddo;
 
-       // iconv schlieﬂen
        iconv_close(pDsIconv);
 
-       // Abschlieﬂende NULL
+       // Add NULL
        pUiOutLen_ = pPtOutBuf - pPtRes;
        memset(pPtRes + pUiOutLen_:NULL:1);
 
@@ -154,26 +153,3 @@
        return PPtRes;
 
        end-proc StrIConv;
-      //---------------------------------------------------------------*
-      //  StrAtoD
-      //---------------------------------------------------------------*
-      //* Save the given object in memory and returns a unique identifier.
-      //*
-      //* @param pAnRef - Program reference. You should use the field
-      //*                 "program name" of the system data structure (SDS).
-      //* @param pPtRef - Pointer &lt;&gt; *Null of the referenced data.
-      //*
-      //* @return &gt;0 - eine valid reference, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc StrAtoD export;
-         dcl-pi *N packed(31:11);
-           pAnStr      varchar(100) const;
-           PAnDecPoint varchar(1)   const options(*nopass:*omit);
-         end-pi;
-
-         return 0;
-       end-proc StrAtoD;

@@ -4,7 +4,7 @@
 /* Please add the source library to your library list or make it the current  */
 /* library.                                                                   */
 /*                                                                            */
-/* If want to create the objects in a different library, you can give the     */
+/* If you want to create the objects in a different library, you can give the */
 /* object library as first parameter.                                         */
 /*----------------------------------------------------------------------------*/
              PGM        PARM(&LIB)

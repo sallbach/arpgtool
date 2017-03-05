@@ -1,4 +1,11 @@
 # Install aRPGtool 
+
+## Prerequisites
+
+- To use the json functions you need the service programs YAJL & YAJLR4 from [Scott Klement](https://www.scottklement.com/yajl/ "Scott Klement") site.
+- Optional, your can install [RPGUnit](http://rpgunit.sourceforge.net/ "RPGUnit") to test the installation.
+
+## Install
 Create the physical source files on your IBM i.
 
     CRTSRCPF FILE(YOURLIB/ARPG_BUILD) RCDLEN(92)  TEXT('aRPGtool - Build sources')

@@ -5,103 +5,82 @@
       /DEFINE AR_FCNTL__
       /INCLUDE ARPG_H,ARCUNISTD
 
-      //******************************************************************/
-      //   File Access Modes for open()                                  */
-      //******************************************************************/
-       dcl-c  O_RDONLY   00001;       // Open for reading only           */
-       dcl-c  O_WRONLY   00002;       // Open for writing only           */
-       dcl-c  O_RDWR     00004;       // Open for reading and writing    */
+      //   File Access Modes for open()
+       dcl-c  O_RDONLY       1;
+       dcl-c  O_WRONLY       2;
+       dcl-c  O_RDWR         4;
 
-      //******************************************************************/
-      //   Mask for use with File Access Modes                           */
-      //******************************************************************/
+      //   Mask for use with File Access Modes
        //dcl-c  O_ACCMODE  (O_RDONLY | O_WRONLY | O_RDWR)
        dcl-c  O_ACCMODE  7;
 
-      //******************************************************************/
-      //   oflag Values for open()                                       */
-      //******************************************************************/
-       dcl-c  O_CREAT      00010;     // Create file if it doesn't exist */
-       dcl-c  O_EXCL       00020;     // Exclusive use flag              */
-      //                   00040         reserved                        */
-       dcl-c  O_TRUNC      00100;     // Truncate flag                   */
-       dcl-c  O_NOCTTY     000000100000;// No controlling terminal   @B8A*/
+      //   oflag Values for open()
+       dcl-c  O_CREAT          8;
+       dcl-c  O_EXCL          16;
+       dcl-c  O_TRUNC         64;
+       dcl-c  O_NOCTTY     32768;
 
-      //******************************************************************/
-      //   File Status Flags for open() and fcntl()                      */
-      //******************************************************************/
-       dcl-c  O_NONBLOCK   00200;     // No delay...return EAGAIN if it
-                                      // will block                      */
-       dcl-c  O_APPEND     00400;     // Set append mode                 */
-       dcl-c  O_LARGEFILE  004000000000;// Large file access         @B1A*/
-       dcl-c  O_SYNC       000000002000;// Synchronous write option  @B9A*/
-       dcl-c  O_DSYNC      000000004000;// sync write, data only     @B9A*/
-       dcl-c  O_RSYNC      000000010000;// Synchronous read option   @B9A*/
+      //   File Status Flags for open() and fcntl()
+       dcl-c  O_NONBLOCK         128;
 
-       dcl-c  O_CODEPAGE   040000000; // The O_CODEPAGE flag is used
-                                      // indicate that the conversion
-                                      // ID parameter should be
-                                      // interpreted as a code page and
-                                      // mixed conversion is not
-                                      // allowed                   @B5C*/
-       dcl-c  O_TEXTDATA  0100000000; // text data flag                */
-       dcl-c  O_FORCE_SCAN  000400000000;// Force scan flag - see scan-
-                                         // related exit point doc
-                                         // for more information   @BBA*/
-       dcl-c  O_INHERITMODE 001000000000;// inherit mode flag      @A1A*/
-       dcl-c  O_CCSID      000040;    // The O_CCSID flag is used to
-                                      // indicate that the conversion
-                                      // ID parameter should be
-                                      // interpreted as a CCSID and
-                                      // mixed conversion is
-                                      // allowed                   @B5A*/
+       dcl-c  O_APPEND           256;
+       dcl-c  O_LARGEFILE  536870912;
+       dcl-c  O_SYNC            1024;
+       dcl-c  O_DSYNC           2048;
+       dcl-c  O_RSYNC           4096;
 
-       dcl-c  O_TEXT_CREAT 000200000000;// This flag is used in
-                                       // conjunction with the following
-                                       // flags:  O_CREAT,
-                                       // O_TEXTDATA, and O_CCSID or
-                                       // O_CODEPAGE. If all of those
-                                       // flags are not specified, then
-                                       // the O_TEXT_CREAT flag is
-                                       // ignored.  This flag provides
-                                       // for text conversion on a newly
-                                       // created file without needing
-                                       // a second open.           @BAA*/
+       dcl-c  O_CODEPAGE     8388608;
 
-      //******************************************************************/
-      //   oflag Share Mode Values for open()                        @A8A*/
-      //******************************************************************/
-       dcl-c  O_SHARE_RDONLY 000000200000;// Share with readers only @A8A*/
-       dcl-c  O_SHARE_WRONLY 000000400000;// Share with writers only @A8A*/
-       dcl-c  O_SHARE_RDWR   000001000000;// Share with readers and
-                                          // writers                 @A8A*/
-       dcl-c  O_SHARE_NONE   000002000000;// Share with neither readers
-                                          // nor writers             @A8A*/
+       dcl-c  O_TEXTDATA     16777216;
+       dcl-c  O_FORCE_SCAN   67108864;
+       dcl-c  O_INHERITMODE 134217728;
+       dcl-c  O_CCSID              32;
 
-      //******************************************************************/
+       dcl-c  O_TEXT_CREAT   33554432;
+
+      //   oflag Share Mode Values for open()
+       dcl-c  O_SHARE_RDONLY        65536;
+       dcl-c  O_SHARE_WRONLY       131072;
+       dcl-c  O_SHARE_RDWR         262144;
+
+       dcl-c  O_SHARE_NONE         524288;
+
+
       //   Constants for l_type in flock structure                       */
-      //******************************************************************/
-       dcl-c  F_RDLCK    1;           // Read lock                       */
-       dcl-c  F_WRLCK    2;           // Write lock                      */
-       dcl-c  F_UNLCK    3;           // Remove the lock                 */
+       dcl-c  F_RDLCK    1;
+       dcl-c  F_WRLCK    2;
+       dcl-c  F_UNLCK    3;
 
-      //******************************************************************/
-      //   Constants for F_GETCVT and F_SETCVT commands              @BCA*/
-      //******************************************************************/
-       dcl-c  F_CNTL_CVTSP_SIZE       128;                        // @BCA*/
+      //* Duplicate a file descriptor
+       dcl-c  F_DUPFD       0;
+      //* Get file descriptor flags
+       dcl-c  F_GETFD       1;
+      //* Set file descriptor flags
+       dcl-c  F_SETFD       2;
+      //* Get locking information
+       dcl-c  F_GETLK       3;
+      //* Set locking information
+       dcl-c  F_SETLK       4;
+      //* Set locking information. Wait if blocked
+       dcl-c  F_SETLKW      5;
+      //* Get file status flags
+       dcl-c  F_GETFL       6;
+      //* Set file status flags
+       dcl-c  F_SETFL       7;
+      //* Get process/group owner
+       dcl-c  F_GETOWN      8;
+      //* Set process/group owner
+       dcl-c  F_SETOWN      9;
+      //* Get locking information
+       dcl-c  F_GETLK64    12;
+      //* Set locking information
+       dcl-c  F_SETLK64    13;
+      //* Set locking information. Wait if blocked
+       dcl-c  F_SETLKW64   14;
 
-      //*******************************************************************
-      //      Mode Flags.
-      //         basically, the mode parm of open(), creat(), chmod(),etc
-      //         uses 9 least significant bits to determine the
-      //         file's mode. (peoples access rights to the file)
-      //
-      //           user:       owner    group    other
-      //           access:     R W X    R W X    R W X
-      //           bit:        8 7 6    5 4 3    2 1 0
-      //
-      // (This is accomplished by adding the flags below to get the mode)
-      //*******************************************************************
+      //   Constants for F_GETCVT and F_SETCVT commands
+       dcl-c  F_CNTL_CVTSP_SIZE       128;
+
       // owner authority
        dcl-c  S_IRUSR   256;
        dcl-c  S_IWUSR   128;
@@ -129,6 +108,8 @@
        dcl-c CCSID_US           37;
        dcl-c CCSID_ASCII       819;
        dcl-c CCSID_UTF8       1208;
+       dcl-c CCSID_UTF16     13488;
+       dcl-c CCSID_USASCII     367;
        dcl-c CCSID_WINASCII   1252;
        dcl-c CCSID_BINARY    65535;
 

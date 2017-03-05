@@ -1,0 +1,457 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCB64R
+      /COPY ARPG_H,ARCSTRING
+      /COPY ARPG_H,ARCSTRR
+      /COPY ARPG_H,ARCFCNTL
+      /COPY ARPG_H,ARCAPRCORE
+
+       dcl-s  gPtB64Read pointer(*proc);
+       dcl-pr B64Read int(10) extproc(gPtB64Read);
+         hdl  int(10) value;
+         data pointer value;
+         len  like(size_t) value;
+       end-pr;
+
+       dcl-s  gPtB64Write pointer(*proc);
+       dcl-pr B64Write int(10) extproc(gPtB64Write);
+         hdl  int(10) value;
+         data pointer value options(*string);
+         len  like(size_t) value;
+       end-pr;
+
+       dcl-s gPtInput  pointer;
+       dcl-s gInInLen  int(10);
+       dcl-s gInInPos  int(10);
+
+       dcl-s gPtOutput pointer;
+       dcl-s gInOuLen  int(10);
+
+       dcl-c MAX_BUFFER_SIZE    1594323;
+       dcl-c MIME_LINE_LENGTH        76;
+
+      //---------------------------------------------------------------
+      // B64StreamEncode
+      //---------------------------------------------------------------
+      //* Encodes stream to base64.
+      //* <P>
+      //* CR/LF will be added.
+      //*
+      //* @param pPtB64Read - Reader function - eg. %paddr('read')
+      //* @param pInSrc - handler of the reader function
+      //* @param pPtB64Write - Writer function - eg. %paddr('write')
+      //* @param pInDst - handler of the reader function
+      //* @param pBoAscii - base64 stream should be in ascii (optional)
+      //*
+      //* @return 0 - Erfolgreich, sonst -1
+      //*
+      //* @author S.Allbach
+      //---------------------------------------------------------------
+       dcl-proc B64StreamEncode export;
+         dcl-pi *N int(10);
+           pPtB64Read  pointer(*proc) const;
+           pInSrc      int(10) const;
+           pPtB64Write pointer(*proc) const;
+           pInDst      int(10) const;
+           pBoAscii    ind     const options(*nopass);
+         end-pi;
+
+         dcl-s pBoAscii_   ind inz(*off);
+         dcl-s pPtBuffer   pointer;
+         dcl-s pPtB64      pointer;
+
+         dcl-s pInRead     int(10);
+         dcl-s pInEncoded  int(10);
+         dcl-s i           int(10);
+
+         gPtB64Read  = pPtB64Read;
+         gPtB64Write = PPtB64Write;
+
+         if %parms() >= %parmnum(pBoAscii);
+           pBoAscii_ = pBoAscii;
+         endif;
+
+         pPtBuffer = %alloc(MAX_BUFFER_SIZE + 1);
+         pPtB64 = %alloc(%div(MAX_BUFFER_SIZE:3) * 4 + 1);
+
+         PInRead = B64ReadStream(pInSrc:pPtBuffer:MAX_BUFFER_SIZE);
+         dow pInRead > 0;
+           pInEncoded = B64Encode(pPtB64:pPtBuffer:pInRead:pBoAscii_);
+
+           // Write base64 blocks
+           for i = 0 by MIME_LINE_LENGTH to (pInEncoded-1);
+             if (pInEncoded - i) >= MIME_LINE_LENGTH;
+               B64Write(pInDst:pPtB64+i:MIME_LINE_LENGTH);
+             else;
+               B64Write(pInDst:pPtB64+i:pInEncoded-i);
+             endif;
+             B64Write(pInDst:NEWLINE:%size(NEWLINE));
+           endfor;
+
+           PInRead = B64ReadStream(pInSrc:pPtBuffer:MAX_BUFFER_SIZE);
+         enddo;
+
+         dealloc pPtBuffer;
+         dealloc pPtB64;
+
+         return 0;
+
+       end-proc B64StreamEncode;
+      //---------------------------------------------------------------
+      // intern B64ReadStream
+      //---------------------------------------------------------------
+       dcl-proc B64ReadStream;
+         dcl-pi *N int(10);
+           pInHdl  int(10) value;
+           pPtData pointer value;
+           pInLen  like(size_t) value;
+         end-pi;
+
+         dcl-s pInRead     int(10);
+         dcl-s pInRes      int(10);
+
+         pInRead = *Zeros;
+         dou pInRes < 1 Or pInRead = pInlen;
+           pInRes = B64Read(pInHdl:pPtData+pInRead:pInLen);
+           if pInRes > 0;
+             pInRead += pInRes;
+             pInLen  -= pInRes;
+           endif;
+         enddo;
+
+         return pInRead;
+
+       end-proc B64ReadStream;
+      //---------------------------------------------------------------
+      // B64StreamDecode
+      //---------------------------------------------------------------
+      //* Dencodes base64 stream.
+      //* <P>
+      //* CR/LF will be ignored.
+      //*
+      //* @param pPtB64Read - Reader function - eg. %paddr('read')
+      //* @param pInSrc - handler of the reader function
+      //* @param pPtB64Write - Writer function - eg. %paddr('write')
+      //* @param pInDst - handler of the reader function
+      //* @param pBoAscii - given stream is in ascii (optional)
+      //*
+      //* @return 0 - Erfolgreich, sonst -1
+      //*
+      //* @author S.Allbach
+      //---------------------------------------------------------------
+       dcl-proc B64StreamDecode export;
+         dcl-pi *N int(10);
+           pPtB64Read  pointer(*proc) const;
+           pInSrc      int(10) const;
+           pPtB64Write pointer(*proc) const;
+           pInDst      int(10) const;
+           pBoAscii    ind     const options(*nopass);
+         end-pi;
+
+         dcl-s pBoAscii_      ind inz(*off);
+         dcl-s pInRead        int(10);
+         dcl-s i              int(10);
+
+         dcl-s pAnRem         char(3);
+         dcl-s pInRemLen      int(10);
+
+         dcl-s pAnBuffer      char(65532);
+         dcl-s pInBufferLen   int(10);
+
+         dcl-s pAnLineDec     char(65532);
+
+         gPtB64Read  = pPtB64Read;
+         gPtB64Write = PPtB64Write;
+
+         if %parms() >= %parmnum(pBoAscii);
+           pBoAscii_ = pBoAscii;
+         endif;
+
+         pAnRem = *Blanks;
+         pInRemLen = *Zeros;
+         pInRead = B64Read(pInSrc:%Addr(pAnBuffer):%size(pAnBuffer));
+         dow pInRead > 0;
+
+           if pInRead < %size(pAnBuffer);
+             pAnBuffer = %subst(pAnBuffer:1:PInRead);
+           endif;
+
+           // replace invalid characters like blank and LF
+           pInBufferLen = %len(%trimr(pAnBuffer));
+           for i=1 by 1 to pInBufferLen;
+             if %scan(%subst(pAnBuffer:i:1):x'0d0a252040') > 0;
+               pAnBuffer = %replace('':pAnBuffer:i:1);
+               i-=1;
+               pInBufferLen -= 1;
+             endif;
+           endfor;
+
+           if pInRemLen > 0;
+             pAnBuffer = %subst(pAnRem:1:pInRemLen) + pAnBuffer;
+             pInBufferLen += pInRemLen;
+           endif;
+
+           pInRemLen = %rem(pInBufferLen:4);
+           if pInRemLen > 0;
+             pAnRem = %subst(pAnBuffer:pInBufferLen-pInRemLen+1);
+             pInBufferLen -= pInRemLen;
+           endif;
+
+           pInRead = B64Decode(%Addr(pAnLineDec)
+                              :%subst(pAnBuffer:1:pInBufferLen)
+                              :pBoAscii_);
+
+           B64Write(PInDst:%Addr(pAnLineDec):pInRead);
+           pInRead = B64Read(pInSrc
+                            :%Addr(pAnBuffer)
+                            :%size(pAnBuffer) - pInRemLen);
+         enddo;
+
+         if pInRemLen > 0;
+           // ERROR
+           return -1;
+         endif;
+
+         return 0;
+
+       end-proc B64StreamDecode;
+      //---------------------------------------------------------------
+      // B64StringEncode
+      //---------------------------------------------------------------
+      //* Encodes string to base64.
+      //* <P>
+      //* CR/LF will be added.
+      //*
+      //* @param pPtInput - input string.
+      //* @param pInLen - length of string (optional)
+      //* @param pBoAscii - base64 string should be in ascii (optinal)
+      //*
+      //* @return Pointer with the encoded data - You have to deallocate it.
+      //*
+      //* @author S.Allbach
+      //---------------------------------------------------------------
+       dcl-proc B64StringEncode export;
+         dcl-pi *N pointer;
+           pPtInput    pointer const options(*string);
+           pInLen      int(10) const options(*nopass);
+           pBoAscii    ind     const options(*nopass);
+         end-pi;
+
+         dcl-s pBoAscii_ ind inz(*off);
+         dcl-s pInRes    int(10);
+         dcl-s pInAlloc  int(10);
+
+         if %parms() >= %parmnum(pBoAscii);
+           pBoAscii_ = pBoAscii;
+         endif;
+
+         if %parms() >= %parmnum(pInLen);
+           gInInLen = pInLen;
+         else;
+           gInInLen = strlen(pPtInput);
+         endif;
+
+         if pPtInput = *Null Or pInLen = 0;
+           return *Null;
+         endif;
+
+         gPtInput = pPtInput;
+         pInAlloc = (%div(gInInLen:3) + 1) * 4;
+         pInAlloc += (%div(pInAlloc:MIME_LINE_LENGTH) + 1) * 2;
+         gPtOutput = %alloc(pInAlloc + 1);
+         gInInPos = 0;
+         gInOuLen = 0;
+
+         B64StreamEncode(%paddr('B64READER'):0
+                        :%paddr('B64WRITER'):0
+                        :pBoAscii_);
+
+         memset(gPtOutput+gInOuLen:NULL:1);
+
+         return gPtOutput;
+
+       end-proc B64StringEncode;
+      //---------------------------------------------------------------
+      // B64StringDecode
+      //---------------------------------------------------------------
+      //* Dencodes base64 string.
+      //* <P>
+      //* CR/LF will be ignored.
+      //*
+      //* @param pPtInput - input string.
+      //* @param pInLen - length of string (optional)
+      //* @param pInOutLen - length of result (optional)
+      //* @param pBoAscii - given base64 string is in ascii (optinal)
+      //*
+      //* @return Pointer with the decoded data - You have to deallocate it.
+      //*
+      //* @author S.Allbach
+      //---------------------------------------------------------------
+       dcl-proc B64StringDecode export;
+         dcl-pi *N pointer;
+           pPtInput    pointer const options(*string);
+           pInLen      int(10) const options(*nopass);
+           pInOutLen   int(10)       options(*nopass);
+           pBoAscii    ind     const options(*nopass);
+         end-pi;
+
+         dcl-s pBoAscii_ ind inz(*off);
+         dcl-s pInRes    int(10);
+         dcl-s pInAlloc  int(10);
+
+         if %parms() >= %parmnum(pBoAscii);
+           pBoAscii_ = pBoAscii;
+         endif;
+
+         if %parms() >= %parmnum(pInLen);
+           gInInLen = pInLen;
+         else;
+           gInInLen = strlen(pPtInput);
+         endif;
+
+         if pPtInput = *Null Or pInLen = 0;
+           return *Null;
+         endif;
+
+         gPtInput = pPtInput;
+         pInAlloc = (%div(gInInLen:4) + 1) * 3;
+         gPtOutput = %alloc(pInAlloc + 1);
+         gInInPos = 0;
+         gInOuLen = 0;
+
+         B64StreamDecode(%paddr('B64READER'):0
+                        :%paddr('B64WRITER'):0
+                        :pBoAscii_);
+
+         memset(gPtOutput+gInOuLen:NULL:1);
+
+         if %parms() >= %parmnum(pInOutLen);
+           pInOutLen = gInOuLen;
+         endif;
+
+         return gPtOutput;
+
+       end-proc B64StringDecode;
+      //---------------------------------------------------------------
+      // B64Encode
+      //---------------------------------------------------------------
+      //* Base64 encode
+      //* <P>
+      //*
+      //* @param pPtOutput - output;
+      //* @param pPtInput - input string.
+      //* @param pInLen - length of string.
+      //* @param pBoAscii - base64 string in ascii (optional)
+      //*
+      //* @return the length of the encoded string
+      //*
+      //* @author S.Allbach
+      //---------------------------------------------------------------
+       dcl-proc B64Encode export;
+         dcl-pi *N int(10);
+           pPtOutput  pointer value;
+           pPtInput   pointer value options(*string);
+           pInlen     int(10) value;
+           pBoAscii   ind     const options(*nopass);
+         end-pi;
+
+         dcl-s pInRes like(size_t);
+         dcl-s pptTmp pointer;
+
+         pInRes = apr_base64_encode_binary(pPtOutput:pPtInput:pInlen);
+
+         if %parms() >= %parmnum(pBoAscii) And pBoAscii;
+           return pInRes - 1; // -NULL
+         endif;
+
+         pPtTmp = StrIConv(pPtOutput:CCSID_ASCII:CCSID_US:pInRes:pInRes);
+         memcpy(pPtOutput:pPtTmp:pInRes);
+
+         dealloc pptTmp;
+
+         return pInRes - 1; // -NULL
+
+       end-proc B64Encode;
+      //---------------------------------------------------------------
+      // B64Decode
+      //---------------------------------------------------------------
+      //* Base64 decode
+      //* <P>
+      //*
+      //* @param pPtOutput - output;
+      //* @param pPtInput - input string.
+      //* @param pBoAscii - given base64 string is in ascii (optional)
+      //*
+      //* @return the length of the dencoded string
+      //*
+      //* @author S.Allbach
+      //---------------------------------------------------------------
+       dcl-proc B64Decode export;
+         dcl-pi *N int(10);
+           pPtOutput  pointer value;
+           pPtInput   pointer value options(*string);
+           pBoAscii   ind     const options(*nopass);
+         end-pi;
+
+         dcl-s pInRes like(size_t);
+         dcl-s pptTmp pointer;
+
+         if %parms() >= %parmnum(pBoAscii) And pBoAscii;
+           return apr_base64_decode_binary(pPtOutput:pPtInput);
+         endif;
+
+         pPtTmp = StrIConv(pPtInput:CCSID_US:CCSID_ASCII);
+         pInRes = apr_base64_decode_binary(pPtOutput:pPtTmp);
+
+         dealloc pPtTmp;
+
+         return pInRes;
+
+       end-proc B64Decode;
+      //---------------------------------------------------------------*
+      // intern B64writer
+      //---------------------------------------------------------------*
+       dcl-proc B64writer;
+         dcl-pi *N int(10);
+           pInHdl     int(10) value;
+           pPtData    pointer value;
+           pInLen     int(10) value;
+         end-pi;
+
+         memcpy(gPtOutput + gInOuLen
+               :pPtData
+               :pInLen);
+
+         gInOuLen += pInLen;
+
+         return pInLen;
+
+       end-proc B64writer;
+      //---------------------------------------------------------------*
+      // intern B64reader
+      //---------------------------------------------------------------*
+       dcl-proc B64reader;
+         dcl-pi *N int(10);
+           pInHdl     int(10) value;
+           pPtData    pointer value;
+           pInLen     int(10) value;
+         end-pi;
+
+         if pInLen > gInInLen - gInInPos;
+           pInLen = gInInLen - gInInPos;
+         endif;
+
+         if pInLen < 1;
+           return 0;
+         endif;
+
+         memcpy(pPtData:gPtInput+gInInPos:pInLen);
+         gInInPos += pInLen;
+
+         return pInLen;
+
+       end-proc B64reader;

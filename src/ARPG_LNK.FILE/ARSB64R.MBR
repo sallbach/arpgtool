@@ -1,0 +1,13 @@
+             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSJSON__')
+
+     /*-----------------------------------------------------------------------*/
+     /* SRVB64R - Base64                                                      */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('B64StreamEncode')
+             EXPORT     SYMBOL('B64StreamDecode')
+             EXPORT     SYMBOL('B64StringEncode')
+             EXPORT     SYMBOL('B64StringDecode')
+             EXPORT     SYMBOL('B64Encode')
+             EXPORT     SYMBOL('B64Decode')
+
+             ENDPGMEXP

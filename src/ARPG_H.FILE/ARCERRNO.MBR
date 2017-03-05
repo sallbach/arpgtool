@@ -4,6 +4,13 @@
 
       /DEFINE AR_ERRNO__
 
+       dcl-pr errno pointer extproc('__errno');
+       end-pr;
+
+       dcl-pr strerror pointer extproc(*dclcase);
+         errno_val int(10) value;
+       end-pr;
+
       //---------------------------------------------------------------
       // error constant definitions
       //---------------------------------------------------------------

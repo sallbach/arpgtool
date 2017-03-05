@@ -4,7 +4,6 @@
      /* SRVSTRR - String functions                                            */
      /*-----------------------------------------------------------------------*/
              EXPORT     SYMBOL('StrIConv')
-             EXPORT     SYMBOL('StrAtoD')
         /*   EXPORT     SYMBOL('StrFunctions') */
 
              ENDPGMEXP

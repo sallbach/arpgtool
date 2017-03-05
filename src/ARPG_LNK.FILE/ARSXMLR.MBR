@@ -5,14 +5,23 @@
      /*-----------------------------------------------------------------------*/
              EXPORT     SYMBOL('XmlDocument')
              EXPORT     SYMBOL('XmlPrettyPrint')
+             EXPORT     SYMBOL('XmlSetNullOnNull')
              EXPORT     SYMBOL('XmlNode')
              EXPORT     SYMBOL('XmlNodeNum')
+             EXPORT     SYMBOL('XmlNodeBool')
+             EXPORT     SYMBOL('XmlNodeDate')
+             EXPORT     SYMBOL('XmlNodeDateTime')
              EXPORT     SYMBOL('XmlNodeB64')
+             EXPORT     SYMBOL('XmlNodeB64Reader')
              EXPORT     SYMBOL('XmlNodeEnd')
              EXPORT     SYMBOL('XmlAttribute')
              EXPORT     SYMBOL('XmlAttributeNum')
+             EXPORT     SYMBOL('XmlAttributeBool')
+             EXPORT     SYMBOL('XmlAttributeDate')
+             EXPORT     SYMBOL('XmlAttributeDateTime')
              EXPORT     SYMBOL('XmlToString')
              EXPORT     SYMBOL('XmlToStmf')
+             EXPORT     SYMBOL('XmlToWriter')
 
      /*-----------------------------------------------------------------------*/
      /* SRVXML01 - XML helper functions                                       */
@@ -20,6 +29,8 @@
              EXPORT     SYMBOL('XmlIanaToCcsid')
              EXPORT     SYMBOL('XmlCcsidToIana')
              EXPORT     SYMBOL('XmlNumber')
-             EXPORT     SYMBOL('XmlQuote')
+             EXPORT     SYMBOL('XmlBoolean')
+             EXPORT     SYMBOL('XmlDate')
+             EXPORT     SYMBOL('XmlDateTime')
 
              ENDPGMEXP

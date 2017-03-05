@@ -13,13 +13,7 @@
       //---------------------------------------------------------------*
       // global variables
       //---------------------------------------------------------------*
-       dcl-s gArQSearch char(1) dim(5) ctdata perrcd(5);
-       dcl-s gArQRpl    char(7) dim(5) ctdata perrcd(1);
-       dcl-s gPtQRpl    pointer inz(%addr(gArQRpl));
-       dcl-ds gDsQRpl qualified dim(5) based(gPtQRpl);
-         InLen zoned(1);
-         AnRpl char(6);
-       end-ds;
+
 
       //---------------------------------------------------------------*
       //  XmlIanaToCcsid
@@ -95,7 +89,7 @@
 
          pAnIana = %xlate('_':'-':pAnIana);
          if %scan(':':pAnIana) > 1;
-           pAnIana = %subst(pAnIana:1:%scan(':':pAnIana)-1);
+           pAnIana = %subst(pAnIana:1:%scan(':':pAnIana)-1) + NULL;
          endif;
 
          return %trim(%str(%addr(pAnIana)));
@@ -134,75 +128,80 @@
 
        end-proc XmlNumber;
       //---------------------------------------------------------------*
-      // XmlQuote
+      // XmlBoolean
       //---------------------------------------------------------------*
-      //* Quote special xml characters.
-      //* <P>
-      //* The function allways gives a new pointer with a copy of the given data.
-      //* You have to deallocate this pointer !
+      //* Convert Indicator to xml conform string.
       //*
-      //* @param pPtString pointer const;
-      //* @param pInLen int(10);
-      //* @param pInCcsid int(10) const;
+      //* @param pBoInd - Indicator.
       //*
-      //* @return a pointer with a copy of the given data.
+      //* @return xml confirm boolean string.
       //*
       //* @diag messageCode to be defined
       //*
       //* @Author S.Allbach
       //---------------------------------------------------------------*
-       dcl-proc XmlQuote export;
-         dcl-pi *N pointer;
-           pPtString pointer const;
-           pInLen like(size_t);
+       dcl-proc XmlBoolean export;
+         dcl-pi *N varchar(5);
+           pBoInd ind const;
          end-pi;
 
-         dcl-s pPtSearch pointer;
-         dcl-s pAnSearch char(1) based(pPtSearch);
-
-         dcl-s pPtRes pointer;
-         dcl-s pPtDst pointer;
-         dcl-s pAnDst char(6) based(pPtDst);
-         dcl-s pInRes like(size_t);
-
-         dcl-s s like(size_t);
-         dcl-s d like(size_t);
-         dcl-s i like(size_t);
-
-         if pPtString = *Null or pInLen = 0;
-           return *Null;
+         if pBoInd;
+           return 'true';
          endif;
 
-         pInRes = pInLen;
-         pPtRes = %alloc(pInLen);
+         return 'false';
 
-         d = 0;
-         for s=0 by 1 to pInLen-1;
-           pPtDst = pPtRes + d;
-           pPtSearch = pPtString + s;
-           i = %lookup(pAnSearch:gArQSearch);
-           if i > 0;
-             pInRes += gDsQRpl(i).InLen - 1;
-             pPtRes = %realloc(pPtRes:pInRes);
-             pPtDst = pPtRes + d;
-             %subst(pAnDst:1:gDsQRpl(i).InLen) = gDsQRpl(i).AnRpl;
-             d += gDsQRpl(i).InLen;
-           else;
-             %subst(pAnDst:1:1) = pAnSearch;
-             d += 1;
-           endif;
-         endfor;
-
-         pInLen = pInRes;
-         return pPtRes;
-
-       end-proc XmlQuote;
+       end-proc XmlBoolean;
       //---------------------------------------------------------------*
-** gArQSearch
-<>&'"
-** gArQRpl
-4&lt;
-4&gt;
-5&amp;
-6&apos;
-6&quot;
+      // XmlDate
+      //---------------------------------------------------------------*
+      //* Convert date to xml conform string.
+      //*
+      //* @param pDaDate - Date.
+      //*
+      //* @return xml confirm date string.
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc XmlDate export;
+         dcl-pi *N varchar(20);
+           pDaDate date const;
+         end-pi;
+
+         if pDaDate = *loval;
+           return '';
+         endif;
+
+         return %char(pDaDate:*iso);
+
+       end-proc XmlDate;
+      //---------------------------------------------------------------*
+      // XmlDateTime
+      //---------------------------------------------------------------*
+      //* Convert timestamp to xml conform string.
+      //*
+      //* @param pTsTime - Timestamp.
+      //*
+      //* @return xml confirm timestamp string.
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc XmlDateTime export;
+         dcl-pi *N varchar(30);
+           pTsTime timestamp const;
+         end-pi;
+
+         if pTsTime = *loval;
+           return '';
+         endif;
+
+         return %char(%date(pTsTime):*iso)
+                + 'T'
+                + %char(%time(pTsTime):*hms);
+
+       end-proc XmlDateTime;
+

@@ -6,20 +6,61 @@
       /INCLUDE ARPG_H,ARCAPRCORE
 
       //---------------------------------------------------------------*
-      // B64FileEncode
+      // B64StreamEncode
       //---------------------------------------------------------------*
-       dcl-pr B64FileEncode int(10) extproc(*dclcase);
-         pPtStr    pointer value options(*string);
-         pInFrom   int(10) const;
-         pInTo     int(10) const;
-         pUiOutLen like(size_t) options(*omit:*nopass);
-         pUiLen    like(size_t) value options(*nopass);
+       dcl-pr B64StreamEncode int(10) extproc(*dclcase);
+         pPtB64Read  pointer(*proc) const;
+         pInSrc      int(10) const;
+         pPtB64Write pointer(*proc) const;
+         pInDst      int(10) const;
+         pBoAscii    ind     const options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
-      // PrcB64FileDecode
+      // B64StreamDecode
       //---------------------------------------------------------------*
-       dcl-pr PrcB64FileDecode int(10) extproc(*dclcase);
-         pAnStr      varchar(100) const;
-         PAnDecPoint varchar(1)   const options(*nopass:*omit);
+       dcl-pr B64StreamDecode int(10) extproc(*dclcase);
+         pPtB64Read  pointer(*proc) const;
+         pInSrc      int(10) const;
+         pPtB64Write pointer(*proc) const;
+         pInDst      int(10) const;
+         pBoAscii    ind     const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // B64StringEncode
+      //---------------------------------------------------------------*
+       dcl-pr B64StringEncode pointer extproc(*dclcase);
+         pPtInput    pointer const options(*string);
+         pInLen      int(10) const options(*nopass);
+         pBoAscii    ind     const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // B64StringDecode
+      //---------------------------------------------------------------*
+       dcl-pr B64StringDecode pointer extproc(*dclcase);
+         pPtInput    pointer const options(*string);
+         pInLen      int(10) const options(*nopass);
+         pInOutLen   int(10)       options(*nopass);
+         pBoAscii    ind     const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // B64Encode
+      //---------------------------------------------------------------*
+       dcl-pr B64Encode int(10) extproc(*dclcase);
+         output  pointer value;
+         input   pointer value options(*string);
+         len     int(10) value;
+         Ascii   ind     const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // B64Decode
+      //---------------------------------------------------------------*
+       dcl-pr B64Decode int(10) extproc(*dclcase);
+         output  pointer value;
+         input   pointer value options(*string);
+         Ascii   ind     const options(*nopass);
        end-pr;

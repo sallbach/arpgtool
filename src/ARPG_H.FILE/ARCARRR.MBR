@@ -25,8 +25,8 @@
       //---------------------------------------------------------------*
        dcl-pr ArrayListAdd int(10) extproc(*dclcase);
          Array int(10) value;
-         Data  pointer value options(*String);
-         Size  like(size_t) value options(*nopass);
+         Data  pointer value options(*string);
+         Size  int(10) value options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
@@ -53,8 +53,8 @@
        dcl-pr ArrayListInsert int(10) extproc(*dclcase);
          Array int(10) value;
          Index int(10) value;
-         Data  pointer value options(*String);
-         Size  like(size_t) value options(*nopass);
+         Data  pointer value options(*string);
+         Size  int(10) value options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
@@ -64,8 +64,8 @@
          Array    int(10) value;
          Index    int(10) value;
          ArraySrc int(10) value;
-         IndexStr int(10) value;
-         IndexLen int(10) value;
+         IndexStr int(10) value options(*nopass);
+         IndexLen int(10) value options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
@@ -81,7 +81,7 @@
        dcl-pr ArrayListGet pointer extproc(*dclcase);
          Array int(10) value;
          Index int(10) value;
-         Size  like(size_t) options(*nopass);
+         Size  int(10) options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
@@ -106,8 +106,8 @@
        dcl-pr ArrayListSet int(10) extproc(*dclcase);
          Array int(10) value;
          Index int(10) value;
-         Data  pointer value options(*String);
-         Size  like(size_t) value options(*nopass);
+         Data  pointer value options(*string);
+         Size  int(10) value options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
@@ -132,8 +132,8 @@
       //---------------------------------------------------------------*
        dcl-pr ArrayListIndexOf int(10) extproc(*dclcase);
          Array int(10) value;
-         Data  pointer value options(*String);
-         Size  like(size_t) value options(*nopass);
+         Data  pointer value options(*string);
+         Size  int(10) value options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
@@ -141,8 +141,8 @@
       //---------------------------------------------------------------*
        dcl-pr ArrayListLastIndexOf int(10) extproc(*dclcase);
          Array int(10) value;
-         Data  pointer value options(*String);
-         Size  like(size_t) value options(*nopass);
+         Data  pointer value options(*string);
+         Size  int(10) value options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
@@ -150,8 +150,8 @@
       //---------------------------------------------------------------*
        dcl-pr ArrayListContains ind extproc(*dclcase);
          Array int(10) value;
-         Data  pointer value options(*String);
-         Size  like(size_t) value options(*nopass);
+         Data  pointer value options(*string);
+         Size  int(10) value options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
@@ -174,7 +174,7 @@
        dcl-pr ArrayListRemove int(10) extproc(*dclcase);
          Array int(10) value;
          Index int(10) value;
-         Len   like(size_t) value options(*nopass);
+         Len   int(10) value options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
@@ -202,7 +202,7 @@
       // ArrayListSort
       //---------------------------------------------------------------*
        dcl-pr ArrayListSort int(10) extproc(*dclcase);
-         Array    pointer value;
+         Array    int(10) value;
          Sort     pointer(*proc) const options(*nopass:*omit);
          Compare  pointer(*proc) const options(*nopass:*omit);
        end-pr;
@@ -228,9 +228,9 @@
       //---------------------------------------------------------------*
        dcl-pr ArrayListCompareAsc int(10) extproc(*dclcase);
          Data1 pointer value;
-         Size1 like(size_t) value;
+         Size1 int(10) value;
          Data2 pointer value;
-         Size2 like(size_t) value;
+         Size2 int(10) value;
        end-pr;
 
       //---------------------------------------------------------------*
@@ -238,7 +238,7 @@
       //---------------------------------------------------------------*
        dcl-pr ArrayListCompareDesc int(10) extproc(*dclcase);
          Data1 pointer value;
-         Size1 like(size_t) value;
+         Size1 int(10) value;
          Data2 pointer value;
-         Size2 like(size_t) value;
+         Size2 int(10) value;
        end-pr;

@@ -1,0 +1,7 @@
+             PGM        PARM(&TYPE &LIBSRC)
+
+             DCL        VAR(&TYPE) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LIBSRC) TYPE(*CHAR) LEN(10)
+
+
+             ENDPGM

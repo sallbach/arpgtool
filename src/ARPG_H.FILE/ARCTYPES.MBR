@@ -38,6 +38,7 @@
        dcl-c NULL    x'00';
        dcl-c CR      x'0d';
        dcl-c LF      x'25';
+       dcl-c LF_ASC  x'0a';
        dcl-c CRLF    x'0d25';
        dcl-c NEWLINE x'0d25';
 

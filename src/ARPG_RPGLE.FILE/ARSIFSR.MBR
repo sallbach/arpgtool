@@ -1,0 +1,186 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCIFSR
+
+      //---------------------------------------------------------------*
+      //  IfsOpenFile
+      //---------------------------------------------------------------*
+      //* Open IFS File (todo)
+      //*
+      //* @param pPtPath - path name of the file to be opened.
+      //* @param pInOpenFlags - The file status flags and file access
+      //*                       modes of the file to be opened
+      //* @param pInMode int(10) - An optional third parameter of type
+      //*                          mode_t that is required if the
+      //*                          @const O_CREAT flag is set
+      //* @param pInCcsid int(10) - An optional fourth parameter of type
+      //*                           unsigned int that is required if the
+      //*                           @const O_CCSID or @const O_CODEPAGE
+      //*                           flag is set.
+      //*
+      //* @return Handle to the opened file or -1 in case of an error.
+      //*
+      //* @see open()
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc IfsOpenFile export;
+         dcl-pi *N int(10);
+           pPtPath pointer value options(*string);
+           pInOpenFlags int(10) value;
+           pInMode int(10) value options(*nopass);
+           pInCcsid int(10) value options(*nopass);
+         end-pi;
+
+         select;
+           when %parms() >= %parmnum(pInCcsid);
+             return open_(pPtPath:pInOpenFlags:pInMode:pInCcsid);
+           when %parms() >= %parmnum(pInMode);
+             return open_(pPtPath:pInOpenFlags:pInMode);
+         endsl;
+
+         return open_(pPtPath:pInOpenFlags);
+
+       end-proc IfsOpenFile;
+      //---------------------------------------------------------------*
+      //  IfsCloseFile
+      //---------------------------------------------------------------*
+      //* Close IFS File (todo)
+      //*
+      //* @param pInHandle - Reference of @link #IfsOpenFile
+      //*
+      //* @return 0 - closed
+      //* @return -1 - failed
+      //*
+      //* @see close()
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc IfsCloseFile export;
+         dcl-pi *N int(10);
+           pInHandle int(10) value;
+         end-pi;
+
+         return close_(pInHandle);
+
+       end-proc IfsCloseFile;
+      //---------------------------------------------------------------*
+      //  IfsWriteFile
+      //---------------------------------------------------------------*
+      //* Write IFS File (todo)
+      //*
+      //* @param pInHandle - Reference of @link #IfsOpenFile
+      //* @param pPtData - A pointer to a buffer containing the data to be written.
+      //* @param pInLen - The size in bytes of the data to be written.
+      //*
+      //* @return >0 - bytes written
+      //* @return -1 - failed
+      //*
+      //* @see write()
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc IfsWriteFile export;
+         dcl-pi *N int(10);
+         pInHandle int(10) value;
+         pPtData   pointer value options(*string);
+         pInLen    like(size_t) value;
+         end-pi;
+
+         return write_(pInHandle:pPtData:pInLen);
+
+       end-proc IfsWriteFile;
+      //---------------------------------------------------------------*
+      //  IfsReadFile
+      //---------------------------------------------------------------*
+      //* Read IFS File (todo)
+      //*
+      //* @param pInHandle - Reference of @link #IfsOpenFile
+      //* @param pPtData - A pointer to a buffer in which the bytes read are placed.
+      //* @param pInLen - The number of bytes to be read.
+      //*
+      //* @return >0 - bytes read
+      //* @return -1 - failed
+      //*
+      //* @see write()
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc IfsReadFile export;
+         dcl-pi *N int(10);
+         pInHandle int(10) value;
+         pPtData   pointer value;
+         pInLen    like(size_t) value;
+         end-pi;
+
+         return read_(pInHandle:pPtData:pInLen);
+
+       end-proc IfsReadFile;
+      //---------------------------------------------------------------*
+      // IfsReadLine
+      //---------------------------------------------------------------*
+      //* Read line of IFS File (todo)
+      //*
+      //* @param pInHandle - Reference of @link #IfsOpenFile
+      //* @param pPtData - A pointer to a buffer in which the bytes read are placed.
+      //* @param pInLen - The number of bytes to be read.
+      //* @param pBoNl - return the NL-Char (*on/*ff) (optional).
+      //*
+      //* @return >0 - bytes read
+      //* @return -1 - failed
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc IfsReadLine export;
+         dcl-pi *N int(10);
+           pInHandle int(10) value;
+           pPtData   pointer value;
+           pInLen    like(size_t) value;
+           pBoNl     ind options(*nopass);
+         end-pi;
+
+         return -1;
+
+       end-proc IfsReadLine;
+      //---------------------------------------------------------------*
+      // IfsLSeek
+      //---------------------------------------------------------------*
+      //* Seek IFS File (todo)
+      //*
+      //* @param pInHandle - Reference of @link #IfsOpenFile
+      //* @param pInOffc - The amount (positive or negative) the byte
+      //*                  offset is to be changed
+      //* @param pInPos - One of the following symbols :
+      //*                 @const SEEK_SET, @const SEEK_CUR, @const SEEK_END
+      //*
+      //* @return >0 - position
+      //* @return -1 - failed
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc IfsLSeek export;
+         dcl-pi *N int(10);
+           pInHandle int(10)     value;
+           pInOffc   like(off_t) value;
+           pInPos    int(10)     value;
+         end-pi;
+
+         return lseek(pInHandle:pInOffc:pInPos);
+
+       end-proc IfsLSeek;

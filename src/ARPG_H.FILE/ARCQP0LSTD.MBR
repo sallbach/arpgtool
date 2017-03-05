@@ -1,0 +1,489 @@
+      /IF DEFINED (AR_QP0LSTDI__)
+      /EOF
+      /ENDIF
+
+      /DEFINE AR_QP0LSTDI__
+
+      /INCLUDE ARPG_H,ARCTYPES
+
+       // Type Definitions
+       dcl-s Qp0lFID_t char(16) template;
+
+       dcl-ds Qp0l_Objtypes_List_t qualified template;
+         Number_Of_Objtypes uns(10);
+         //qp0l_objtype_t  Objtypes[];*/ /*Variable length entry @A4A*/
+       end-ds;
+
+       dcl-ds Qp0l_IN_EXclusion_List_t qualified template;
+         IN_EXclusion_t uns(10);
+         Number_Of_Pointers uns(10);
+         Reserved char(8) inz(*allx'00');
+        //Qlg_Path_Name_T    *Path_Name_Ptrs[];*/
+       end-ds;
+
+       //dcl-ds Qp0l_User_Function_t qualified template;
+       //  Function_Type uns(10);
+       //  Library char(10);
+       //  Program  char(10);
+       //  Mltthdacn char(1);
+       //  Reserved char(7);
+       //  Procedure likeds(Qp0l_ProcSubtree_t);
+       //end-ds;
+
+       dcl-ds Qp0l_AttrTypes_List_t qualified template;
+         Number_Of_ReqAttrs uns(10);
+         //uns  AttrTypes[];*/      /*Variable length entry @A5A*/
+       end-ds;
+
+       dcl-ds Qp0l_Checkout_t qualified template;
+         Checked_Out_Flag char(1);
+         User_Name char(10);
+         Reserved char(1);
+         Checked_Out_Time uns(10);
+       end-ds;
+
+       dcl-ds Qp0l_Authority_General_t qualified template;
+        Object_owner char(10);
+        Primary_group char(10);
+        Auth_list_name char(10);
+        Reserved1 char(10) inz(*allx'00');
+        UserArray_Offset uns(10);
+        Number_of_users uns(10);
+        UserEntry_size uns(10);
+        Reserved2 char(12) inz(*allx'00');
+        //char Array_of_Users[];*/
+       end-ds;
+
+       dcl-ds Qp0l_QSYS_Info_t qualified template;
+         Bytes_Returned uns(10);
+         Bytes_Available uns(10);
+         CCSID_Out uns(10);
+         Lib_Name char(28);
+         Lib_Type char(20);
+         Obj_Name char(28);
+         Obj_Type char(20);
+         Mbr_Name char(28);
+         Mbr_Type char(20);
+         Asp_Name char(28);
+       end-ds;
+
+       dcl-ds Qp0l_Authority_Users_t qualified template;
+         User_name char(10);
+         User_data_auth char(10);
+         OBJMGT_rights char(1);
+         OBJEXIST_rights char(1);
+         OBJALTER_rights char(1);
+         OBJREF_rights char(1);
+         Reserved1 char(10) inz(*allx'00');
+         OBJOPR_DataRights char(1);
+         READ_DataRights char(1);
+         ADD_DataRights char(1);
+         UPDATE_DataRights char(1);
+         DELETE_DataRights char(1);
+         EXECUTE_DataRights char(1);
+         EXCLUDE_DataRights char(1);
+         Reserved2 char(7) inz(*allx'00');
+       end-ds;
+
+
+       dcl-ds Qp0l_Pathnames_t qualified template;
+         Number_Of_Names uns(10);
+         Reserved char(12) inz(*allx'00');
+         //Qlg_Path_Name_T  *Names_Ptrs[];*/
+       end-ds;
+
+
+       //dcl-ds Qp0l_StgFree_Function_t qualified template;
+       //  Function_Type uns(10);
+       //  Library char(10);
+       //  Program char(10);
+       //  Mltthdacn char(1);
+       //  Reserved char(7);
+       //  Procedure likeds(Qp0l_SaveStgFree_t);
+       //end-ds;
+
+       dcl-ds Qp0l_Attr_Header_t qualified template;
+         Next_Attr_Offset uns(10);
+         Attr_ID uns(10);
+         Attr_Size uns(10);
+         Reserved char(4);
+       end-ds;
+
+       dcl-ds Qp0l_Usage_t qualified template;
+           Reset_date uns(10);
+           Last_used_date uns(10);
+           Days_used_count uns(5);
+           Reserved char(6) inz(*allx'00');
+       end-ds;
+
+       dcl-ds Qp0l_Journal_Info_t qualified template;
+         Status char(1);
+         Options char(1);
+         Journal_Identifier char(10);
+         Journal_Name char(10);
+         Journal_Library char(10);
+         Time_Last_Started uns(10);
+       end-ds;
+
+       dcl-ds Qp0l_Journal_Extended_Info_t qualified template;
+         Status char(1);
+         Options char(1);
+         Journal_Identifier  char(10);
+         Journal_Name  char(10);
+         Journal_Library char(10);
+         Time_Last_Started uns(10);
+         ReceiverName char(10);
+         ReceiverLibrary  char(10);
+         ReceiverASPDevice  char(10);
+         ApplyJournalChangeReq char(1);
+         RollBackEnded char(1);
+         Reserved0  char(12);
+       end-ds;
+
+       dcl-ds Qp0l_Scan_Info_t qualified template;
+         status char(1);
+         signaturesDiff char(1);
+         binary char(1);
+         reserved char(1);
+         CCSID_1 uns(10);
+         CCSID_2 uns(10);
+       end-ds;
+
+       dcl-c QP0L_USER_FUNCTION_PTR  0;
+       dcl-c  QP0L_USER_FUNCTION_PGM 1;
+
+
+       dcl-c  QP0L_INCLUSION_TYPE    0;
+       dcl-c  QP0L_EXCLUSION_TYPE    1;
+
+       dcl-c  QP0L_SUBTREE_YES       0;
+       dcl-c  QP0L_SUBTREE_NO        1;
+
+
+       dcl-c  QP0L_LOCAL_REMOTE_OBJ  0;
+       dcl-c  QP0L_LOCAL_OBJ         1;
+       dcl-c  QP0L_REMOTE_OBJ        2;
+
+       dcl-c  QP0L_PASS_WITH_ERRORID   0;
+       dcl-c  QP0L_BYPASS_NO_ERRORID   1;
+       dcl-c  QP0L_JOBLOG_NO_ERRORID   2;
+       dcl-c  QP0L_NULLNAME_ERRORID    3;
+       dcl-c  QP0L_END_PROCESS_SUBTREE 4;
+
+
+       dcl-c  QP0L_SELECT_OK         0;
+       dcl-c  QP0L_SELECT_DONE       1;
+       dcl-c  QP0L_SELECT_NOT_OK     2;
+       dcl-c  QP0L_SELECT_FAILED     3;
+
+       dcl-c  QP0L_ALLDIR  '*ALLDIR   ';
+       dcl-c  QP0L_ALLQSYS '*ALLQSYS  ';
+       dcl-c  QP0L_ALLSTMF '*ALLSTMF  ';
+       dcl-c  QP0L_MBR     '*MBR      ';
+       dcl-c  QP0L_NOQSYS  '*NOQSYS   ';
+
+       dcl-c  QP0L_ATTR_OBJTYPE            0;
+       dcl-c  QP0L_ATTR_DATA_SIZE          1;
+       dcl-c  QP0L_ATTR_ALLOC_SIZE         2;
+       dcl-c  QP0L_ATTR_EXTENDED_ATTR_SIZE 3;
+       dcl-c  QP0L_ATTR_CREATE_TIME        4;
+       dcl-c  QP0L_ATTR_ACCESS_TIME        5;
+       dcl-c  QP0L_ATTR_CHANGE_TIME        6;
+       dcl-c  QP0L_ATTR_MODIFY_TIME        7;
+       dcl-c  QP0L_ATTR_STG_FREE           8;
+       dcl-c  QP0L_ATTR_CHECKED_OUT        9;
+       dcl-c  QP0L_ATTR_LOCAL_REMOTE       10;
+       dcl-c  QP0L_ATTR_AUTH               11;
+       dcl-c  QP0L_ATTR_FILE_ID            12;
+       dcl-c  QP0L_ATTR_ASP                13;
+
+       dcl-c  QP0L_ATTR_DATA_SIZE_64       14;
+       dcl-c  QP0L_ATTR_ALLOC_SIZE_64      15;
+       dcl-c  QP0L_ATTR_USAGE_INFORMATION  16;
+       dcl-c  QP0L_ATTR_PC_READ_ONLY       17;
+       dcl-c  QP0L_ATTR_PC_HIDDEN          18;
+       dcl-c  QP0L_ATTR_PC_SYSTEM          19;
+       dcl-c  QP0L_ATTR_PC_ARCHIVE         20;
+       dcl-c  QP0L_ATTR_SYSTEM_ARCHIVE     21;
+       dcl-c  QP0L_ATTR_CODEPAGE           22;
+       dcl-c  QP0L_ATTR_FILE_FORMAT        23;
+       dcl-c  QP0L_ATTR_UDFS_DEFAULT_FORMAT 24;
+       dcl-c  QP0L_ATTR_JOURNAL_INFORMATION 25;
+       dcl-c  QP0L_ATTR_ALWCKPWRT          26;
+       dcl-c  QP0L_ATTR_CCSID              27;
+       dcl-c  QP0L_ATTR_SIGNED             28;
+       dcl-c  QP0L_ATTR_SYS_SIGNED         29;
+       dcl-c  QP0L_ATTR_MULT_SIGS          30;
+       dcl-c  QP0L_ATTR_DISK_STG_OPT       31;
+       dcl-c  QP0L_ATTR_MAIN_STG_OPT       32;
+       dcl-c  QP0L_ATTR_DIR_FORMAT         33;
+       dcl-c  QP0L_ATTR_AUDIT              34;
+       dcl-c  QP0L_ATTR_CRTOBJSCAN         35;
+       dcl-c  QP0L_ATTR_SCAN               36;
+       dcl-c  QP0L_ATTR_SCAN_INFO          37;
+       dcl-c  QP0L_ATTR_ALWSAV             38;
+       dcl-c  QP0L_ATTR_RSTDRNMUNL         39;
+       dcl-c  QP0L_ATTR_JOURNAL_EXTENDED_INFORMATION 40;
+       dcl-c  QP0L_ATTR_CRTOBJAUD          41;
+       dcl-c  QP0L_ATTR_SYSTEM_USE         42;
+       dcl-c  QP0L_ATTR_TEMPORARY          43;
+       dcl-c  QP0L_ATTR_UDFS_TEMPORARY     44;
+       dcl-c  QP0L_ATTR_UDFS_PREFERRED_STORAGE_UNIT 45;
+       dcl-c  QP0L_ATTR_INHERIT_ALWCKPWRT  46;
+       dcl-c  QP0L_ATTR_SYS_RESTRICTS_SAVE 47;
+       dcl-c  QP0L_ATTR_TEXT               48;
+       dcl-c  QP0L_ATTR_RESET_DATE        200;
+       dcl-c  QP0L_ATTR_SUID              300;
+       dcl-c  QP0L_ATTR_SGID              301;
+
+       dcl-c  QP0L_DONOT_FOLLOW_SYMLNK 0;
+       dcl-c  QP0L_FOLLOW_SYMLNK       1;
+
+       dcl-c  QP0L_NO                  0;
+       dcl-c  QP0L_YES                 1;
+
+       dcl-c  QP0L_SYS_NOT_STG_FREE    0;
+       dcl-c  QP0L_SYS_STG_FREE        1;
+
+       dcl-c  QP0L_NOT_CHECKED_OUT     0;
+       dcl-c  QP0L_CHECKED_OUT         1;
+
+
+       dcl-c  QP0L_PC_NOT_READONLY         0;
+       dcl-c  QP0L_PC_READONLY             1;
+
+       dcl-c  QP0L_PC_NOT_HIDDEN           0;
+       dcl-c  QP0L_PC_HIDDEN               1;
+
+       dcl-c  QP0L_PC_NOT_SYSTEM           0;
+       dcl-c  QP0L_PC_SYSTEM               1;
+
+       dcl-c  QP0L_PC_NOT_CHANGED          0;
+       dcl-c  QP0L_PC_CHANGED              1;
+
+       dcl-c  QP0L_SYSTEM_NOT_CHANGED      0;
+
+       dcl-c  QP0L_SYSTEM_CHANGED          1;
+
+       dcl-c  QP0L_FILE_FORMAT_TYPE1   0;
+
+       dcl-c  QP0L_FILE_FORMAT_TYPE2   1;
+
+       dcl-c  QP0L_UDFS_DEFAULT_TYPE1  0;
+       dcl-c  QP0L_UDFS_DEFAULT_TYPE2  1;
+
+       dcl-c  QP0L_NOT_ALWCKPWRT       0;
+
+       dcl-c  QP0L_ALWCKPWRT           1;
+
+       dcl-c  QP0L_NOT_SIGNED          0;
+
+       dcl-c  QP0L_SIGNED              1;
+       dcl-c  QP0L_SYSTEM_SIGNED_NO    0;
+       dcl-c  QP0L_SYSTEM_SIGNED_YES   1;
+
+       dcl-c  QP0L_MULT_SIGS_NO        0;
+       dcl-c  QP0L_MULT_SIGS_YES       1;
+
+       dcl-c  QP0L_DIR_FORMAT_TYPE1    0;
+       dcl-c  QP0L_DIR_FORMAT_TYPE2    1;
+
+       dcl-c  QP0L_STG_NORMAL          0;
+       dcl-c  QP0L_STG_MINIMIZE        1;
+       dcl-c  QP0L_STG_DYNAMIC         2;
+
+       dcl-c  QP0L_SUID_OFF            0;
+       dcl-c  QP0L_SUID_ON             1;
+
+       dcl-c  QP0L_SGID_OFF            0;
+       dcl-c  QP0L_SGID_ON             1;
+
+       dcl-c  QP0L_MLTTHDACN_SYSVAL 0;
+       dcl-c  QP0L_MLTTHDACN_NOMSG  1;
+       dcl-c  QP0L_MLTTHDACN_MSG    2;
+       dcl-c  QP0L_MLTTHDACN_NO     3;
+
+       dcl-c  QP0L_NOT_JOURNALED       0;
+       dcl-c  QP0L_JOURNALED           1;
+
+       dcl-c  QP0L_JOURNAL_SUBTREE           x'80';
+       dcl-c  QP0L_JOURNAL_BEFORE_IMAGES     x'40';
+       dcl-c  QP0L_JOURNAL_AFTER_IMAGES      x'20';
+       dcl-c  QP0L_JOURNAL_OPTIONAL_ENTRIES  x'08';
+
+       dcl-c  QP0L_APYJRNCHG_REQ_NO    x'00';
+       dcl-c  QP0L_APYJRNCHG_REQ_YES   x'01';
+       dcl-c  QP0L_ROLLBACK_END_NO     x'00';
+       dcl-c  QP0L_ROLLBACK_END_YES    x'01';
+
+       dcl-c  QP0L_SCANNING_NO         0;
+       dcl-c  QP0L_SCANNING_YES        1;
+       dcl-c  QP0L_SCANNING_CHGONLY    2;
+
+       dcl-c  QP0L_ALWSAV_NO           0;
+       dcl-c  QP0L_ALWSAV_YES          1;
+
+       dcl-c  QP0L_RSTDRNMUNL_OFF      0;
+       dcl-c  QP0L_RSTDRNMUNL_ON       1;
+
+       dcl-c  QP0L_AUD_ALL    '*ALL      ';
+       dcl-c  QP0L_AUD_CHANGE '*CHANGE   ';
+       dcl-c  QP0L_AUD_NONE   '*NONE     ';
+       dcl-c  QP0L_AUD_NOTAVL '*NOTAVL   ';
+       dcl-c  QP0L_AUD_SYSVAL '*SYSVAL   ';
+       dcl-c  QP0L_AUD_USRPRF '*USRPRF   ';
+
+       dcl-c  QP0L_SYSUSE_NONE         0;
+       dcl-c  QP0L_SYSUSE_VRTVOL       1;
+       dcl-c  QP0L_SYSUSE_NWSSTG       2;
+
+       dcl-c  QP0L_TEMPORARY_NO        0;
+       dcl-c  QP0L_TEMPORARY_YES       1;
+
+       dcl-c  QP0L_UDFS_TEMPORARY_NO   0;
+       dcl-c  QP0L_UDFS_TEMPORARY_YES  1;
+
+       dcl-c  QP0L_UDFS_PREFERRED_STORAGE_UNIT_ANY  0;
+       dcl-c  QP0L_UDFS_PREFERRED_STORAGE_UNIT_SSD  1;
+
+       dcl-c  QP0L_INHERIT_ALWCKPWRT_NO   0;
+       dcl-c  QP0L_INHERIT_ALWCKPWRT_YES  1;
+
+       dcl-c  QP0L_SYS_RESTRICTS_SAVE_NO  0;
+       dcl-c  QP0L_SYS_RESTRICTS_SAVE_YES 1;
+
+      //---------------------------------------------------------------*
+      // Qp0lRenameUnlink
+      //---------------------------------------------------------------*
+       dcl-pr Qp0lRenameUnlink int(10) extproc(*dclcase);
+         dest pointer value options(*string);
+         src  pointer value options(*string);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // Qp0lRenameKeep
+      //---------------------------------------------------------------*
+       dcl-pr Qp0lRenameKeep int(10) extproc(*dclcase);
+         dest pointer value options(*string);
+         src  pointer value options(*string);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // Qp0lGetPathFromFileID
+      //---------------------------------------------------------------*
+       dcl-pr Qp0lGetPathFromFileID pointer extproc(*dclcase);
+         path pointer value options(*string);
+         size  like(size_t) value;
+         Qp0lFID like(Qp0lFID_t) value;
+       end-pr;
+
+      //QBFC_EXTERN int Qp0lProcessSubtree(Qlg_Path_Name_T *,
+      //                            uns,
+      //                            Qp0l_Objtypes_List_t *,
+      //                            uns,
+      //                            Qp0l_IN_EXclusion_List_t *,
+      //                            uns,
+      //                            Qp0l_User_Function_t *,
+      //                            void *, ...);
+
+      //QBFC_EXTERN int QlgProcessSubtree(Qlg_Path_Name_T *,
+      //                            uns,
+      //                            Qp0l_Objtypes_List_t *,
+      //                            uns,
+      //                            Qp0l_IN_EXclusion_List_t *,
+      //                            uns,
+      //                            Qp0l_User_Function_t *,
+      //                            void *, ...);
+
+
+      //QBFC_EXTERN int Qp0lGetAttr(Qlg_Path_Name_T *,
+      //                              Qp0l_AttrTypes_List_t *,
+      //                              char *,
+      //                              uns,
+      //                              uns *,
+      //                              uns *,
+      //                              uns, ...);
+
+      //QBFC_EXTERN int QlgGetAttr(Qlg_Path_Name_T *,
+      //                              Qp0l_AttrTypes_List_t *,
+      //                              char *,
+      //                              uns,
+      //                              uns *,
+      //                              uns *,
+      //                              uns, ...);
+
+      //QBFC_EXTERN void Qp0lCvtPathToQSYSObjName(
+      //                              Qlg_Path_Name_T *,
+      //                              void *,
+      //                              char [8],
+      //                              uns,
+      //                              uns,
+      //                              void *);
+
+      //QBFC_EXTERN void QlgCvtPathToQSYSObjName(
+      //                              Qlg_Path_Name_T *,
+      //                              void *,
+      //                              char [8],
+      //                              uns,
+      //                              uns,
+      //                              void *);
+
+      //QBFC_EXTERN int Qp0lSaveStgFree(Qlg_Path_Name_T *,
+      //                                     Qp0l_StgFree_Function_t *,
+      //                                     void *);
+
+
+      //QBFC_EXTERN int QlgSaveStgFree(Qlg_Path_Name_T *,
+      //                                     Qp0l_StgFree_Function_t *,
+      //                                     void *);
+
+
+      //---------------------------------------------------------------*
+      // Qp0lSetAttr
+      //---------------------------------------------------------------*
+       dcl-pr Qp0lSetAttr int(10) extproc(*dclcase);
+         Qlg_Path_Name pointer value;
+         Atr pointer value;
+         size like(size_t) value;
+         opt  uns(10) value;
+       end-pr;
+
+      //---------------------------------------------------------------*
+      //  QlgSetAttr
+      //---------------------------------------------------------------*
+       dcl-pr  QlgSetAttr int(10) extproc(*dclcase);
+         Qlg_Path_Name pointer value;
+         Atr pointer value;
+         size like(size_t) value;
+         opt  uns(10) value;
+       end-pr;
+
+      //QBFC_EXTERN int Qp0lOpen(Qlg_Path_Name_T *,
+      //                              int, ...);
+
+      //QBFC_EXTERN int QlgOpen(Qlg_Path_Name_T *,
+      //                              int, ...);
+
+
+      //QBFC_EXTERN int Qp0lUnlink(Qlg_Path_Name_T *);
+
+      //QBFC_EXTERN int QlgUnlink(Qlg_Path_Name_T *);
+
+
+      //QBFC_EXTERN int QlgRenameKeep(const Qlg_Path_Name_T *,
+      //                               const Qlg_Path_Name_T *);
+      //QBFC_EXTERN int QlgRenameUnlink(const Qlg_Path_Name_T *,
+      //                                  const Qlg_Path_Name_T *);
+      //QBFC_EXTERN Qlg_Path_Name_T *QlgGetPathFromFileID(
+      //				  Qlg_Path_Name_T *,
+      //                                  size_t, Qp0lFID_t);
+
+      //QBFC_EXTERN int QlgChangeAuthority(
+      //                                   Qlg_Path_Name_T *,
+      //                                   unsigned int,
+      //                                   char *,
+      //                                   char *,
+      //                                   unsigned int,
+      //                                   char *,
+      //                                   char *,
+      //                                   unsigned int);

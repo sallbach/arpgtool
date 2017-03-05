@@ -1,0 +1,25 @@
+             INCLUDE    SRCMBR(B_INCLUDE)
+
+             CRTRPGMOD  MODULE(&LIBOBJ/ARSIFSR) +
+                          SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBG) +
+                          OPTIMIZE(&OPTIMIZE)
+             CRTRPGMOD  MODULE(&LIBOBJ/ARSIFS01) +
+                          SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBG) +
+                          OPTIMIZE(&OPTIMIZE)
+             CRTSRVPGM  SRVPGM(&LIBOBJ/ARSIFSR) +
+                          MODULE(&LIBOBJ/ARSIFSR &LIBOBJ/ARSIFS01) +
+                          SRCFILE(&LIBSRC/ARPG_LNK) TEXT('String +
+                          functions')
+
+/* Only build testcases if RPGUnit exists */
+             CHKOBJ     OBJ(RUTESTCASE) OBJTYPE(*SRVPGM)
+             MONMSG     MSGID(CPF9801) EXEC(GOTO CMDLBL(END))
+
+             CRTRPGMOD  MODULE(&LIBSRC/T_ARSIFSR) +
+                          SRCFILE(&LIBSRC/ARPG_TEST) DBGVIEW(*LIST)
+             CRTSRVPGM  SRVPGM(T_ARSIFSR) EXPORT(*ALL) +
+                          BNDSRVPGM((ARSIFSR) (RUTESTCASE))
+
+             CALL       PGM(QCMDEXC) PARM('RUCALLTST  TSTPGM(T_ARSIFSR)' 28)
+
+ END:        ENDPGM

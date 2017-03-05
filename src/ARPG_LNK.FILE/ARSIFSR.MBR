@@ -1,0 +1,18 @@
+             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSIFSR__')
+
+     /*-----------------------------------------------------------------------*/
+     /* SRVIFSR - IFS functions (wrapper for open/read/write/seek)            */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('IfsOpenFile')
+             EXPORT     SYMBOL('IfsCloseFile')
+             EXPORT     SYMBOL('IfsWriteFile')
+             EXPORT     SYMBOL('IfsReadFile')
+             EXPORT     SYMBOL('IfsReadLine')
+             EXPORT     SYMBOL('IfsLSeek')
+
+     /*-----------------------------------------------------------------------*/
+     /* SRVIFS01 - IFS helper functions                                       */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('IfsSetFileCcsid')
+
+             ENDPGMEXP
