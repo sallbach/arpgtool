@@ -4,9 +4,11 @@ write a xml-file
 
     XmlDocument(CCSID_UTF8);
     XmlPrettyPrint(*on);
+    XmlPi('xml-stylesheet type="text/xsl" href="test.xsl"');
     
     XmlNode('root');
       XmlNode('child1');
+        XmlComment('Comment before child11');
         XmlNode('child11':'data 11');
           XmlAttribute('atr1':'value 1');
           XmlAttributeNum('atr2':1.23);
@@ -24,8 +26,10 @@ write a xml-file
 
 Result 
 
-        <?xml version="1.0" encoding="UTF-8"?>
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <?xml-stylesheet type="text/xsl" href="test.xsl" ?>
         <root>
+          <!-- Comment before child11 -->
           <child1>
             <child11 atr1="value 1" atr2="1.23" atr3="value 3">data 11</child11>
             <child12>data 12</child12>
