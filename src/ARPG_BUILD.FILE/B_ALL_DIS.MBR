@@ -23,7 +23,7 @@
 
              CRTBNDCL   PGM(&LIBSRC/B_METADATA) +
                           SRCFILE(&LIBSRC/ARPG_BUILD)
-             CALL       PGM(&LIBSRC/B_METADATA)
+             CALL       PGM(&LIBSRC/B_METADATA) PARM(&LIBSRC)
              MONMSG     MSGID(CPF0000)
 
              CRTBNDCL   PGM(&LIBSRC/B_UNITTEST) +

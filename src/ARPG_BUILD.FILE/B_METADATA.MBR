@@ -18,5 +18,6 @@
              CHGPFM     FILE(&LIBSRC/&FILE) MBR(&MBR) SRCTYPE(&TYPE) +
                           TEXT(&TEXT)
              MONMSG     MSGID(CPF0000)
+             GOTO       CMDLBL(LOOP)  
 
  END:        ENDPGM

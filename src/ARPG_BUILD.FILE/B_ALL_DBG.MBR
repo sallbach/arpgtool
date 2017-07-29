@@ -22,14 +22,14 @@
                           VALUE(&LIBSRC))
 
              CRTBNDCL   PGM(&LIBSRC/B_METADATA) +
-                          SRCFILE(&LIBSRC/ARPG_BUILD)
-             CALL       PGM(&LIBSRC/B_METADATA)
+                          SRCFILE(&LIBSRC/ARPG_BUILD) DBGVIEW(*LIST)
+             CALL       PGM(&LIBSRC/B_METADATA) PARM(&LIBSRC)
              MONMSG     MSGID(CPF0000)
 
              CRTBNDCL   PGM(&LIBSRC/B_UNITTEST) +
-                          SRCFILE(&LIBSRC/ARPG_BUILD)
+                          SRCFILE(&LIBSRC/ARPG_BUILD) DBGVIEW(*LIST)
              CRTBNDCL   PGM(&LIBSRC/B_ALL_LST) +
-                          SRCFILE(&LIBSRC/ARPG_BUILD)
+                          SRCFILE(&LIBSRC/ARPG_BUILD) DBGVIEW(*LIST)
              CALL       PGM(B_ALL_LST) PARM(*DEBUG &LIBSRC &LIBOBJ *UNRSLVREF)
              CALL       PGM(B_ALL_LST) PARM(*DEBUG &LIBSRC &LIBOBJ *RSLVREF)
 
