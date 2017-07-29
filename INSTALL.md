@@ -17,6 +17,7 @@ Create the physical source files on your IBM i.
     CRTSRCPF FILE(YOURLIB/ARPG_RPGLE) RCDLEN(112) TEXT('aRPGtool - Program sources')
     CRTSRCPF FILE(YOURLIB/ARPG_TEST)  RCDLEN(112) TEXT('aRPGtool - RPGUnit test cases')
     CRTSRCPF FILE(YOURLIB/ARPG_UIM)   RCDLEN(92)  TEXT('aRPGtool - Command help')
+    CRTPF    FILE(YOURLIB/ARPG_META)  RCDLEN(80)  TEXT('aRPGtool - Meta data')
 
 Upload the source code
 

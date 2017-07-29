@@ -33,4 +33,12 @@
              EXPORT     SYMBOL('XmlDate')
              EXPORT     SYMBOL('XmlDateTime')
 
+     /*-----------------------------------------------------------------------*/
+     /* SRVXMLxx - New helper functions                                       */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('XmlHeader')
+             EXPORT     SYMBOL('XmlPi')
+             EXPORT     SYMBOL('XmlComment')
+             EXPORT     SYMBOL('XmlNamespace')
+
              ENDPGMEXP

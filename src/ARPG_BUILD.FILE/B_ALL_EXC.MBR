@@ -1,11 +1,12 @@
 /*----------------------------------------------------------------------------*/
 /* Build all objects in the list                                              */
 /*----------------------------------------------------------------------------*/
-             PGM        PARM(&TYPE &LIBSRC &LIBOBJ)
+             PGM        PARM(&TYPE &LIBSRC &LIBOBJ &RSLVREF)
 
              DCL        VAR(&TYPE)   TYPE(*CHAR) LEN(10)
              DCL        VAR(&LIBSRC) TYPE(*CHAR) LEN(10)
              DCL        VAR(&LIBOBJ) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&RSLVREF) TYPE(*CHAR) LEN(10)
 
              DCLF       FILE(QAFDMBRL)
 
@@ -13,11 +14,12 @@
              MONMSG     MSGID(CPF0864) EXEC(GOTO CMDLBL(END))
 
              IF         COND(%SST(&MLNAME 1 5) = 'B_ALL' *OR &MLNAME +
-                          = 'B_INCLUDE' *OR &MLNAME = 'B_METADATA') +
-                          THEN(GOTO CMDLBL(LOOP))
+                          = 'B_INCLUDE' *OR &MLNAME = 'B_CRT_META' +
+                          *OR &MLNAME = 'B_METADATA' *OR &MLNAME = +
+                          'B_UNITTEST') THEN(GOTO CMDLBL(LOOP))
 
              CRTBNDCL   PGM(&MLLIB/&MLNAME) SRCFILE(&MLLIB/&MLFILE)
-             CALL       PGM(&MLLIB/&MLNAME) PARM(&TYPE &LIBSRC &LIBOBJ)
+             CALL       PGM(&MLLIB/&MLNAME) PARM(&TYPE &LIBSRC &LIBOBJ &RSLVREF)
 
              GOTO       CMDLBL(LOOP)
 

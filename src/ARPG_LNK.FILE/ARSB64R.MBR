@@ -1,4 +1,4 @@
-             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSJSON__')
+             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSB64R__')
 
      /*-----------------------------------------------------------------------*/
      /* SRVB64R - Base64                                                      */

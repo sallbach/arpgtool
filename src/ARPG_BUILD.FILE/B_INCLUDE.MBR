@@ -1,4 +1,4 @@
-             PGM        PARM(&TYPE1 &LIBSRC1 &LIBOBJ1)
+             PGM        PARM(&TYPE1 &LIBSRC1 &LIBOBJ1 &RSLVREFP)
 
              DCL        VAR(&TYPE1) TYPE(*CHAR) LEN(10)
              DCL        VAR(&LIBSRC1) TYPE(*CHAR) LEN(10)
@@ -13,6 +13,9 @@
              DCL        VAR(&DEFINE) TYPE(*CHAR) LEN(10) VALUE(*NONE)
              DCL        VAR(&COMPILEOPT) TYPE(*CHAR) LEN(10) +
                           VALUE(*NONE)
+             DCL        VAR(&RSLVREFP) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&RSLVREF) TYPE(*CHAR) LEN(10) +
+                          VALUE(*RSLVREF)
 
              CHGVAR     VAR(&TYPE) VALUE(&TYPE1)
              MONMSG     MSGID(CPF0000) EXEC(CHGVAR VAR(&TYPE) +
@@ -25,6 +28,10 @@
              CHGVAR     VAR(&LIBOBJ) VALUE(&LIBOBJ1)
              MONMSG     MSGID(CPF0000) EXEC(CHGVAR VAR(&LIBOBJ) +
                           VALUE(*CURLIB))
+
+             CHGVAR     VAR(&RSLVREF) VALUE(&RSLVREFP)
+             MONMSG     MSGID(CPF0000) EXEC(CHGVAR VAR(&RSLVREF) +
+                          VALUE(*RSLVREF))
 
 /* Still under development ? */
              IF         COND(&TYPE = '*DEBUG') THEN(DO)

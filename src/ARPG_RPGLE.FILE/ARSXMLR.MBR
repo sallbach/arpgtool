@@ -24,6 +24,8 @@
          inCcsid  int(10)       inz(CCSID_JOB);
          ptAttrs  pointer       inz(*Null); // Addr(dim(inAttrs))
          inAttrs  int(10)       inz(0);
+         ptComms  pointer       inz(*Null); // Addr(dim(inComms))
+         inComms  int(10)       inz(0);
          ptNodes  pointer       inz(*Null); // Addr(dim(inNodes))
          inNodes  int(10)       inz(0);
          ptParent pointer       inz(*Null);
@@ -33,6 +35,12 @@
        dcl-ds DsAttr_t qualified align; // no template to use it for *inz
          ptName  pointer       inz(*Null);
          inName  like(size_t)  inz(0);
+         ptData  pointer       inz(*Null);
+         inData  like(size_t)  inz(0);
+         inCcsid int(10)       inz(CCSID_JOB);
+       end-ds;
+
+       dcl-ds DsComment_t qualified align; // no template to use it for *inz
          ptData  pointer       inz(*Null);
          inData  like(size_t)  inz(0);
          inCcsid int(10)       inz(CCSID_JOB);
@@ -63,7 +71,8 @@
            gArQRplAsLen    zoned(1) dim(5) overlay(gArQRplAsLenInit);
        end-ds;
 
-       dcl-s gBoPretty ind inz(*off);
+       dcl-s gBoHeader ind inz(DFT_HEADER);
+       dcl-s gBoPretty ind inz(DFT_PRETTY);
        dcl-s gInCcsid int(10);
 
        dcl-s  gPtCurNode pointer;
@@ -82,6 +91,14 @@
        dcl-s gBoTeraspace  ind inz(*off);
        dcl-s gBoNullOnNull ind inz(*off);
 
+       dcl-s gPtPi pointer inz(*null);
+       dcl-s gInPi int(10) inz(0);
+       dcl-ds DsPi_t qualified align; // no template to use it for *inz
+         ptData  pointer       inz(*Null);
+         inData  like(size_t)  inz(0);
+         inCcsid int(10)       inz(CCSID_JOB);
+       end-ds;
+
       //---------------------------------------------------------------*
       // constants
       //---------------------------------------------------------------*
@@ -91,10 +108,17 @@
        dcl-c ELEM_EMPTY   ' />';
        dcl-c ATTR_STR     '="';
        dcl-c ATTR_END     '"';
+       dcl-c PI_STR       '<?';
+       dcl-c PI_END       ' ?>';
+       dcl-c COMMENT_STR  '<!-- ';
+       dcl-c COMMENT_END  ' -->';
        dcl-c PRETTY_TAB   '  ';
        dcl-c PRETTY_NL   x'25';
 
        dcl-c START_HEAP  1048576; // 1M
+
+       dcl-c DFT_HEADER  *on;
+       dcl-c DFT_PRETTY  *off;
 
       //---------------------------------------------------------------*
       //  XmlDocument
@@ -125,9 +149,13 @@
 
          gPtCurNode = %addr(gDsXmlDoc);
          gPtAtrNode = *Null;
+         gPtPi      = *Null;
 
          // Create new heap
          CeeCreateHeap(gInHeap:START_HEAP:*Omit:0:*Omit);
+
+         gBoPretty = DFT_PRETTY;
+         gBoHeader = DFT_HEADER;
 
          return 0;
 
@@ -149,6 +177,23 @@
          gBoPretty = pBoPretty;
 
        end-proc XmlPrettyPrint;
+      //---------------------------------------------------------------*
+      // XmlHeader
+      //---------------------------------------------------------------*
+      //* Print XML-Header.
+      //*
+      //* @param pBoHeader - Print header on/off (on-Default).
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc XmlHeader export;
+         dcl-pi *N;
+           pBoHeader ind const;
+         end-pi;
+
+         gBoHeader = pBoHeader;
+
+       end-proc XmlHeader;
       //---------------------------------------------------------------*
       // XmlSetNullOnNull
       //---------------------------------------------------------------*
@@ -407,12 +452,12 @@
                          :gInCcsid);
          endif;
 
-           return XmlNode(pPtName
-                         :B64StringEncode(pPtData
-                                         :strlen(pPtData)
-                                         :isAsciiCcsid(gInCcsid) = 1)
-                         :*off
-                         :gInCcsid);
+         return XmlNode(pPtName
+                       :B64StringEncode(pPtData
+                                       :strlen(pPtData)
+                                       :isAsciiCcsid(gInCcsid) = 1)
+                       :*off
+                       :gInCcsid);
 
        end-proc XmlNodeB64;
       //---------------------------------------------------------------*
@@ -520,7 +565,7 @@
       //* Add an attribute element to the current node.
       //*
       //* @param pPtName - Attribut name.
-      //* @param pPtData - Attribut data (optional).
+      //* @param pPtData - Attribut data.
       //* @param pBoNull - Null indicator (optional).
       //* @param pInCcsid - Ccsid of the given data
       //*                   (optional, default @const CCSID_JOB).
@@ -708,6 +753,158 @@
 
        end-proc XmlAttributeDateTime;
       //---------------------------------------------------------------*
+      // XmlNamespace
+      //---------------------------------------------------------------*
+      //* Add a namespace to the current node.
+      //*
+      //* @param pPtName - Namespace name (@const API_DEFAULT)
+      //* @param pPtData - Namespace data.
+      //* @param pInCcsid - Ccsid of the given data
+      //*                   (optional, default @const CCSID_JOB).
+      //*
+      //* @return 0 - success, else -1.
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc XmlNamespace export;
+         dcl-pi *N int(10);
+           pPtName pointer const options(*string);
+           pPtData pointer const options(*string);
+           pInCcsid int(10) const options(*nopass);
+         end-pi;
+
+         dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
+
+         if pPtName = *Null Or strlen(pPtName) = 0;
+           return -1;
+         endif;
+
+         if %parms() >= %parmnum(pInCcsid);
+           pInCcsid_ = pInCcsid;
+         endif;
+
+         if %str(pPtName) = API_DEFAULT;
+           return XmlAttribute('xmlns':pPtData:*off:pInCcsid_);
+         endif;
+
+         return XmlAttribute('xmlns:' + %str(pPtName):pPtData:*off:pInCcsid_);
+
+       end-proc XmlNamespace;
+      //---------------------------------------------------------------*
+      // XmlPi
+      //---------------------------------------------------------------*
+      //* Add a processing instruction.
+      //*
+      //* @param pPtData - Processing instruction.
+      //* @param pInCcsid - Ccsid of the given data
+      //*                   (optional, default @const CCSID_JOB).
+      //*
+      //* @return 0 - success, else -1.
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc XmlPi export;
+         dcl-pi *N int(10);
+           pPtData pointer const options(*string);
+           pInCcsid int(10) const options(*nopass);
+         end-pi;
+
+         dcl-s  pPtPi pointer;
+         dcl-ds pDsPi likeds(DsPi_t) based(pPtPi);
+         dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
+
+         if pPtData = *Null Or strlen(pPtData) = 0;
+           return -1;
+         endif;
+
+         if %parms() >= %parmnum(pInCcsid);
+           pInCcsid_ = pInCcsid;
+         endif;
+
+         // new process instruction
+         if gPtPi = *Null;
+           CeeGetHeap(gInHeap:%size(DsPi_t):gPtPi:*Omit);
+           gInPi = 1;
+         else;
+           gInPi += 1;
+           gPtPi = %realloc(gPtPi:%size(DsPi_t) * gInPi);
+         endif;
+
+         pPtPi = gPtPi + %size(DsPi_t) * (gInPi - 1);
+
+         pDsPi.inData = strlen(pPtData);
+         pDsPi.InCcsid = pInCcsid_;
+         CeeGetHeap(gInHeap:pDsPi.inData:pDsPi.ptData:*Omit);
+         memcpy(pDsPi.ptData:pPtData:pDsPi.inData);
+
+         return 0;
+
+       end-proc XmlPi;
+      //---------------------------------------------------------------*
+      // XmlComment
+      //---------------------------------------------------------------*
+      //* Add a comment.
+      //*
+      //* @param pPtData - Comment.
+      //* @param pInCcsid - Ccsid of the given data
+      //*                   (optional, default @const CCSID_JOB).
+      //*
+      //* @return 0 - success, else -1.
+      //*
+      //* @diag messageCode to be defined
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc XmlComment export;
+         dcl-pi *N int(10);
+           pPtData pointer const options(*string);
+           pInCcsid int(10) const options(*nopass);
+         end-pi;
+
+         dcl-s  pPtComm pointer;
+         dcl-ds pDsComm likeds(DsComment_t) based(pPtComm);
+         dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
+
+         if gPtAtrNode = *Null;
+           return -1;
+         endif;
+
+         if pPtData = *Null and strlen(pPtData) = 0;
+           return 0;
+         endif;
+
+         if %parms() >= %parmnum(pInCcsid);
+           pInCcsid_ = pInCcsid;
+         endif;
+
+         // new comment
+         CeeGetHeap(gInHeap:%size(DsComment_t):pPtComm:*Omit);
+         pDsComm = DsComment_t; // inz(*likeds)
+
+         pDsComm.inData = strlen(pPtData);
+         pDsComm.ptData = XmlQuote(pPtData:pDsComm.inData:pInCcsid_);
+         pDsComm.InCcsid = pInCcsid_;
+
+         gDsAtrNode.inComms += 1;
+         if gDsAtrNode.ptComms = *Null;
+           CeeGetHeap(gInHeap:%size(pPtComm):gDsAtrNode.ptComms:*Omit);
+         else;
+           gDsAtrNode.ptComms = %realloc(gDsAtrNode.ptComms
+                                        :%size(pPtComm) * gDsAtrNode.inComms);
+         endif;
+         memcpy(gDsAtrNode.ptComms
+                + %size(pPtComm) * (gDsAtrNode.inComms-1)
+               :%Addr(pPtComm)
+               :%size(pPtComm));
+
+         return 0;
+
+       end-proc XmlComment;
+      //---------------------------------------------------------------*
       // XmlToString
       //---------------------------------------------------------------*
       //* Returns the XML document (max 16MB).
@@ -856,15 +1053,48 @@
          dcl-s pPtAttr pointer based(pPtAttrs);
          dcl-ds pDsAttr likeds(DsAttr_t) based(pPtAttr);
 
+         dcl-s pPtComms pointer;
+         dcl-s pPtComm pointer based(pPtComms);
+         dcl-ds pDsComm likeds(DsComment_t) based(pPtComm);
+
+         dcl-s  pPtPi pointer;
+         dcl-ds pDsPi likeds(DsPi_t) based(pPtPi);
+
          dcl-s i int(10);
          dcl-s pAnHead varchar(100);
 
-         if pInLevel = -1;
+         if pInLevel = -1 and gBoHeader;
            pAnHead = '<?xml version="1.0" encoding="'
                    + XmlCcsidToIana(gInCcsid)
-                   + '"?>';
+                   + '" ?>';
            XmlWriter(pAnHead:%len(pAnHead));
          endif;
+
+         if pInLevel = -1 and gPtPi <> *Null;
+           for i=0 by 1 to (gInPi - 1);
+             pPtPi = gPtPi + %size(DsPi_t) * i;
+             if gBoPretty And (i > 0 Or gBoHeader);
+               XmlWriter(PRETTY_NL:%size(PRETTY_NL));
+             endif;
+             XmlWriter(PI_STR:%size(PI_STR));
+             XmlWriter(pDsPi.PtData:pDsPi.InData:pDsPi.InCcsid);
+             XmlWriter(PI_END:%size(PI_END));
+           endfor;
+         endif;
+
+         // write all comments
+         for i=0 by 1 to pDsNode.inComms-1;
+           pPtComms = pDsNode.ptComms + %size(pPtComms) * i;
+           if gBoPretty And (pInLevel > 0 Or gBoHeader Or gPtPi <> *Null);
+             XmlWriter(PRETTY_NL:%size(PRETTY_NL));
+             for i=1 by 1 to pInLevel;
+               XmlWriter(PRETTY_TAB:%size(PRETTY_TAB));
+             endfor;
+           endif;
+           XmlWriter(COMMENT_STR:%size(COMMENT_STR));
+           XmlWriter(pDsComm.ptData:pDsComm.inData:pDsComm.inCcsid);
+           XmlWriter(COMMENT_END:%size(COMMENT_END));
+         endfor;
 
          // write node name
          if pDsNode.ptName <> *Null;

@@ -32,7 +32,6 @@
 
        dcl-s pPtString pointer;
 
-         XmlPrettyPrint(*off);
          XmlDocument(37);
          XmlNode('root');
            XmlNode('child1');
@@ -64,7 +63,7 @@
          XmlNodeEnd();
          pPtString = XmlToString();
 
-         aEqual('<?xml version="1.0" encoding="IBM037"?>'
+         aEqual('<?xml version="1.0" encoding="IBM037" ?>'
                + '<root>'
                  + '<child1>'
                    + '<child1.2>data 1.2</child1.2>'
@@ -91,8 +90,8 @@
 
        dcl-s pPtString pointer;
 
-         XmlPrettyPrint(*on);
          XmlDocument(37);
+         XmlPrettyPrint(*on);
          XmlNode('root');
            XmlNode('child1');
              XmlNode('child1.1':'data 1.1');
@@ -109,7 +108,7 @@
          XmlNodeEnd();
          pPtString = XmlToString();
 
-         aEqual('<?xml version="1.0" encoding="IBM037"?>' + LF
+         aEqual('<?xml version="1.0" encoding="IBM037" ?>' + LF
                + '<root>' + LF
                  + '  <child1>' + LF
                    + '    <child1.1 '
@@ -161,11 +160,14 @@
            child4 likeds(subb);
          end-ds;
 
-         XmlPrettyPrint(*on);
          XmlDocument(CCSID_UTF8);
+         XmlPrettyPrint(*on);
+         XmlPi('xml-stylesheet type="text/xsl" href="test.xsl"');
          XmlNode('root');
+           XmlComment('Comment before root');
            XmlNode('child1');
              XmlNode('child11':'data 1.1');
+             XmlComment('Comment before child11');
                XmlAttribute('atr1':'value 1xxx');
                XmlAttributeNum('atr2':1.23);
                XmlAttribute('atr3':'value 3xxx');
@@ -192,9 +194,12 @@
          //%len(pAnString) = len;
          IfsCloseFile(pInFile);
 
-         aEqual('<?xml version="1.0" encoding="UTF-8"?>' + LF
+         aEqual('<?xml version="1.0" encoding="UTF-8" ?>' + LF
+               +'<?xml-stylesheet type="text/xsl" href="test.xsl" ?>' + LF
+               + '<!-- Comment before root -->' + LF
                + '<root>' + LF
                  + '  <child1>' + LF
+                   + '    <!-- Comment before child11 -->' + LF
                    + '    <child11 '
                             + 'atr1="value 1xxx" '
                             + 'atr2="1.23" '
@@ -229,6 +234,111 @@
         unlink('/tmp/t_arsxmlr_unit_test.xml');
 
        end-proc test_Xml_File;
+      //---------------------------------------------------------------*
+      // XmlComment
+      //---------------------------------------------------------------*
+       dcl-proc test_Xml_Comment export;
+
+       dcl-s pPtString pointer;
+
+         XmlDocument(37);
+         XmlHeader(*off);
+         XmlPrettyPrint(*on);
+         XmlNode('root');
+           XmlComment('Comment before root');
+           XmlNode('child1');
+             XmlNode('child1.1':'data 1.1');
+             XmlComment('Comment before child1.1');
+               XmlAttribute('atr1':'value 1xxx');
+               XmlAttributeNum('atr2':1.23);
+               XmlAttribute('atr3':'value 3xxx');
+             XmlNode('child1.2':'data 1.2');
+           XmlNodeEnd();
+           XmlNode('child2':'data 2&3');
+           XmlNodeNum('child3':22.333);
+           XmlNode('child4':'');
+             XmlAttribute('atr1':'value "1xxx"');
+             XmlAttribute('atr2':'value 2xxx');
+         XmlNodeEnd();
+         pPtString = XmlToString();
+
+         aEqual('<!-- Comment before root -->' + LF
+               + '<root>' + LF
+                 + '  <child1>' + LF
+                   + '    <!-- Comment before child1.1 -->' + LF
+                   + '    <child1.1 '
+                            + 'atr1="value 1xxx" '
+                            + 'atr2="1.23" '
+                            + 'atr3="value 3xxx"'
+                   + '>data 1.1</child1.1>' + LF
+                   + '    <child1.2>data 1.2</child1.2>' + LF
+                 + '  </child1>' + LF
+                 + '  <child2>data 2&amp;3</child2>' + LF
+                 + '  <child3>22.333</child3>' + LF
+                 + '  <child4 '
+                         + 'atr1="value &quot;1xxx&quot;" '
+                         + 'atr2="value 2xxx"'
+                     + ' />' + LF
+                 +'</root>'
+               :%str(pPtString));
+
+         dealloc pPtString;
+
+       end-proc test_Xml_Comment;
+      //---------------------------------------------------------------*
+      // XmlNameSpace
+      //---------------------------------------------------------------*
+       dcl-proc test_Xml_Namespace export;
+
+       dcl-s pPtString pointer;
+
+         XmlDocument(37);
+         XmlPrettyPrint(*on);
+         XmlNode('root');
+           XmlNamespace(API_DEFAULT:'http://default.test');
+           XmlNamespace('a':'http://ns1.test');
+           XmlNamespace('b':'http://ns2.test');
+           XmlNode('a:child1');
+             XmlNode('a:child1.1':'data 1.1');
+               XmlAttribute('atr1':'value 1xxx');
+               XmlAttributeNum('atr2':1.23);
+               XmlAttribute('atr3':'value 3xxx');
+             XmlNode('a:child1.2':'data 1.2');
+           XmlNodeEnd();
+           XmlNode('b:child2':'data 2&3');
+           XmlNodeNum('child3':22.333);
+           XmlNode('child4':'');
+             XmlAttribute('atr1':'value "1xxx"');
+             XmlAttribute('atr2':'value 2xxx');
+         XmlNodeEnd();
+         pPtString = XmlToString();
+
+         aEqual('<?xml version="1.0" encoding="IBM037" ?>' + LF
+               + '<root '
+                   + 'xmlns="http://default.test" '
+                   + 'xmlns:a="http://ns1.test" '
+                   + 'xmlns:b="http://ns2.test"'
+               + '>' + LF
+                 + '  <a:child1>' + LF
+                   + '    <a:child1.1 '
+                            + 'atr1="value 1xxx" '
+                            + 'atr2="1.23" '
+                            + 'atr3="value 3xxx"'
+                   + '>data 1.1</a:child1.1>' + LF
+                   + '    <a:child1.2>data 1.2</a:child1.2>' + LF
+                 + '  </a:child1>' + LF
+                 + '  <b:child2>data 2&amp;3</b:child2>' + LF
+                 + '  <child3>22.333</child3>' + LF
+                 + '  <child4 '
+                         + 'atr1="value &quot;1xxx&quot;" '
+                         + 'atr2="value 2xxx"'
+                     + ' />' + LF
+                 +'</root>'
+               :%str(pPtString));
+
+         dealloc pPtString;
+
+       end-proc test_Xml_Namespace;
       //---------------------------------------------------------------*
       // iana to ccsid
       //---------------------------------------------------------------*

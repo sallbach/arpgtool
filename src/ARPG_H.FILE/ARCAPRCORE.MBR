@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_APRCORE__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_APRCORE__)
 
       /DEFINE AR_APRCORE__
       /INCLUDE ARPG_H,ARCTYPES
@@ -78,3 +76,4 @@
          plain_dst pointer value;
          coded_src pointer value;
        end-pr;
+      /ENDIF

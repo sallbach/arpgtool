@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_QPGMI__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_QPGMI__)
 
       /DEFINE AR_QPGMI__
       /INCLUDE ARPG_H,ARCQUSEC
@@ -49,3 +47,4 @@
         SMod char(20) const;
         USec char(65535) options(*varsize) noopt;
        end-pr;
+      /ENDIF

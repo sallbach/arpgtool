@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_STDLIB__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_STDLIB__)
 
       /DEFINE AR_STDLIB__
       /INCLUDE ARPG_H,ARCTYPES
@@ -59,3 +57,4 @@
        dcl-pr C_TS_free extproc('_C_TS_free');
          ptr pointer value;
        end-pr;
+      /ENDIF

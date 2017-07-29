@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_XMLR__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_XMLR__)
 
       /DEFINE AR_XMLR__
       /INCLUDE ARPG_H,ARCTYPES
@@ -17,6 +15,38 @@
       //---------------------------------------------------------------*
        dcl-pr XmlPrettyPrint extproc(*dclcase);
          pBoPretty ind const;
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlHeader
+      //---------------------------------------------------------------*
+       dcl-pr XmlHeader extproc(*dclcase);
+         pBoHeader ind const;
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlPi
+      //---------------------------------------------------------------*
+       dcl-pr XmlPi int(10) extproc(*dclcase);
+         pPtData pointer const options(*String);
+         pInCcsid int(10) const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlComment
+      //---------------------------------------------------------------*
+       dcl-pr XmlComment int(10) extproc(*dclcase);
+         pPtData pointer const options(*String);
+         pInCcsid int(10) const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // XmlNamespace
+      //---------------------------------------------------------------*
+       dcl-pr XmlNamespace int(10) extproc(*dclcase);
+         pPtName  pointer const options(*string);
+         pPtData pointer const options(*String);
+         pInCcsid int(10) const options(*nopass);
        end-pr;
 
       //---------------------------------------------------------------*
@@ -213,3 +243,4 @@
        dcl-pr XmlDateTime varchar(30) extproc(*dclcase);
          pTsTime timestamp const;
        end-pr;
+      /ENDIF

@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_STRR__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_STRR__)
 
       /DEFINE AR_STRR__
       /INCLUDE ARPG_H,ARCTYPES
@@ -15,3 +13,4 @@
          pUiOutLen like(size_t) options(*omit:*nopass);
          pUiLen    like(size_t) value options(*nopass);
        end-pr;
+      /ENDIF

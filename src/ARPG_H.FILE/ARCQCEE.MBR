@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_QCEE__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_QCEE__)
 
       /DEFINE AR_QCEE__
 
@@ -104,3 +102,4 @@
          HeapId   int(10)  const;
          Feedback char(12) options(*Omit);
        end-pr;
+      /ENDIF

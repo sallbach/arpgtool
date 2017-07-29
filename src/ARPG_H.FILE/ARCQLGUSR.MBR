@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_QLGUSR__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_QLGUSR__)
 
       /DEFINE AR_QLGUSR__
 
@@ -16,3 +14,4 @@
          pInOuDesSize int(10) value;
          pInJobCcsid  int(10) value;
        end-pr;
+      /ENDIF

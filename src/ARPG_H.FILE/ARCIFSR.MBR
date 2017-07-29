@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_IFSR__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_IFSR__)
 
       /DEFINE AR_IFSR__
       /INCLUDE ARPG_H,ARCFCNTL
@@ -66,4 +64,4 @@
          file  pointer const options(*string);
          ccsid int(10) const options(*nopass);
        end-pr;
-
+      /ENDIF

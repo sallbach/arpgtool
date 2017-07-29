@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_QUSEC__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_QUSEC__)
 
       /DEFINE AR_QUSEC__
 
@@ -22,3 +20,4 @@
          Excp char(7);
          Resv char(1);
        end-ds;
+      /ENDIF

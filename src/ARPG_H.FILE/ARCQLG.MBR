@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_QLG__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_QLG__)
 
       /DEFINE AR_QLG__
 
@@ -54,4 +52,4 @@
        dcl-c QLG_CURRENT_JOB_CCSID       0;         // current job CCSID
        dcl-c QLG_CURRENT_JOB_REGION      x'0000';   // Job Country/Region
        dcl-c QLG_CURRENT_JOB_LANGUAGE    x'000000'; // Job Country/Region
-
+      /ENDIF

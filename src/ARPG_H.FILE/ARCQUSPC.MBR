@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_QUSPC__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_QUSPC__)
 
       /DEFINE AR_QUSPC__
       /INCLUDE ARPG_H,ARCQUSEC
@@ -90,3 +88,4 @@
         UsrSpc char(20) const;
         USec char(65535) options(*varsize) noopt;
        end-pr ;
+      /ENDIF

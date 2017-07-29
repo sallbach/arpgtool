@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_QP0LSTDI__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_QP0LSTDI__)
 
       /DEFINE AR_QP0LSTDI__
 
@@ -487,3 +485,4 @@
       //                                   char *,
       //                                   char *,
       //                                   unsigned int);
+      /ENDIF
