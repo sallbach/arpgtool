@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_B64R__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_B64R__)
 
       /DEFINE AR_B64R__
       /INCLUDE ARPG_H,ARCAPRCORE
@@ -64,3 +62,4 @@
          input   pointer value options(*string);
          Ascii   ind     const options(*nopass);
        end-pr;
+      /ENDIF

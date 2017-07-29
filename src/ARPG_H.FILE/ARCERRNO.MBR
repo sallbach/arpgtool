@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_ERRNO__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_ERRNO__)
 
       /DEFINE AR_ERRNO__
 
@@ -282,3 +280,4 @@
        dcl-c ENOENT          3025;
       //* operation not permitted
        dcl-c EPERM           3027;
+      /ENDIF

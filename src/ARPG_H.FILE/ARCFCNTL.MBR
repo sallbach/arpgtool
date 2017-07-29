@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_FCNTL__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_FCNTL__)
 
       /DEFINE AR_FCNTL__
       /INCLUDE ARPG_H,ARCUNISTD
@@ -129,3 +127,4 @@
        dcl-pr close_ int(10) extproc('close');
          hdl  int(10) value;
        end-pr;
+      /ENDIF

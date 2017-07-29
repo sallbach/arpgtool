@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_TYPES__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_TYPES__)
 
       /DEFINE AR_TYPES__
 
@@ -153,3 +151,4 @@
       //  AS/400 Object Type used in the stat structure.
       //--------------------------------------------------------------------
        dcl-s qp0l_objtype_t char(11) template; // AS/400 Object Type
+      /ENDIF

@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_UNISTD__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_UNISTD__)
 
       /DEFINE AR_UNISTD__
       /INCLUDE ARPG_H,ARCTYPES
@@ -69,3 +67,4 @@
        dcl-pr unlink int(10) extproc(*dclcase);
          path pointer value options(*string);
        end-pr;
+      /ENDIF

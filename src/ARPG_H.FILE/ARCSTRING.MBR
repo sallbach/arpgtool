@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_STRING__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_STRING__)
 
       /DEFINE AR_STRING__
       /INCLUDE ARPG_H,ARCTYPES
@@ -135,3 +133,4 @@
        dcl-pr atof float(8) extproc(*dclcase);
          atr pointer value options(*string);
        end-pr;
+      /ENDIF

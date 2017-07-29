@@ -1,0 +1,65 @@
+ARPG_BUILDB_ALL_DBG CLLE      Build all - target debug         (Compile with 14)
+ARPG_BUILDB_ALL_DIS CLLE      Build all - target distribution  (Compile with 14)
+ARPG_BUILDB_ALL_EXC CLLE      Build all - build
+ARPG_BUILDB_ALL_LST CLLE      Build all - build list
+ARPG_BUILDB_ARSARRR CLLE      Build ARSARRR
+ARPG_BUILDB_ARSB64R CLLE      Build ARSB64R
+ARPG_BUILDB_ARSIFSR CLLE      Build ARSIFSR
+ARPG_BUILDB_ARSSTRR CLLE      Build ARSSTRR
+ARPG_BUILDB_ARSXMLR CLLE      Build ARSXMLR
+ARPG_BUILDB_CRT_METACLLE      Build meta file
+ARPG_BUILDB_INCLUDE CLLE      Build include
+ARPG_BUILDB_METADATACLLE      Build meta data
+ARPG_BUILDB_PGMDOC  CLLE      Build PGMDOC
+ARPG_BUILDB_UNITTESTCLLE      Build Unittest
+ARPG_CLLE ARCRTPGMDCCLLE      CrtPgmDoc - Create (Srv-)Pgm documentation
+ARPG_CLLE ARUPDPGMDCCLLE      UpdPgmDoc - Update (Srv-)Pgm documentation
+ARPG_CMD  ARCRTPGMD CMD       CrtPgmDoc - Create (Srv-)Pgm documentation
+ARPG_CMD  ARUPDPGMD CMD       UpdPgmDoc - Update (Srv-)Pgm documentation
+ARPG_H    ARCALLCTL RPGLE     controle header for all
+ARPG_H    ARCAPRCORERPGLE     APR Utility Functions
+ARPG_H    ARCARRR   RPGLE     OO and storage prototypes
+ARPG_H    ARCB64R   RPGLE     Base64 prototypes
+ARPG_H    ARCERRNO  RPGLE     c_errno
+ARPG_H    ARCFCNTL  RPGLE     c_fcntl
+ARPG_H    ARCICONV  RPGLE     c_iconv
+ARPG_H    ARCIFSR   RPGLE     ifs prototypes
+ARPG_H    ARCQCEE   RPGLE     QCEE
+ARPG_H    ARCQLG    RPGLE     QLG
+ARPG_H    ARCQLGUSR RPGLE     QLGUSR
+ARPG_H    ARCQMH    RPGLE     QMH - Message Handling
+ARPG_H    ARCQPGMI  RPGLE     Srv-/Pgm information
+ARPG_H    ARCQP0LSTDRPGLE     ARCQP0LSTDI
+ARPG_H    ARCQUSEC  RPGLE     qusec
+ARPG_H    ARCQUSPC  RPGLE     qusrspc
+ARPG_H    ARCSTDLIB RPGLE     c_stdlib
+ARPG_H    ARCSTRING RPGLE     c_string
+ARPG_H    ARCSTRR   RPGLE     string prototypes
+ARPG_H    ARCSYSR   RPGLE     system prototypes
+ARPG_H    ARCTYPES  RPGLE     c_types
+ARPG_H    ARCUNISTD RPGLE     c_unistd
+ARPG_H    ARCXMLR   RPGLE     xml prototypes
+ARPG_H    ARCYAJL   RPGLE     RPG prototypes for YAJL/YAJLR4 (scottklement)
+ARPG_LNK  ARSB64R   BND       Exports JSON
+ARPG_LNK  ARSIFSR   BND       Exports IFS
+ARPG_LNK  ARSSTRR   BND       Exports STR
+ARPG_LNK  ARSXMLR   BND       Exports XML
+ARPG_META ARPG_META           aRPGtool - Meta data
+ARPG_RPGLEARSARRR   RPGLE     ArrayList storage functions
+ARPG_RPGLEARSB64R   RPGLE     Base64 functions
+ARPG_RPGLEARSDOCR   RPGLE     Program documentation
+ARPG_RPGLEARSDOC01  RPGLE     Modul documentation
+ARPG_RPGLEARSDOC02  RPGLE     Procedure documentation
+ARPG_RPGLEARSIFSR   RPGLE     IFS functions (wrapper for open/read/write/seek)
+ARPG_RPGLEARSIFS01  RPGLE     IFS helper functions
+ARPG_RPGLEARSSTRR   RPGLE     String functions
+ARPG_RPGLEARSXMLR   RPGLE     XML writer functions
+ARPG_RPGLEARSXML01  RPGLE     XML helper functions
+ARPG_TEST T_ARSARRR RPGLE     UnitTest ARSARRR
+ARPG_TEST T_ARSB64R RPGLE     UnitTest ARSB64R
+ARPG_TEST T_ARSIFSR RPGLE     UnitTest ARSIFSR
+ARPG_TEST T_ARSSTRR RPGLE     UnitTest ARSSTRR
+ARPG_TEST T_ARSXMLR RPGLE     UnitTest ARSXMLR
+ARPG_TEST T_PGMDOC  CLP       Test PGM doc
+ARPG_UIM  ARCRTPGMD PNLGRP    CrtPgmDoc - Create (Srv-)Pgm documentation
+ARPG_UIM  ARUPDPGMD PNLGRP    UpdPgmDoc - Update (Srv-)Pgm documentation

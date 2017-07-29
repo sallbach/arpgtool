@@ -10,9 +10,11 @@
                           MODULE(&LIBOBJ/ARSXMLR &LIBOBJ/ARSXML01) +
                           SRCFILE(&LIBSRC/ARPG_LNK) TEXT('XML +
                           writer functions') BNDSRVPGM((ARSSTRR) +
-                          (ARSIFSR) (ARSB64R) (QHTTPSVR/QZSRAPR))
+                          (ARSIFSR) (ARSB64R) (QHTTPSVR/QZSRAPR)) +
+                          OPTION(&RSLVREF)
 
 /* Only build testcases if RPGUnit exists */
+             IF         COND(&RSLVREF = '*UNRSLVREF') THEN(GOTO CMDLBL(END))
              CHKOBJ     OBJ(RUTESTCASE) OBJTYPE(*SRVPGM)
              MONMSG     MSGID(CPF9801) EXEC(GOTO CMDLBL(END))
 
@@ -20,8 +22,9 @@
                           SRCFILE(&LIBSRC/ARPG_TEST) DBGVIEW(*LIST)
              CRTSRVPGM  SRVPGM(T_ARSXMLR) EXPORT(*ALL) +
                           BNDSRVPGM((ARSXMLR) (ARSIFSR) (ARSB64R) +
-                          (QHTTPSVR/QZSRAPR) (RUTESTCASE))
+                          (QHTTPSVR/QZSRAPR) (RUTESTCASE)) +
+                          OPTION(&RSLVREF)
 
-             CALL       PGM(QCMDEXC) PARM('RUCALLTST  TSTPGM(T_ARSXMLR)' 28)
+             CALL       PGM(B_UNITTEST) PARM('T_ARSXMLR' &RSLVREF)
 
  END:        ENDPGM

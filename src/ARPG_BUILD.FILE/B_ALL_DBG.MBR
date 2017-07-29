@@ -21,8 +21,16 @@
              MONMSG     MSGID(CPF0000) EXEC(CHGVAR VAR(&LIBOBJ) +
                           VALUE(&LIBSRC))
 
+             CRTBNDCL   PGM(&LIBSRC/B_METADATA) +
+                          SRCFILE(&LIBSRC/ARPG_BUILD)
+             CALL       PGM(&LIBSRC/B_METADATA)
+             MONMSG     MSGID(CPF0000)
+
+             CRTBNDCL   PGM(&LIBSRC/B_UNITTEST) +
+                          SRCFILE(&LIBSRC/ARPG_BUILD)
              CRTBNDCL   PGM(&LIBSRC/B_ALL_LST) +
                           SRCFILE(&LIBSRC/ARPG_BUILD)
-             CALL       PGM(B_ALL_LST) PARM(*DEBUG &LIBSRC &LIBOBJ)
+             CALL       PGM(B_ALL_LST) PARM(*DEBUG &LIBSRC &LIBOBJ *UNRSLVREF)
+             CALL       PGM(B_ALL_LST) PARM(*DEBUG &LIBSRC &LIBOBJ *RSLVREF)
 
              ENDPGM

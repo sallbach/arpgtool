@@ -18,9 +18,7 @@
       * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       */
 
-      /if defined(YAJL_H_DEFINED)
-      /eof
-      /endif
+      /if not defined(YAJL_H_DEFINED)
       /define YAJL_H_DEFINED
 
       *--------------------------------------------------------------
@@ -1436,3 +1434,4 @@
      D yajl_exbuf_free...
      d                 PR
      d   buf                               likeds(yajl_exbuf_t)
+      /endif

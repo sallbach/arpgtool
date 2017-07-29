@@ -1,0 +1,18 @@
+             PGM        PARM(&UNITTEST &RSLVREF)
+
+             DCL        VAR(&UNITTEST) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&RSLVREF) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&CMD) TYPE(*CHAR) LEN(28)
+
+             CHGVAR     VAR(&CMD) VALUE('RUCALLTST TSTPGM(' *TCAT +
+                          &UNITTEST *TCAT ')')
+
+             CHKOBJ     OBJ(RUCALLTST) OBJTYPE(*CMD)
+             MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(END))
+
+             IF         COND(&RSLVREF = '*UNRSLVREF') THEN(GOTO +
+                          CMDLBL(END))
+
+             CALL       PGM(QCMDEXC) PARM(&CMD 28)
+
+END:         ENDPGM

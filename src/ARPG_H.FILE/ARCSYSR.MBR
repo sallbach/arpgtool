@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_SYSR__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_SYSR__)
 
       /DEFINE AR_SYSR__
       /INCLUDE ARPG_H,ARCTYPES
@@ -44,3 +42,4 @@
         s#xmle int(20)  pos(372);
        end-ds;
 
+      /ENDIF

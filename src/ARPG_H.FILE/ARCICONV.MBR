@@ -1,6 +1,4 @@
-      /IF DEFINED (AR_ICONV__)
-      /EOF
-      /ENDIF
+      /IF NOT DEFINED (AR_ICONV__)
 
       /DEFINE AR_ICONV__
       /INCLUDE ARPG_H,ARCTYPES
@@ -54,3 +52,4 @@
        dcl-pr iconv_close int(10) extproc(*dclcase);
          cd value like(iconv_t);
        end-pr;
+      /ENDIF
