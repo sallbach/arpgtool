@@ -2,8 +2,8 @@
 
 write a xml-file
 
-    XmlPrettyPrint(*on);
     XmlDocument(CCSID_UTF8);
+    XmlPrettyPrint(*on);
     
     XmlNode('root');
       XmlNode('child1');
