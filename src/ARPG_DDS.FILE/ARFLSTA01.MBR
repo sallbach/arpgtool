@@ -1,0 +1,9 @@
+Create index ARFLSTA01 on ARFLSTA
+(
+  LSta_jobname,
+  LSta_jobuser,
+  LSta_jobnumber,
+  LSta_logmember
+);
+
+Label on Index ARFLSTA01 is 'status/job/user/jobnum/member';

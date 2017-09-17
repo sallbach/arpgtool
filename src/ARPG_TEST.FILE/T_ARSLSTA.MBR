@@ -1,0 +1,69 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCSYSR
+      /COPY ARPG_H,ARCLSTA
+      /COPY ARPG_H,ARCCMDE
+      /COPY ARPG_H,ARCIFSR
+      /COPY ARPG_H,ARCQMH
+
+      /COPY RPGUNIT1,TESTCASE
+
+      //---------------------------------------------------------------*
+      // test
+      //---------------------------------------------------------------*
+       dcl-proc test_LSta export;
+
+         dcl-ds pDsSettings likeds(LogStash_t) inz(*likeds);
+         dcl-s pInFile int(10);
+
+         pDsSettings.logfile = 'T_ARSLSTA';
+         pDsSettings.loglib  = '*CURLIB';
+         pDsSettings.server  = LSTASH_SERVER_NO;
+         pDsSettings.pretty  = *on;
+
+         iEqual(0:LogStashStart(pDsSettings));
+
+         iEqual(0:LogStashStartTask());
+         iEqual(0:LogStashSetVar('uuid':'task1-uuid'));
+         iEqual(0:LogStashSetVar('info':'special info 1'));
+         MhSndPM('CPF9898':'QCPFMSG   *LIBL     '
+                :'Msg 1':5
+                :MSG_DIAG
+                :'*':0
+                :Msg_Key
+                :QUSecF);
+         iEqual(0:LogStashEndTask());
+
+         MhSndPM('CPF9898':'QCPFMSG   *LIBL     '
+                :'Not to log':10
+                :MSG_DIAG
+                :'*':0
+                :Msg_Key
+                :QUSecF);
+
+         iEqual(0:LogStashStartTask());
+         iEqual(0:LogStashSetVar('uuid':'task2-uuid'));
+         iEqual(0:LogStashSetVar('info':'special info 2'));
+         MhSndPM('CPF9898':'QCPFMSG   *LIBL     '
+                :'Msg 2':5
+                :MSG_DIAG
+                :'*':0
+                :Msg_Key
+                :QUSecF);
+         iEqual(0:LogStashEndTask());
+
+         CmdExec('DSPJOBLOG OUTPUT(*APIDFN)');
+
+         pInFile = IfsOpenFile('/tmp/t_arslsta_unit_test.json'
+                              :O_WRONLY + O_CREAT + O_TRUNC // + O_EXCL
+                              :S_IRWXU);
+
+         iEqual(0:LogStashStartLogger(PInFile:pDsSettings));
+
+         IfsCloseFile(pInFile);
+
+       end-proc test_LSta;
