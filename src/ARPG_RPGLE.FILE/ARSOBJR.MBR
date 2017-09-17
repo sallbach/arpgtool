@@ -1,0 +1,33 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCOBJR
+
+      //---------------------------------------------------------------*
+      //  ObjCheck
+      //---------------------------------------------------------------*
+      //* Fill string with variables.
+      //*
+      //* @param pPtStr - String with place holders &1 - &20
+      //* @param pPtP1 - pPtP20 - Values for place holders.
+      //*
+      //* @return Returns new string.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ObjCheck export;
+         dcl-pi *N int(10);
+           objekt char(10) value;
+           type char(10) value;
+           description char(50) options(*nopass:*omit);
+           library char(10) options(*nopass);
+         end-pi;
+
+
+         return 0;
+
+       end-proc ObjCheck;
+

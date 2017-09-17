@@ -1,0 +1,69 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCJOBF
+      /COPY ARPG_H,ARCQJOB
+
+      //---------------------------------------------------------------*
+      // global variables
+      //---------------------------------------------------------------*
+      /COPY QSYSINC/QRPGLESRC,QUSRJOBI
+
+      //---------------------------------------------------------------*
+      // global data structures
+      //---------------------------------------------------------------*
+
+      //---------------------------------------------------------------*
+      //  JobIsRunning
+      //---------------------------------------------------------------*
+      //* Save the given object in memory and returns a unique identifier.
+      //*
+      //* @param pDsJob - Job name or likeds(job_t)
+      //* @param pAnUser - Job user name (optional).
+      //* @param pAnJobN - Job number (optional).
+      //*
+      //* @return *On - Job is still active.
+      //* @return *Off - Job has ended.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc JobIsRunning export;
+         dcl-pi *N ind;
+           pDsJob like(job_t) value;
+           pAnUser char(10) value options(*nopass);
+           pAnJobN char(6) value options(*nopass);
+         end-pi;
+
+         dcl-ds pDsJob_ likeds(job_t);
+         dcl-ds *N;
+           anNotFound char(21) inz('CPF3C53CPF3C55CPF3C58');
+           arNotFound char(7) dim(3) overlay(anNotFound);
+         end-ds;
+
+         pDsJob_ = pDsjob;
+
+         if %parms() >= %parmnum(pAnUser);
+           pDsJob_.jobuser = pAnUser;
+         endif;
+
+         if %parms() >= %parmnum(pAnJobN);
+           pDsJob_.jobnumber = pAnJobN;
+         endif;
+
+         clear QUSI010000;
+         QUSecF.Excp = *blanks;
+
+         UsrJobI(QUSI010000
+                :%size(QUSI010000)
+                :'JOBI0100'
+                :pDsJob_
+                :*Blanks
+                :QUSecF);
+
+         return (QUSJS01 <> '*OUTQ' And
+                  %lookup(QUSecF.Excp:arNotFound) = 0);
+
+       end-proc JobIsRunning;

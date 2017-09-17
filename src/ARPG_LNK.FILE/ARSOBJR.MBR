@@ -1,0 +1,8 @@
+             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSOBJR__')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSOBJR - Object functions                                            */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('ObjCheck')
+
+             ENDPGMEXP

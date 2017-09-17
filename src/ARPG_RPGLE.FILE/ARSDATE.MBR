@@ -1,0 +1,165 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCDATE
+      /COPY ARPG_H,ARCQJOB
+
+      //---------------------------------------------------------------*
+      // global variables
+      //---------------------------------------------------------------*
+
+      //---------------------------------------------------------------*
+      // global data structures
+      //---------------------------------------------------------------*
+
+      //--------------------------------------------------------------*
+      // PrcDatAdjTs
+      //--------------------------------------------------------------*
+      //* Convert timestamp to a different time zone.
+      //* <P>
+      //* Possible values for from/to time zone :
+      //* @const DAT_ADJ_SYS, @const DAT_ADJ_UTC, @const DAT_ADJ_JOB,
+      //* and all values of WRKTIMZON.
+      //*
+      //* @param PTsTime - timstamp
+      //* @param PAnTo   - to time zone (optional)
+      //*                  default is @const DAT_ADJ_UTC
+      //* @param PAnFrom - from time zone (optional)
+      //*                  default ist @const DAT_ADJ_JOB if pAnTo <> @const DAT_ADJ_JOB,
+      //*                  else @const DAT_ADJ_UTC
+      //*
+      //* @return Converted timestamp.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc DatAdjTs export;
+         dcl-pi *N timestamp;
+           pTsTime timestamp const;
+           pAnTo varchar(10) const options(*nopass);
+           pAnFrom varchar(10) const options(*nopass);
+         end-pi;
+
+         dcl-s PAnTo_ char(10) inz(DAT_ADJ_UTC);
+         dcl-s PAnFrom_ char(10) inz(DAT_ADJ_JOB);
+
+         dcl-ds pDsTimeStruct qualified;
+           Date zoned(8:0);
+           Time zoned(6:0);
+           MilliSec zoned(6:0);
+         end-ds;
+
+         dcl-ds PDsIn likeds(pDsTimeStruct) inz;
+         dcl-ds PDsOut likeds(pDsTimeStruct) inz;
+
+         dcl-ds pDsTimeZone qualified;
+           BytesReturned int(10);
+           BytesAvail int(10);
+           TimeZoneName char(10);
+           Reserved1 char(1);
+           DaylightSav char(1);
+           CurOffset int(10);
+           CurFullName char(50);
+           CurAbbrName char(50);
+           MsgFile char(10);
+           MsgFileLib char(10);
+         end-ds;
+
+         dcl-s pAnTimeStamp char(26);
+
+         if pTsTime = *Loval Or pTsTime = *Hival;
+          return pTsTime;
+         endif;
+
+         if %parms() >= %parmnum(pAnTo) Or
+             (%parms() = -1 and %addr(pAnTo) <> *Null);
+           pAnTo_ = pAnTo;
+         endif;
+
+         if %parms() >= %parmnum(pAnFrom) Or
+             (%parms() = -1 and %addr(pAnFrom) <> *Null);
+           pAnFrom_ = PAnFrom;
+         endif;
+
+         if pAnFrom_ = pAnTo_ And pAnTo_ = DAT_ADJ_JOB;
+           pAnFrom_ = DAT_ADJ_UTC;
+         endif;
+
+         if pAnFrom_ = pAnTo_;
+           return pTsTime;
+         endif;
+
+         pDsIn.Date = %int(%char(%date(pTsTime):*iso0));
+         pDsIn.Time = %int(%char(%time(pTsTime):*iso0));
+         pDsIn.MilliSec = %Subdt(pTsTime:*MS);
+         WcCvtDt('*YYMD'
+                 :pDsIn
+                 :'*YYMD'
+                 :pDsOut
+                 :QUsecF
+                 :pAnFrom_
+                 :pAnTo_
+                 :pDsTimeZone
+                 :%size(pDsTimeZone)
+                 :(pDsIn.MilliSec > 0));
+
+         monitor;
+           pAnTimeStamp = %char(%Date(pDsOut.date:*iso):*iso)+'-'+
+                          %char(%Time(pDsOut.time:*iso):*iso)+'.'+
+                          %editc(pDsOut.millisec:'X');
+         on-error;
+           return pTsTime;
+         endmon;
+
+         return %timestamp(pAnTimeStamp);
+
+       end-proc DatAdjTs;
+      //--------------------------------------------------------------*
+      // DatGetUtcOffset
+      //--------------------------------------------------------------*
+      //* Get UTC offset.
+      //* <P>
+      //* Possible values for from time zone :
+      //* @const DAT_ADJ_SYS, @const DAT_ADJ_UTC, @const DAT_ADJ_JOB,
+      //* and all values of WRKTIMZON.
+      //*
+      //* @param PTsTime - timstamp
+      //* @param PAnFrom - from time zone (optional)
+      //*                  default ist @const DAT_ADJ_JOB
+      //*
+      //* @return Zeitstempel
+      //*
+      //* @todo isn't there an IBM Api !?
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc DatGetUtcOffset export;
+         dcl-pi *N char(6);
+           pTsTime timestamp const;
+           pAnFrom varchar(10) const options(*nopass);
+         end-pi;
+
+         dcl-s pTsTo timestamp;
+         dcl-s d packed(3:0);
+         dcl-s hh packed(2:0);
+         dcl-s mn packed(2:0);
+
+         if %parms() >= %parmnum(pAnFrom);
+           pTsTo = DatAdjTs(pTsTime:DAT_ADJ_UTC:pAnFrom);
+         else;
+           pTsTo = DatAdjTs(pTsTime);
+         endif;
+
+         d = %diff(pTsTime:pTsTo:*mn);
+         hh = %div(%abs(d):60);
+         mn = %rem(%abs(d):60);
+
+         if hh < *Zeros;
+           return '-' + %editc(hh:'X') + ':' + %editc(mn:'X');
+         endif;
+
+         return '+' + %editc(hh:'X') + ':' + %editc(mn:'X');
+
+       end-proc DatGetUtcOffset;

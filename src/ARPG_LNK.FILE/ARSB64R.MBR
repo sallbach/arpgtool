@@ -1,7 +1,7 @@
              STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSB64R__')
 
      /*-----------------------------------------------------------------------*/
-     /* SRVB64R - Base64                                                      */
+     /* ARSB64R - Base64                                                      */
      /*-----------------------------------------------------------------------*/
              EXPORT     SYMBOL('B64StreamEncode')
              EXPORT     SYMBOL('B64StreamDecode')

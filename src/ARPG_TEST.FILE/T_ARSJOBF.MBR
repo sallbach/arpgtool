@@ -1,0 +1,32 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCSYSR
+      /COPY ARPG_H,ARCJOBF
+
+      /COPY RPGUNIT1,TESTCASE
+
+      //---------------------------------------------------------------*
+      // test
+      //---------------------------------------------------------------*
+       dcl-proc test_JobIsRunning export;
+
+         dcl-ds job likeds(job_t);
+
+         assert(JobIsRunning(S#job:S#User:%editc(S#jobN:'X')):'fail');
+         assert(not JobIsRunning('XXX':'XXX':'123456'):'fail');
+
+         job.jobname = S#Job;
+         job.jobuser = S#User;
+         job.jobnumber = %editc(S#jobN:'X');
+         assert(JobIsRunning(job):'fail');
+
+         job.jobname = 'YYY';
+         job.jobuser = 'YYY';
+         job.jobnumber = '123457';
+         assert(not JobIsRunning(job):'fail');
+
+       end-proc test_JobIsRunning;

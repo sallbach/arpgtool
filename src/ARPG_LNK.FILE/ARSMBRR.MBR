@@ -1,0 +1,8 @@
+             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSMBRR__')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSMBRR - Member functions                                            */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('MbrCheck')
+
+             ENDPGMEXP
