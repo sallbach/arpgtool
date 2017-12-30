@@ -292,6 +292,7 @@
            return 0;
          endif;
 
+         PDsCurNode.InCcsid = pInCcsid_;
          PDsCurNode.inData = strlen(pPtData);
          if PDsCurNode.inData = 0 Or
              %parms() >= %parmnum(pBoNull) And pBoNull;
@@ -300,7 +301,6 @@
          endif;
 
          PDsCurNode.ptData = XmlQuote(pPtData:PDsCurNode.inData:pInCcsid_);
-         PDsCurNode.InCcsid = pInCcsid_;
 
          return 0;
 
