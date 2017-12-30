@@ -89,7 +89,11 @@
              else;
                B64Write(pInDst:pPtB64+i:pInEncoded-i);
              endif;
-             B64Write(pInDst:NEWLINE:%size(NEWLINE));
+             if pBoAscii;
+               B64Write(pInDst:x'0D0A':%size(NEWLINE));
+             else;
+               B64Write(pInDst:NEWLINE:%size(NEWLINE));
+             endif;
            endfor;
 
            PInRead = B64ReadStream(pInSrc:pPtBuffer:MAX_BUFFER_SIZE);
