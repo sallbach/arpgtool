@@ -89,7 +89,7 @@
              else;
                B64Write(pInDst:pPtB64+i:pInEncoded-i);
              endif;
-             if pBoAscii;
+             if pBoAscii_;
                B64Write(pInDst:x'0D0A':%size(NEWLINE));
              else;
                B64Write(pInDst:NEWLINE:%size(NEWLINE));
