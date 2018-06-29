@@ -250,7 +250,6 @@
 
          gPtInput = pPtInput;
          pInAlloc = (%div(gInInLen:3) + 1) * 4;
-         pInAlloc += (%div(pInAlloc:MIME_LINE_LENGTH) + 1) * 2;
          gPtOutput = %alloc(pInAlloc + 1);
          gInInPos = 0;
          gInOuLen = 0;
