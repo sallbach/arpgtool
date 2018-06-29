@@ -1,0 +1,16 @@
+      /IF NOT DEFINED (AR_OBJR__)
+
+      /DEFINE AR_OBJR__
+      /INCLUDE ARPG_H,ARCTYPES
+
+      //---------------------------------------------------------------*
+      // ObjCheck
+      //---------------------------------------------------------------*
+       dcl-pr ObjCheck int(10) extproc(*dclcase);
+         object char(10) value;
+         type char(10) value;
+         description char(50) options(*nopass:*omit);
+         library char(10) options(*nopass);
+       end-pr;
+
+      /ENDIF

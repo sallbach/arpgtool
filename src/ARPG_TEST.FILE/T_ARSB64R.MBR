@@ -80,16 +80,9 @@ VzdFN0cmluZzEyMw==';
 
          dcl-s pPtDst pointer;
          dcl-s pAnDst char(200) based(pPtDst);
-         dcl-s pAnCmp char(200);
 
          pPtDst = B64StringEncode(teststring123);
-         pAnCmp = %subst(teststring123b64:1:76)
-                + x'0D25'
-                + %subst(teststring123b64:77:76)
-                + x'0D25'
-                + %trimr(%subst(teststring123b64:153))
-                + x'0D25';
-         aEqual(%trimr(pAnCmp):%str(pPtDst));
+         aEqual(%trimr(teststring123b64):%str(pPtDst));
          dealloc pPtDst;
 
        end-proc test_base64_2;

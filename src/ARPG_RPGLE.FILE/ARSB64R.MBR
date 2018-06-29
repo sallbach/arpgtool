@@ -9,7 +9,7 @@
       /COPY ARPG_H,ARCSTRR
       /COPY ARPG_H,ARCFCNTL
       /COPY ARPG_H,ARCAPRCORE
-
+  
        dcl-s  gPtB64Read pointer(*proc);
        dcl-pr B64Read int(10) extproc(gPtB64Read);
          hdl  int(10) value;
@@ -32,7 +32,6 @@
        dcl-s gInOuLen  int(10);
 
        dcl-c MAX_BUFFER_SIZE    1594323;
-       dcl-c MIME_LINE_LENGTH        76;
 
       //---------------------------------------------------------------
       // B64StreamEncode
@@ -81,21 +80,7 @@
          PInRead = B64ReadStream(pInSrc:pPtBuffer:MAX_BUFFER_SIZE);
          dow pInRead > 0;
            pInEncoded = B64Encode(pPtB64:pPtBuffer:pInRead:pBoAscii_);
-
-           // Write base64 blocks
-           for i = 0 by MIME_LINE_LENGTH to (pInEncoded-1);
-             if (pInEncoded - i) >= MIME_LINE_LENGTH;
-               B64Write(pInDst:pPtB64+i:MIME_LINE_LENGTH);
-             else;
-               B64Write(pInDst:pPtB64+i:pInEncoded-i);
-             endif;
-             if pBoAscii_;
-               B64Write(pInDst:x'0D0A':%size(NEWLINE));
-             else;
-               B64Write(pInDst:NEWLINE:%size(NEWLINE));
-             endif;
-           endfor;
-
+           B64Write(pInDst:pPtB64:pInEncoded);
            PInRead = B64ReadStream(pInSrc:pPtBuffer:MAX_BUFFER_SIZE);
          enddo;
 
@@ -265,7 +250,6 @@
 
          gPtInput = pPtInput;
          pInAlloc = (%div(gInInLen:3) + 1) * 4;
-         pInAlloc += (%div(pInAlloc:MIME_LINE_LENGTH) + 1) * 2;
          gPtOutput = %alloc(pInAlloc + 1);
          gInInPos = 0;
          gInOuLen = 0;

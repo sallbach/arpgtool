@@ -4,6 +4,12 @@
       /INCLUDE ARPG_H,ARCTYPES
 
       //---------------------------------------------------------------*
+      // constants
+      //---------------------------------------------------------------*
+       dcl-c STR_LOWER 0;
+       dcl-c STR_UPPER 1;
+
+      //---------------------------------------------------------------*
       // StrIconv
       //---------------------------------------------------------------*
        dcl-pr StrIConv pointer extproc(*dclcase);
@@ -13,4 +19,66 @@
          pUiOutLen like(size_t) options(*omit:*nopass);
          pUiLen    like(size_t) value options(*nopass);
        end-pr;
+
+      //---------------------------------------------------------------*
+      // StrFillValues
+      //---------------------------------------------------------------*
+       dcl-pr StrFillValues varchar(65535) extproc(*dclcase);
+         pPtStr    pointer value options(*string);
+         pPtP1     pointer value options(*string:*nopass);
+         pPtP2     pointer value options(*string:*nopass);
+         pPtP3     pointer value options(*string:*nopass);
+         pPtP4     pointer value options(*string:*nopass);
+         pPtP5     pointer value options(*string:*nopass);
+         pPtP6     pointer value options(*string:*nopass);
+         pPtP7     pointer value options(*string:*nopass);
+         pPtP8     pointer value options(*string:*nopass);
+         pPtP9     pointer value options(*string:*nopass);
+         pPtP10    pointer value options(*string:*nopass);
+         pPtP11    pointer value options(*string:*nopass);
+         pPtP12    pointer value options(*string:*nopass);
+         pPtP13    pointer value options(*string:*nopass);
+         pPtP14    pointer value options(*string:*nopass);
+         pPtP15    pointer value options(*string:*nopass);
+         pPtP16    pointer value options(*string:*nopass);
+         pPtP17    pointer value options(*string:*nopass);
+         pPtP18    pointer value options(*string:*nopass);
+         pPtP19    pointer value options(*string:*nopass);
+         pPtP20    pointer value options(*string:*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // StrHexStrToBytes
+      //---------------------------------------------------------------*
+       dcl-pr StrHexStrToBytes int(10) extproc(*dclcase);
+         pAnStr varchar(65535) const options(*varsize);
+         pPtBytes pointer const;
+         pInLen int(10) const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // StrBytesToHexStr
+      //---------------------------------------------------------------*
+       dcl-pr StrBytesToHexStr varchar(65534) extproc(*dclcase);
+         pPtBytes pointer const options(*string);
+         pInLen int(10) const options(*nopass:*omit);
+         pInOptions int(10) const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // StrUppr
+      //---------------------------------------------------------------*
+       dcl-pr StrUppr int(10) extproc(*dclcase);
+         pPtString pointer value;
+         pInLen int(10) const options(*nopass);
+       end-pr;
+
+      //---------------------------------------------------------------*
+      // StrLowr
+      //---------------------------------------------------------------*
+       dcl-pr StrLowr int(10) extproc(*dclcase);
+         pPtString pointer value;
+         pInLen int(10) const options(*nopass);
+       end-pr;
+
       /ENDIF

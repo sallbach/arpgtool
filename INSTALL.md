@@ -11,6 +11,7 @@ Create the physical source files on your IBM i.
     CRTSRCPF FILE(YOURLIB/ARPG_BUILD) RCDLEN(92)  TEXT('aRPGtool - Build sources')
     CRTSRCPF FILE(YOURLIB/ARPG_CLLE)  RCDLEN(92)  TEXT('aRPGtool - CL sources')
     CRTSRCPF FILE(YOURLIB/ARPG_CMD)   RCDLEN(92)  TEXT('aRPGtool - Command sources')
+    CRTSRCPF FILE(YOURLIB/ARPG_DDS)   RCDLEN(92)  TEXT('aRPGtool - File sources')
     CRTSRCPF FILE(YOURLIB/ARPG_H)     RCDLEN(112) TEXT('aRPGtool - Prototypes')
     CRTSRCPF FILE(YOURLIB/ARPG_HTML)  RCDLEN(212) TEXT('aRPGtool - HTML templates')
     CRTSRCPF FILE(YOURLIB/ARPG_LNK)   RCDLEN(92)  TEXT('aRPGtool - Exports')

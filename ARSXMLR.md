@@ -39,4 +39,4 @@ Result
           <child4 atr1="value &quot;1&quot;" atr2="value 2" atr3="true" />
         </root>
 
-
+Please check the unit test module ARPG_TEST/T_ARSXMLR too.

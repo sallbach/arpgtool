@@ -1,0 +1,18 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCOBJR
+
+      /COPY RPGUNIT1,TESTCASE
+
+      //---------------------------------------------------------------*
+      // test_check_obj
+      //---------------------------------------------------------------*
+       dcl-proc test_check_obj export;
+
+
+       end-proc test_check_obj;
+

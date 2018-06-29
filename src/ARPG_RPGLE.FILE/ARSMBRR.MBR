@@ -1,0 +1,33 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCMBRR
+
+      //---------------------------------------------------------------*
+      //  MbrCheck
+      //---------------------------------------------------------------*
+      //* Fill string with variables.
+      //*
+      //* @param pPtStr - String with place holders &1 - &20
+      //* @param pPtP1 - pPtP20 - Values for place holders.
+      //*
+      //* @return Returns new string.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc MbrCheck export;
+         dcl-pi *N int(10);
+           file char(10) value;
+           member char(10);
+           description char(50) options(*nopass:*omit);
+           library char(10) options(*nopass);
+         end-pi;
+
+
+         return 0;
+
+       end-proc MbrCheck;
+

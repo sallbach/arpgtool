@@ -39,6 +39,10 @@
        dcl-c LF_ASC  x'0a';
        dcl-c CRLF    x'0d25';
        dcl-c NEWLINE x'0d25';
+       dcl-c FALSE   0;
+       dcl-c TRUE    1;
+       dcl-c ON      *on;
+       dcl-c OFF     *off;
 
        dcl-c API_FIRST       '*FIRST';
        dcl-c API_LAST        '*LAST';
@@ -126,6 +130,7 @@
        dcl-c API_RESTRICTED  '*RESTRICTED';
        dcl-c API_STARTINGD   '*STARTING';
        dcl-c API_PUBLIC      '*PUBLIC';
+       dcl-c API_IMMED       '*IMMED';
 
       //* Constant used for fields in qlg_nls_t :
       //* Use the job CCSID value
@@ -151,4 +156,14 @@
       //  AS/400 Object Type used in the stat structure.
       //--------------------------------------------------------------------
        dcl-s qp0l_objtype_t char(11) template; // AS/400 Object Type
+
+      //--------------------------------------------------------------------
+      // job
+      //--------------------------------------------------------------------
+       dcl-ds job_t qualified align template;
+         jobname char(10);
+         jobuser char(10);
+         jobnumber char(6);
+       end-ds;
+
       /ENDIF
