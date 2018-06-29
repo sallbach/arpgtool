@@ -9,7 +9,7 @@
       /COPY ARPG_H,ARCSTRR
       /COPY ARPG_H,ARCFCNTL
       /COPY ARPG_H,ARCAPRCORE
-
+  
        dcl-s  gPtB64Read pointer(*proc);
        dcl-pr B64Read int(10) extproc(gPtB64Read);
          hdl  int(10) value;
