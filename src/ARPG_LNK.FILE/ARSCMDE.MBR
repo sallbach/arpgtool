@@ -1,8 +1,0 @@
-             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSCMDE__')
-
-     /*-----------------------------------------------------------------------*/
-     /* ARSCMDE - Command execution funkctions                                */
-     /*-----------------------------------------------------------------------*/
-             EXPORT     SYMBOL('CmdExec')
-
-             ENDPGMEXP

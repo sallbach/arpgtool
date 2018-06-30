@@ -1,8 +1,0 @@
-             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSJOBF__')
-
-     /*-----------------------------------------------------------------------*/
-     /* ARSJOBF - job functions                                               */
-     /*-----------------------------------------------------------------------*/
-             EXPORT     SYMBOL('JobIsRunning')
-
-             ENDPGMEXP
