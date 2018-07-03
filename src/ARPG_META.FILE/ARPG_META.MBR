@@ -48,6 +48,8 @@ ARPG_H    ARCXMLR   RPGLE     xml prototypes
 ARPG_H    ARCYAJL   RPGLE     RPG prototypes for YAJL/YAJLR4 (scottklement)
 ARPG_LNK  ARSB64R   BND       Exports JSON
 ARPG_LNK  ARSIFSR   BND       Exports IFS
+ARPG_LNK  ARSJSON   BND       Exports json
+ARPG_LNK  ARSOORR   BND       Exports OO
 ARPG_LNK  ARSSTRR   BND       Exports STR
 ARPG_LNK  ARSXMLR   BND       Exports XML
 ARPG_META ARPG_META           aRPGtool - Meta data
@@ -58,12 +60,16 @@ ARPG_RPGLEARSDOC01  RPGLE     Modul documentation
 ARPG_RPGLEARSDOC02  RPGLE     Procedure documentation
 ARPG_RPGLEARSIFSR   RPGLE     IFS functions (wrapper for open/read/write/seek)
 ARPG_RPGLEARSIFS01  RPGLE     IFS helper functions
+ARPG_RPGLEARSJSON   RPGLE     json functions (YAJL)
+ARPG_RPGLEARSOORR   RPGLE     OO functions 
 ARPG_RPGLEARSSTRR   RPGLE     String functions
 ARPG_RPGLEARSXMLR   RPGLE     XML writer functions
 ARPG_RPGLEARSXML01  RPGLE     XML helper functions
 ARPG_TEST T_ARSARRR RPGLE     UnitTest ARSARRR
 ARPG_TEST T_ARSB64R RPGLE     UnitTest ARSB64R
 ARPG_TEST T_ARSIFSR RPGLE     UnitTest ARSIFSR
+ARPG_TEST T_ARSJSON RPGLE     UnitTest ARSJSON
+ARPG_TEST T_ARSOORR RPGLE     UnitTest ARSOORR
 ARPG_TEST T_ARSSTRR RPGLE     UnitTest ARSSTRR
 ARPG_TEST T_ARSXMLR RPGLE     UnitTest ARSXMLR
 ARPG_TEST T_PGMDOC  CLP       Test PGM doc
