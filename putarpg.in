@@ -1,0 +1,18 @@
+your_user_id
+lcd /src
+cd /qsys.lib/yourlib.lib
+quote "CRTSRCPF FILE(YOURLIB/ARPG_BUILD) RCDLEN(92)  TEXT('aRPGtool - Build sources')"
+quote "CRTSRCPF FILE(YOURLIB/ARPG_CLLE)  RCDLEN(92)  TEXT('aRPGtool - CL sources')"
+quote "CRTSRCPF FILE(YOURLIB/ARPG_CMD)   RCDLEN(92)  TEXT('aRPGtool - Command sources')"
+quote "CRTSRCPF FILE(YOURLIB/ARPG_DDS)   RCDLEN(92)  TEXT('aRPGtool - File sources')"
+quote "CRTSRCPF FILE(YOURLIB/ARPG_H)     RCDLEN(112) TEXT('aRPGtool - Prototypes')"
+quote "CRTSRCPF FILE(YOURLIB/ARPG_HTML)  RCDLEN(212) TEXT('aRPGtool - HTML templates')"
+quote "CRTSRCPF FILE(YOURLIB/ARPG_LNK)   RCDLEN(92)  TEXT('aRPGtool - Exports')"
+quote "CRTSRCPF FILE(YOURLIB/ARPG_RPGLE) RCDLEN(112) TEXT('aRPGtool - Program sources')"
+quote "CRTSRCPF FILE(YOURLIB/ARPG_TEST)  RCDLEN(112) TEXT('aRPGtool - RPGUnit test cases')"
+quote "CRTSRCPF FILE(YOURLIB/ARPG_UIM)   RCDLEN(92)  TEXT('aRPGtool - Command help')"
+quote "CRTPF    FILE(YOURLIB/ARPG_META)  RCDLEN(80)  TEXT('aRPGtool - Meta data')"
+ascii
+mput ARPG_*.FILE/*.MBR
+bye
+
