@@ -1,0 +1,16 @@
+/*----------------------------------------------------------------------------*/
+/* Build meta file ARPG_META                                                  */
+/*----------------------------------------------------------------------------*/
+             PGM        PARM(&LIB)
+
+             DCL        VAR(&LIB) TYPE(*CHAR) LEN(10)
+
+             DSPFD      FILE(&LIB/ARPG*) TYPE(*MBRLIST) +
+                          OUTPUT(*OUTFILE) OUTFILE(QTEMP/DSPFMETA)
+             CLRPFM     FILE(&LIB/ARPG_META)
+             RUNSQL     SQL('insert into ' *CAT &LIB *TCAT +
+                          '/arpg_meta SELECT MLFILE || MLNAME || +
+                          MLSEU2 || MLMTXT FROM QTEMP/DSPFMETA') +
+                          COMMIT(*NONE) NAMING(*SYS)
+
+             ENDPGM
