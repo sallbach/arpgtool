@@ -1,0 +1,2025 @@
+**Free
+       ctl-opt nomain;
+      /COPY ARPG_H,ARCALLCTL
+      //---------------------------------------------------------------*
+      // extern prototypes
+      //---------------------------------------------------------------*
+      /COPY ARPG_H,ARCARRR
+      /COPY ARPG_H,ARCOORR
+      /COPY ARPG_H,ARCQCEE
+      /COPY ARPG_H,ARCSYSR
+      /COPY ARPG_H,ARCOORR
+      /COPY ARPG_H,ARCSTRING
+
+      //---------------------------------------------------------------*
+      // global variables
+      //---------------------------------------------------------------*
+
+      //---------------------------------------------------------------*
+      // global data structures
+      //---------------------------------------------------------------*
+       dcl-ds DsArray_t qualified align; // no template to use it for *inz
+         InHeap    int(10) inz(-1);
+         InElem    int(10) inz(0);
+         PtFirst   pointer inz(*Null);
+         PtLast    pointer inz(*Null);
+         IsSorted  ind     inz(*off);
+       end-ds;
+
+       dcl-ds DsElem_t qualified align template;
+         PtPrev    pointer inz(*Null);
+         InUsed    int(10) inz(0);
+         PtData    pointer dim(2048) inz(*Null);
+         InSize    int(10) dim(2048) inz(0);
+         PtNext    pointer inz(*Null);
+       end-ds;
+
+      //---------------------------------------------------------------*
+      // constants
+      //---------------------------------------------------------------*
+       dcl-c START_HEAP  100000; // 100Kb
+
+      //---------------------------------------------------------------*
+      //  ArrayListNew
+      //---------------------------------------------------------------*
+      //* Create a new Array.
+      //*
+      //* @param pInCpyFrom - Copy an existing array (optional).
+      //* @param pInIdxStr - Start index to copy (optional).
+      //* @param pInIdxLen - Number of elements (optional).
+      //*
+      //* @return Reference &gt;= 0
+      //* @return -1 error.
+      //*
+      //* @diag CPE3520
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListNew export;
+         dcl-pi *N int(10);
+           pInCpyFrom int(10) value options(*nopass);
+           pInIdxStr  int(10) value options(*nopass);
+           pInIdxLen  int(10) value options(*nopass);
+         end-pi;
+
+         dcl-s pInIdxStr_i int(10);
+         dcl-s pInIdxLen_i int(10);
+
+         dcl-s pInArray int(10);
+         dcl-s pPtArray pointer;
+
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         if %parms() > 0 and not ArrayListIsValid(pInCpyFrom);
+           // EINHDL
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //---------------------
+         // Arraydefinitionen anlegen und Adresse referenzieren
+         pInArray = OoRObjectNew(S#Prog:pPtArray:%size(DsArray_t));
+         pDsArray = DsArray_t; // inz
+
+         // Create new heap
+         CeeCreateHeap(pDsArray.InHeap:START_HEAP:*Omit:0:*Omit);
+         CeeGetHeap(pDsArray.InHeap:%size(DsElem_t):pDsArray.PtFirst:*Omit);
+         memset(pDsArray.PtFirst:NULL:%size(DsElem_t));
+         pDsArray.PtLast = pDsArray.PtFirst;
+
+         //---------------------
+         // Copy existing array
+         if %parms() > 0;
+
+           pInIdxStr_i = 1;
+           pInIdxLen_i = ArrayListSize(pInCpyFrom);
+
+           if %parms() > 1;
+             pInIdxStr_i = pInIdxStr;
+           endif;
+
+           if %parms() > 2;
+             pInIdxLen_i = pInIdxLen;
+           endif;
+
+           if pInIdxLen_i = 0; // nothing to copy
+             return pInArray;
+           endif;
+
+           if ArrayListAddAll(pInArray
+                             :pInCpyFrom
+                             :PInIdxStr_i
+                             :PInIdxLen_i) = -1;
+
+             //QMhSndPM(Excp:ExcpM:ExcpA:
+             //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+             ArrayListFree(pInArray);
+             return -1;
+           endif;
+         endif;
+
+         return pInArray;
+
+       end-proc ArrayListNew;
+      //---------------------------------------------------------------*
+      //  ArrayListAdd
+      //---------------------------------------------------------------*
+      //* Element der Liste hinzufügen.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pPtData - Zeiger auf zu schreibende Daten (*String)
+      //* @param pInSize - Länge der Daten (Optional)
+      //*
+      //* @return Index an dem erfolgreich eingefügt wurde, sonst -1.
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0777
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListAdd export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+           pPtData  pointer value options(*string);
+           pInSize  int(10) value options(*nopass);
+         end-pi;
+
+         dcl-s pInSize_i int(10);
+         dcl-s pPtTmp    pointer;
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem   pointer;
+         dcl-ds pDsElem  likeds(DsElem_t) based(pPtElem);
+
+         if %parms() > 2;
+           pInSize_i = pInSize;
+         else;
+           pInSize_i = strlen(pPtData);
+         endif;
+
+         //----
+         // Datenlänge prüfen
+         if pPtData   = *Null Or
+            pInSize_i < 1;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         pDsArray.IsSorted = *Off;
+
+         //----
+         // Zu letzter Datenstruktur gehen
+         pPtElem = pDsArray.PtLast;
+
+         //-----------
+         // Neuen Block erstellen
+         if pDsElem.InUsed = %elem(pDsElem.PtData);
+           pDsArray.PtLast = %alloc(%size(DsElem_t));
+           memset(pDsArray.PtLast:NULL:%size(DsElem_t));
+
+           pDsElem.PtNext = pDsArray.PtLast;
+           pPtTmp         = pPtElem;
+           pPtElem        = pDsElem.PtNext;
+           pDsElem.PtPrev = pPtTmp;
+         endif;
+
+         //-----------
+         // Daten speichern
+         pDsElem.InUsed += 1;
+         pDsElem.PtData(pDsElem.InUsed) = %alloc(PInSize_i);
+         pDsElem.InSize(pDsElem.InUsed) = pInSize_i;
+         memcpy(pDsElem.PtData(pDsElem.InUsed)
+               :pPtData
+               :PInSize_i);
+         pDsArray.InElem += 1;
+         return pDsArray.InElem;
+
+       end-proc ArrayListAdd;
+      //---------------------------------------------------------------*
+      //  ArrayListAddInt
+      //---------------------------------------------------------------*
+      //* Integer-Element der Liste hinzufügen.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInData - Integerwert
+      //*
+      //* @return Index an dem erfolgreich eingefügt wurde, sonst -1.
+      //*
+      //* @diag xxx0772
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListAddInt export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+           pInData  int(20) value;
+         end-pi;
+
+         return ArrayListAdd(PInArray:%Addr(PInData):%size(PInData));
+
+       end-proc ArrayListAddInt;
+      //---------------------------------------------------------------*
+      //  ArrayListAddAll
+      //---------------------------------------------------------------*
+      //* Andere Arraylist am Ende anhängen.
+      //* <P>
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInArraySrc - Array, von dem Daten importier werden sollen.
+      //* @param pInIdxStr - Startindex des Quellarray (Optional)
+      //* @param pInIdxLen - Anzahl Elemente aus dem Quellarray (Optional)
+      //*
+      //* @return Index an dem zuletzt erfolgreich eingefügt wurde, sonst -1.
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0778
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListAddAll export;
+         dcl-pi *N int(10);
+           pInArray    int(10) value;
+           pInArraySrc int(10) value;
+           pInIdxStr   int(10) value options(*nopass);
+           pInIdxLen   int(10) value options(*nopass);
+         end-pi;
+
+         dcl-s i           int(10);
+         dcl-s pPtData     pointer;
+         dcl-s pInSize     int(10);
+         dcl-s pPtTmp      pointer;
+         dcl-s pInIdxStr_i int(10);
+         dcl-s pInIdxLen_i int(10);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         //----
+         // Quellarrays auf Gültigkeit prüfen
+         if not ArrayListIsValid(PInArraySrc);
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         pInIdxStr_i = 1;
+         if %parms() > 2;
+           pInIdxStr_i = pInIdxStr;
+         endif;
+
+         if %parms() > 3;
+           pInIdxLen_i = pInIdxLen;
+         else;
+           pInIdxLen_i = ArrayListSize(PInArraySrc);
+         endif;
+
+         //----
+         // Index des Quellarrays auf Gültigkeit prüfen
+          if pInIdxStr_i < 1 Or
+            ArrayListSize(PInArraySrc) < (PInIdxStr_i + pInIdxLen_i - 1);
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         pDsArray.IsSorted = *Off;
+
+         //----
+         // Zu letzter Datenstruktur gehen
+         pPtElem = pDsArray.PtLast;
+
+         for i=PInIdxStr_i by 1 to (PInIdxStr_i + pInIdxLen_i - 1);
+
+           // Daten aus Quellarray lesen
+           pPtData = ArrayListGet(PInArraySrc:i:PInSize);
+
+           //-----------
+           // Neuen Block erstellen
+           if pDsElem.InUsed = %elem(pDsElem.PtData);
+             pDsArray.PtLast = %alloc(%size(DsElem_t));
+             memset(pDsArray.PtLast:NULL:%size(DsElem_t));
+
+             pDsElem.PtNext = pDsArray.PtLast;
+             pPtTmp         = pPtElem;
+             pPtElem        = pDsElem.PtNext;
+             pDsElem.PtPrev = pPtTmp;
+           endif;
+
+           //-----------
+           // Daten kopieren
+           pDsElem.InUsed += 1;
+           pDsElem.PtData(pDsElem.InUsed) = %alloc(PInSize);
+           pDsElem.InSize(pDsElem.InUsed) = pInSize;
+           memcpy(pDsElem.PtData(pDsElem.InUsed)
+                    :pPtData
+                    :PInSize);
+           pDsArray.InElem += 1;
+
+         endfor;
+
+         return pDsArray.InElem;
+
+       end-proc ArrayListAddAll;
+      //---------------------------------------------------------------*
+      //  ArrayListInsert
+      //---------------------------------------------------------------*
+      //* Element in Liste einfügen.
+      //* <P>
+      //* Die nachfolgenden Elemente verschieben sich entsprechend.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInIndex - Stelle an der das neue Element eingefügt werden soll.
+      //* @param pPtData - Zeiger auf zu schreibende Daten (*String)
+      //* @param pInSize - Länge der Daten (Optional)
+      //*
+      //* @return 0 - Erfolgreich, sonst -1
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0777
+      //* @diag xxx0778
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListInsert export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+           pInIndex int(10) value;
+           pPtData  pointer value options(*string);
+           pInSize  int(10) value options(*nopass);
+         end-pi;
+
+         dcl-s i         int(10);
+         dcl-s pInSize_i int(10);
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         if %parms() > 3;
+           pInSize_i = pInSize;
+         else;
+           pInSize_i = strlen(pPtData);
+         endif;
+
+         //----
+         // Datenlänge prüfen
+         if pPtData   = *Null Or
+            pInSize_i < 1;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Index auf Gültigkeit prüfen
+         if pInIndex < 1 Or pInIndex > pDsArray.InElem;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         pDsArray.IsSorted = *Off;
+
+         //----
+         // Am Ende ein 'leeres' Element für MOVE anlegen
+         ArrayListAdd(PInArray:' ');
+
+         //----
+         // vorhandene Daten verschieben
+         for i = (pDsArray.InElem - 1) by 1 downto pInIndex;
+            ArrayListSwap(pPtArray:i+1:i);
+         endfor;
+
+         //-----------
+         // Daten in Zielarray schreiben
+         ArrayListSet(PInArray:PInIndex:pPtData:PInSize_i);
+
+         return 0;
+
+       end-proc ArrayListInsert;
+      //---------------------------------------------------------------*
+      //  ArrayListInsertAll
+      //---------------------------------------------------------------*
+      //* Andere Arraylist in Liste einfügen.
+      //* <P>
+      //* Die nachfolgenden Elemente verschieben sich entsprechend.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInIndex - Stelle an der die Arraylist eingefügt werden soll.
+      //* @param pInArraySrc - Array, von dem Daten importier werden sollen.
+      //* @param pInIdxStr - Startindex des Quellarray (Optional)
+      //* @param pInIdxLen - Anzahl Elemente aus dem Quellarray (Optional)
+      //*
+      //* @return 0 - Erfolgreich, sonst -1
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0778
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListInsertAll export;
+         dcl-pi *N int(10);
+           pInArray    int(10) value;
+           pInIndex    int(10) value;
+           pInArraySrc int(10) value;
+           pInIdxStr   int(10) value options(*nopass);
+           pInIdxLen   int(10) value options(*nopass);
+         end-pi;
+
+         dcl-s i           int(10);
+         dcl-s pPtData     pointer;
+         dcl-s pInSize     int(10);
+         dcl-s pPtTmp      pointer;
+         dcl-s pInIdxStr_i int(10);
+         dcl-s pInIdxLen_i int(10);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         //----
+         // Quellarrays auf Gültigkeit prüfen
+         if not ArrayListIsValid(PInArraySrc);
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         pInIdxStr_i = 1;
+         if %parms() > 3;
+           pInIdxStr_i = pInIdxStr;
+         endif;
+
+         if %parms() > 4;
+           pInIdxLen_i = pInIdxLen;
+         else;
+           pInIdxLen_i = ArrayListSize(PInArraySrc);
+         endif;
+
+         //----
+         // Index des Quellarrays auf Gültigkeit prüfen
+         if pInIdxStr_i < 1 Or
+            ArrayListSize(PInArraySrc) < (PInIdxStr_i + pInIdxLen_i - 1);
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         pDsArray.IsSorted = *Off;
+
+         //----
+         // Am Ende 'leere' Elemente für MOVE anlegen
+         for i = 1 by 1 to pInIdxLen_i;
+           ArrayListAdd(PInArray:' ');
+         endfor;
+
+         //----
+         // vorhandene Daten verschieben
+         for i = (pDsArray.InElem - pInIdxLen_i) by 1 downto pInIndex;
+            ArrayListSwap(pPtArray:i+PInIdxLen_i:i);
+         endfor;
+
+         //----
+         // Neue Daten schreiben
+         for i=PInIdxStr_i by 1 to (PInIdxStr_i + pInIdxLen_i - 1);
+
+           //-----------
+           // Daten aus Quellarray lesen
+           pPtData = ArrayListGet(PInArraySrc:i:PInSize);
+
+           //-----------
+           // Daten in Zielarray schreiben
+           ArrayListSet(PInArray
+                          :PInIndex + i - pInIdxStr_i
+                          :pPtData
+                          :PInSize);
+
+         endfor;
+
+         return pDsArray.InElem;
+
+       end-proc ArrayListInsertAll;
+      //---------------------------------------------------------------*
+      //  ArrayListClear
+      //---------------------------------------------------------------*
+      //* Alle Einträge der Liste entfernen
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //*
+      //* @return 0 - Erfolgreich, sonst -1
+      //*
+      //* @diag xxx0772
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListClear export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+         end-pi;
+
+         dcl-s i int(10);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtTmp   pointer;
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         pPtElem = pDsArray.PtFirst;
+         dow pPtElem <> *Null;
+           for i=1 by 1 to %elem(pDsElem.PtData);
+             if pDsElem.PtData(i) = *Null;
+               leave;
+             endif;
+             dealloc(n) pDsElem.PtData(i);
+           endfor;
+           pPtTmp = pDsElem.PtNext;
+           dealloc(n) pPtElem;
+           pPtElem = pPtTmp;
+         enddo;
+
+         pDsArray.InElem    = 0;
+         pDsArray.IsSorted  = *On;
+         pDsArray.PtFirst   = %alloc(%size(DsElem_t));
+         pDsArray.PtLast    = pDsArray.PtFirst;
+         memset(pDsArray.PtFirst:NULL:%size(DsElem_t));
+
+         return 0;
+
+       end-proc ArrayListClear;
+      //---------------------------------------------------------------*
+      //  ArrayListGet
+      //---------------------------------------------------------------*
+      //* Element aus Liste Abrufen.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInIndex - Stelle des anzurufenden Elements
+      //* @param pInSize - Rückgabewert für die Größe des Rückgabezeigers (optional).
+      //*
+      //* @return Zeiger auf die gefundnen Daten.
+      //*         Der Speicherbereich wird bei jedem Aufruf überschrieben !
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0778
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListGet export;
+         dcl-pi *N pointer;
+           pInArray int(10) value;
+           pInIndex int(10) value;
+           pInSize  int(10) options(*nopass);
+         end-pi;
+
+         dcl-s i         int(10);
+         dcl-s pInSize_i int(10) static inz;
+         dcl-s pPtRes    pointer static inz(*Null);
+         dcl-s pPtRet    pointer static inz(*Null);
+         dcl-s pInRetLen int(10) static inz(0);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem   pointer;
+         dcl-ds pDsElem  likeds(DsElem_t) based(pPtElem);
+
+         pInSize_i = *Zeros;
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return *Null;
+         endif;
+
+         //----
+         // Index auf Gültigkeit prüfen
+         if pInIndex < 1 Or pInIndex > pDsArray.InElem;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return *Null;
+         endif;
+
+         //----
+         // Zu gesuchter Datenstruktur gehen
+         pPtRes = ArrayListGetIntern(pPtArray:PInIndex:PInSize_i);
+         if %parms() > 2;
+           pInSize = pInSize_i;
+         endif;
+
+         //----
+         // Kopie des Ergebnises zurückgeben
+         if pInSize_i > pInRetLen;
+
+           if pInRetLen > *Zeros;
+              monitor;
+                pPtRet = %realloc(pPtRet:PInSize_i);
+              on-error;
+                pPtRet = %alloc(PInSize_i);
+              endmon;
+           else;
+              pPtRet = %alloc(PInSize_i);
+           endif;
+
+           pInRetLen = pInSize_i;
+         endif;
+
+         memcpy(pPtRet:pPtRes:PInSize_i);
+
+         return pPtRet;
+
+       end-proc ArrayListGet;
+      //---------------------------------------------------------------*
+      //  ArrayListGetInt
+      //---------------------------------------------------------------*
+      //* Integer-Element aus Liste Abrufen.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInIndex - Stelle des anzurufenden Elements
+      //*
+      //* @return Integerwert - wenn die hinterlegeten Daten maximal 8Byte
+      //*                       lang sind, sonst 0.
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0778
+      //* @diag xxx0779
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListGetInt export;
+         dcl-pi *N int(20);
+           pInArray int(10) value;
+           pInIndex int(10) value;
+         end-pi;
+
+         dcl-s i       int(10);
+         dcl-s pInRes  int(20) static inz;
+         dcl-s pPtRes  pointer static inz(*Null);
+         dcl-s pInSize int(10) static inz;
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return 0;
+         endif;
+
+         //----
+         // Index auf Gültigkeit prüfen
+         if pInIndex < 1 Or pInIndex > pDsArray.InElem;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return 0;
+         endif;
+
+         //----
+         // Zu gesuchter Datenstruktur gehen
+         pPtRes = ArrayListGetIntern(pPtArray:PInIndex:PInSize);
+
+         if pInSize > %size(PInRes);
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return 0;
+         endif;
+
+         pInRes = *Zeros;
+         memcpy(%Addr(PInRes) + %size(PInRes) - pInSize
+                  :pPtRes
+                  :PInSize);
+
+         return pInRes;
+
+       end-proc ArrayListGetInt;
+      //---------------------------------------------------------------*
+      //  ArrayListGetString
+      //---------------------------------------------------------------*
+      //* Text-Element aus Liste Abrufen.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInIndex - Stelle des anzurufenden Elements
+      //*
+      //* @return Text - wenn die hinterlegeten Daten maximal 65535
+      //*                lang sind, sonst Länge 0.
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0778
+      //*
+      //* @exception xxx0779
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListGetString export;
+         dcl-pi *N varchar(65535);
+           pInArray int(10) value;
+           pInIndex int(10) value;
+         end-pi;
+
+         dcl-s i       int(10);
+         dcl-s pPtRes  pointer;
+         dcl-s pAnRes  char(65535) based(pPtRes);
+         dcl-s pInSize int(10);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return '';
+         endif;
+
+         //----
+         // Index auf Gültigkeit prüfen
+         if pInIndex < 1 Or pInIndex > pDsArray.InElem;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return '';
+         endif;
+
+         //----
+         // Zu gesuchter Datenstruktur gehen
+         pPtRes = ArrayListGetIntern(pPtArray:PInIndex:PInSize);
+
+         if pInSize > 65535;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           // EXIT !!!!!!
+           return '';
+         endif;
+
+         return %subst(PAnRes:1:PInSize);
+
+       end-proc ArrayListGetString;
+      //---------------------------------------------------------------*
+      //  ArrayListSet
+      //---------------------------------------------------------------*
+      //* Element in Liste berschreiben.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInIndex - Stelle an der das Element berschrieben werden soll.
+      //* @param pPtData - Zeiger auf zu schreibende Daten (*String)
+      //* @param pInSize   - Lnge der Daten (Optional)
+      //*
+      //* @return &gt;0 - Erfolgreich, sonst -1
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0777
+      //* @diag xxx0778
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListSet export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+           pInIndex int(10) value;
+           pPtData  pointer value options(*string);
+           pInSize  int(10) value options(*nopass);
+         end-pi;
+
+         dcl-s i         int(10);
+         dcl-s pInSize_i int(10);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         if %parms() > 3;
+           pInSize_i = pInSize;
+         else;
+           pInSize_i = strlen(pPtData);
+         endif;
+
+         //----
+         // Datenlnge prfen
+         if pPtData   = *Null Or
+            pInSize_i < 1;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Index auf Gltigkeit prfen
+         if pInIndex < 1 Or pInIndex > pDsArray.InElem;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         pDsArray.IsSorted = *Off;
+
+         //----
+         // Zu gesuchter Datenstruktur gehen
+         pPtElem = pDsArray.PtFirst;
+         for i = 1 by 1 to %div(PInIndex-1:%elem(DsElem_t.PtData));
+           pPtElem = pDsElem.PtNext;
+         endfor;
+
+         i = %rem(PInIndex-1:%elem(DsElem_t.PtData)) + 1;
+
+         if pDsElem.InSize(i) < pInSize_i;
+           pDsElem.PtData(i) = %realloc(pDsElem.PtData(i):PInSize_i);
+         endif;
+
+         pDsElem.InSize(i) = pInSize_i;
+         memcpy(pDsElem.PtData(i):pPtData:PInSize_i);
+
+         return pInSize_i;
+
+       end-proc ArrayListSet;
+      //---------------------------------------------------------------*
+      //  ArrayListSetInt
+      //---------------------------------------------------------------*
+      //* Element in Liste mit einem Integerwert berschreiben
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInIndex - Stelle an der das Element berschrieben werden soll.
+      //* @param pInData - Integerwert, der geschrieben werden soll.
+      //*
+      //* @return &gt;0 - Erfolgreich, sonst -1
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0777
+      //* @diag xxx0778
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListSetInt export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+           pInIndex int(10) value;
+           pInData  int(20) value;
+         end-pi;
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         if ArrayListSet(PInArray:PInIndex:%Addr(PInData):%size(PInData)) = -1;
+           //QMhRmvPM('*':0:ExpMKey:API_BYKEY:QUsecF);
+           //QMhMovPm(*Blanks:MSGMOVALL:MSGMOVALLN:'*':1:QUSecF);
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+            return -1;
+         endif;
+
+         return %size(PInData);
+
+       end-proc ArrayListSetInt;
+      //---------------------------------------------------------------*
+      //  ArrayListObjectSize
+      //---------------------------------------------------------------*
+      //* Gre des Elements abfragen.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInIndex - Stelle des anzurufenden Elements
+      //*
+      //* @return Gre des Elements &gt;= 0, sont -1.
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0778
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListObjectSize export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+           pInIndex int(10) value;
+         end-pi;
+
+         dcl-s pInSize int(10);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Index auf Gltigkeit prfen
+         if pInIndex < 1 Or pInIndex > pDsArray.InElem;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Zu gesuchter Datenstruktur gehen
+         ArrayListGetIntern(pPtArray:PInIndex:PInSize);
+
+         return pInSize;
+
+       end-proc ArrayListObjectSize;
+      //---------------------------------------------------------------*
+      //  ArrayListIndexOf
+      //---------------------------------------------------------------*
+      //* Gibt den Index des ersten gefundenen Elements zurck.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pPtData - Zeiger auf Vergleichsdaten (*String)
+      //* @param pInSize - Lnge der Daten (Optional)
+      //*
+      //* @return Index des gefundenen Elements, sonst 0.
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0777
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListIndexOf export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+           pPtData  pointer value options(*string);
+           pInSize  int(10) value options(*nopass);
+         end-pi;
+
+         dcl-s i int(10);
+         dcl-s d int(10);
+         dcl-s pInSize_i int(10);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         if %parms() > 2;
+           pInSize_i = pInSize;
+         else;
+           pInSize_i = strlen(pPtData);
+         endif;
+
+         //----
+         // Datenlnge prfen
+         if pPtData   = *Null Or
+            pInSize_i < 1;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         pPtElem = pDsArray.PtFirst;
+         d = 0;
+         dow pPtElem <> *Null;
+          for i=1 by 1 to %elem(pDsElem.PtData);
+             //if pDsElem.PtData(i) = *Null;
+             //  return 0;
+             //endif;
+             if pInSize_i = pDsElem.InSize(i) And
+                memcmp(pPtData:pDsElem.PtData(i):pDsElem.InSize(i)) = 0;
+               return d * %elem(pDsElem.PtData) + i;
+             endif;
+           endfor;
+           pPtElem = pDsElem.PtNext;
+           d += 1;
+         enddo;
+
+         return 0;
+
+       end-proc ArrayListIndexOf;
+      //---------------------------------------------------------------*
+      //  ArrayListLastIndexOf
+      //---------------------------------------------------------------*
+      //* Gibt den Index des letzten gefundenen Elements zurck.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pPtData - Zeiger auf zu schreibende Daten (*String)
+      //* @param pInSize - Lnge der Daten (Optional)
+      //*
+      //* @return Index des gefundenen Elements, sonst 0.
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0777
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListLastIndexOf export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+           pPtData  pointer value options(*string);
+           pInSize  int(10) value options(*nopass);
+         end-pi;
+
+         dcl-s i int(10);
+         dcl-s d int(10);
+         dcl-s pInSize_i int(10);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         if %parms() > 2;
+           pInSize_i = pInSize;
+         else;
+           pInSize_i = strlen(pPtData);
+         endif;
+
+         //----
+         // Datenlnge prfen
+         if pPtData   = *Null Or
+            pInSize_i < 1;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         pPtElem = pDsArray.PtLast;
+         d = 0;
+         dow pPtElem <> *Null;
+           for i=pDsElem.InUsed by 1 downto 1;
+             if pInSize_i = pDsElem.InSize(i) And
+                memcmp(pPtData:pDsElem.PtData(i):pDsElem.InSize(i)) = 0;
+              return pDsArray.InElem - d - pDsElem.InUsed + i;
+            endif;
+           endfor;
+           d += pDsElem.InUsed;
+           pPtElem = pDsElem.PtPrev;
+         enddo;
+
+         return 0;
+
+       end-proc ArrayListLastIndexOf;
+      //---------------------------------------------------------------*
+      //  ArrayListContains
+      //---------------------------------------------------------------*
+      //* Prft, ob ein Element in der Liste existiert.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pPtData - Zeiger auf zu Vergleichsdaten (*String)
+      //* @param pInSize - Lnge der Daten (Optional)
+      //*
+      //* @return *On - Gefunden, sonst *Off.
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0777
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListContains export;
+         dcl-pi *N ind;
+           pInArray int(10) value;
+           pPtData  pointer value options(*string);
+           pInSize  int(10) value options(*nopass);
+         end-pi;
+
+         dcl-s pInSize_i int(10);
+         dcl-s pInRes    int(10);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         if %parms() > 2;
+           pInSize_i = pInSize;
+         else;
+           pInSize_i = strlen(pPtData);
+         endif;
+
+         pInRes = ArrayListIndexOf(PInArray:pPtData:PInSize_i);
+         if pInRes < 1;
+           return *off;
+         endif;
+
+         return (PInRes > 0);
+
+       end-proc ArrayListContains;
+      //---------------------------------------------------------------*
+      //  ArrayListRemove
+      //---------------------------------------------------------------*
+      //* Elemente aus der Liste entfernen.
+      //* <P>
+      //* Die nachfolgenden Elemente verschieben sich entsprechend.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pInIndex - Stelle an der das Element entfernt werden soll.
+      //* @param pInLen - Anzahl Elemente, die entfernt werden sollen (optional)
+      //*
+      //* @return Anzahl entfernte Elemente, sonst -1.
+      //*
+      //* @diag xxx0772
+      //* @diag xxx0778
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListRemove export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+           pInIndex int(10) value;
+           pInLen   int(10) value options(*nopass);
+         end-pi;
+
+         dcl-s i        int(10);
+         dcl-s pInLen_i int(10);
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem  pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         if %parms() > 2;
+           pInLen_i = pInLen;
+         else;
+           pInLen_i = 1;
+         endif;
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // Index auf Gltigkeit prfen
+         if pInIndex < 1 Or pInIndex + pInLen_i - 1 > pDsArray.InElem;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         //----
+         // vorhandene Daten verschieben
+         for i = pInIndex by 1 to (pDsArray.InElem - pInLen_i);
+           ArrayListSwap(pPtArray:i:i+PInLen_i);
+         endfor;
+
+         //----
+         // Daten am Ende lschen
+         pPtElem = pDsArray.PtLast;
+         for i = pInLen_i by 1 downto 1;
+
+           dealloc(n) pDsElem.PtData(pDsElem.InUsed);
+           pDsElem.InSize(pDsElem.InUsed) = 0;
+
+           pDsArray.InElem -= 1;
+           pDsElem.InUsed  -= 1;
+
+           if pDsElem.InUsed = *Zeros And pDsArray.InElem > *Zeros;
+             pPtElem = pDsElem.PtPrev;
+             dealloc(n) pDsArray.PtLast;
+             pDsArray.PtLast = pPtElem;
+             pDsElem.PtNext  = *Null;
+           endif;
+
+           if pDsArray.InElem = *Zeros;
+             pDsArray.IsSorted  = *On;
+           endif;
+         endfor;
+
+         return 0;
+
+       end-proc ArrayListRemove;
+      //---------------------------------------------------------------*
+      //  ArrayListIsEmpty
+      //---------------------------------------------------------------*
+      //* Prft, ob die Liste leer ist.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //*
+      //* @return *On - Liste ist leer, sonst *Off.
+      //*
+      //* @diag xxx0772
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListIsEmpty export;
+         dcl-pi *N ind;
+           pInArray int(10) value;
+         end-pi;
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return *on;
+         endif;
+
+         return (pDsArray.InElem < 1);
+
+       end-proc ArrayListIsEmpty;
+      //---------------------------------------------------------------*
+      //  ArrayListIsSorted
+      //---------------------------------------------------------------*
+      //* Prft, ob die Liste sortiert ist.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //*
+      //* @return *On - Liste ist sortiert, sonst *Off.
+      //*
+      //* @diag xxx0772
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListIsSorted export;
+         dcl-pi *N ind;
+           pInArray int(10) value;
+         end-pi;
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return *on;
+         endif;
+
+         return pDsArray.IsSorted;
+
+       end-proc ArrayListIsSorted;
+      //---------------------------------------------------------------*
+      //  ArrayListSize
+      //---------------------------------------------------------------*
+      //* Gibt die aktuelle Anzahl Elemente zurck.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //*
+      //* @return Gibt die aktuelle Anzahl Elemente zurck.
+      //*
+      //* @diag xxx0772
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListSize export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+         end-pi;
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         return pDsArray.InElem;
+
+       end-proc ArrayListSize;
+      //---------------------------------------------------------------*
+      //  ArrayListFree
+      //---------------------------------------------------------------*
+      //* Array List freigeben.
+      //* <P>
+      //* Die Liste wird komplett aus dem Speicher entfernt und die
+      //* Refernznummer von @link #ArrayListNew wird ungltig.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //*
+      //* @return 0 - Liste erfolgreich freigegeben, sonst -1.
+      //*
+      //* @diag xxx0772
+      //*
+      //* @see SrvSysf.SrvSysf.ExpExcp - Letzter Fehlercode.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListFree export;
+         dcl-pi *N int(10);
+           pInArray int(10) value;
+         end-pi;
+
+         dcl-s pPtArray  pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         //----
+         // Zeiger laden
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           //QMhSndPM(Excp:ExcpM:ExcpA:
+           //           %size(ExpExcpA):API_DIAG:'*':1:GAnMKey:QUsecF);
+           return -1;
+         endif;
+
+         if ArrayListClear(PInArray) = -1;
+           //QMhMovPm(*Blanks:MSGMOVALL:MSGMOVALLN:'*':1:QUSecF);
+           return -1;
+         endif;
+
+         dealloc(n) pDsArray.PtFirst;
+         dealloc(n) pPtArray;
+         OoRObjectFree(S#Prog:PInArray);
+
+         return 0;
+
+       end-proc ArrayListFree;
+      //---------------------------------------------------------------*
+      //  ArrayListIsValid
+      //---------------------------------------------------------------*
+      //* Prft, ob die Liste nicht schon durch @link #ArrayListFree
+      //* bereinigt wurde.
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //*
+      //* @return *On - Liste ist noch gltig, sonst *Off.
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListIsValid export;
+         dcl-pi *n ind;
+           pInArray int(10) value;
+         end-pi;
+
+         return (OoRObjectGet(S#Prog:pInArray) <> *Null);
+
+       end-proc ArrayListIsValid;
+      //---------------------------------------------------------------*
+      //  ArrayListSort
+      //---------------------------------------------------------------*
+      //* Sort array list.
+      //* <P>
+      //* <DL>
+      //* <DT><B>Interface for sort function :</B></DT>
+      //* <DD><PRE>d IntSort         PR            10I 0
+      //* d   pPtArray                      *   value
+      //* d   pPtCompFunc                   *   const procptr</PRE></DD>
+      //* <DD>Dieses Interface darf nur duch das Modul SRVSTG01
+      //*     implementiert werden.</DD>
+      //* <DD><DL>
+      //*    <DT><B>Parameters:</B></DT>
+      //*    <DD>pPtArray - Zeiger auf das Array</DD>
+      //*    <DD>pPtCompFunc - Zeiger auf eine Vergleichsfunktion</DD>
+      //*    </DL>
+      //*    <DL>
+      //*    <DT><B>Returns:</B></DT>
+      //*    <DD>0 - Liste erfolgreich sortiert, sonst -1.</DD>
+      //*    </DL>
+      //* </DD>
+      //* </DL>
+      //* <P>
+      //* <DL>
+      //* <DT><B>Implementierte Sortierfunktionen :</B></DT>
+      //* <DD>@link #ArrayListShakerSort -
+      //*              Stabile Sortiertung mit ShakerSort (Default)</DD>
+      //* <DD>@link #ArrayListQuickSort -
+      //*              Instabile Sortiertung mit QuickSort</DD>
+      //* </DL>
+      //* <P>
+      //* <DL>
+      //* <DT><B>Interface fr Vergleichsfunktionen :</B></DT>
+      //* <DD><PRE>d IntCompare      PR            10I 0
+      //* d   pPtData1                      *   value
+      //* d   pInSize1                    10I 0 value
+      //* d   pPtData2                      *   value
+      //* d   pInSize2                    10I 0 value</PRE></DD>
+      //* <DD>Dieses Interface kann von jeder Anwendung implementiert
+      //*     werden, der ein normaler Bytevergleich der gespeicherten
+      //*     Daten nicht ausreicht. Dies wre z.B. der Fall, wenn nur
+      //*     ein bestimmtes Teilstck verglichen werden soll,
+      //*     oder falls auf Grund der Daten noch weitere Funktionen fr
+      //*     einen Vergleich bentigt werden.</DD>
+      //* <DD><DL>
+      //*    <DT><B>Parameters:</B></DT>
+      //*    <DD>pPtData1 - Zeiger auf Daten 1</DD>
+      //*    <DD>PInSize1 - Lnge Daten 1</DD>
+      //*    <DD>pPtData2 - Zeiger auf Daten 2</DD>
+      //*    <DD>PInSize2 - Lnge Daten 2</DD>
+      //*    </DL>
+      //*    <DL>
+      //*    <DT><B>Returns:</B></DT>
+      //*    <DD>0 - Daten sind identisch</DD>
+      //*    <DD>&gt;0 - pPtData1 > pPtData2</DD>
+      //*    <DD>&lt;0 - pPtData1 < pPtData2</DD>
+      //*    </DL>
+      //*    <DL>
+      //*    <DT><B>Bemerkung:</B></DT>
+      //*    <DD>Durch das Umkehren der Rckgabewerte fr den Vergleich,
+      //*        kann eine absteigende Sortierung erreicht werden.</DD>
+      //*    </DL>
+      //* </DD>
+      //* </DL>
+      //* <P>
+      //* <DL>
+      //* <DT><B>Implementierte Vergleichsfunktionen :</B></DT>
+      //* <DD>@link #ArrayListCompareAsc -
+      //*              Direkter Byte-Vergleich der Arrayinhalte (Default).
+      //*              Das Ergebnis der Funktion fhrt zu einer aufsteigenden
+      //*              Sortierung.</DD>
+      //* <DD>@link #ArrayListCompareDesc -
+      //*              Direkter Byte-Vergleich der Arrayinhalte.
+      //*              Das Ergebnis der Funktion fhrt zu einer absteigenden
+      //*              Sortierung.</DD>
+      //* </DL>
+      //*
+      //* @param pInArray - Referenz des Arrays von @link #ArrayListNew
+      //* @param pPtSort - Zeiger auf eine Sortierfunktion (Optional/Omit)
+      //* @param pPtCompare - Zeiger auf eine Vergleichsfunktion (Optional/Omit)
+      //*
+      //* @return 0 - Liste erfolgreich sortiert, sonst -1.
+      //*
+      //* @diag xxxxxx
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListSort export;
+         dcl-pi *N int(10);
+           pInArray   int(10) value;
+           pPtSort    pointer(*proc) const options(*nopass:*omit);
+           pPtCompare pointer(*proc) const options(*nopass:*omit);
+         end-pi;
+
+         dcl-s pPtSort_i    pointer(*proc);
+         dcl-s pPtCompare_i pointer(*proc);
+
+         dcl-pr IntSort int(10) extproc(pPtSort_i);
+                  pPtArray    pointer value;
+                  pPtCompFunc pointer(*proc) const;
+         end-pr;
+
+         dcl-s  pPtArray pointer;
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         //----
+         // check parameters
+         pPtSort_i = %PAddr(ArrayListShakerSort);
+         if %parms() > 1 And %Addr(pPtSort) <> *Null And pPtSort <> *Null;
+           pPtSort_i = pPtSort;
+         endif;
+
+         pPtCompare_i = %PAddr(ArrayListCompareAsc);
+         if %parms() > 2 And %Addr(pPtCompare) <> *Null And pPtCompare <> *Null;
+           pPtCompare_i = pPtCompare;
+         endif;
+
+         //----
+         // Load pointer
+         pPtArray = OoRObjectGet(S#Prog:PInArray);
+         if pPtArray = *Null;
+           // todo msg
+           return -1;
+         endif;
+
+         //----
+         // sort list
+         if IntSort(pPtArray:pPtCompare_i) = -1;
+           // todo msg
+           return -1;
+         endif;
+
+         pDsArray.IsSorted  = *On;
+
+         return 0;
+
+       end-proc ArrayListSort;
+      //---------------------------------------------------------------*
+      //  ArrayListShakerSort
+      //---------------------------------------------------------------*
+      //* Sort ArrayList with ShakerSort (stable Sort).
+      //* <P>
+      //* The function implements the interface IntSort, which is described
+      //* in @link #ArrayListSort.
+      //*
+      //* @param pInArray - Array list @link #ArrayListNew
+      //* @param pPtCompare - Function pointer to compare
+      //*                     function which implements the interface IntCompare.
+      //*
+      //* @return 0 - List successful sorted, else -1.
+      //*
+      //* @diag xxxxxx
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListShakerSort export;
+         dcl-pi *N int(10);
+           pPtArray    pointer value;
+           pPtCompare  pointer(*proc) const;
+         end-pi;
+
+         dcl-s i int(10);
+         dcl-s j int(10);
+         dcl-s x int(10);
+
+         dcl-s pBoSwap ind;
+
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s  pInElem1 int(10);
+         dcl-s  pPtElem1 pointer;
+         dcl-ds pDsElem1 likeds(DsElem_t) based(pPtElem1);
+
+         dcl-s  pInElem2 int(10);
+         dcl-s  pPtElem2 pointer;
+         dcl-ds pDsElem2 likeds(DsElem_t) based(pPtElem1);
+
+         dcl-pr IntCompare int(10) extproc(pPtCompare);
+                  pPtData1 pointer value;
+                  pInSize1 int(10) value;
+                  pPtData2 pointer value;
+                  pInSize2 int(10) value;
+         end-pr;
+
+         if pDsArray.InElem <= 1;
+           return 0;
+         endif;
+
+         //----
+         // ShakerSort
+         for i = 1 by 1 to pDsArray.InElem - 1;
+
+           pBoSwap = *Off;
+
+           for j = i by 1 to pDsArray.InElem - 1;
+
+             pPtElem1 = pDsArray.PtFirst;   // Element j
+             for x = 1 by 1 to %div((j)-1:%elem(DsElem_t.PtData));
+               pPtElem1 = pDsElem1.PtNext;
+             endfor;
+             pInElem1 = %rem((j)-1:%elem(DsElem_t.PtData)) + 1;
+
+             pPtElem2 = pPtElem1;
+             pInElem2 = pInElem1 + 1;       // Element j+1
+             if pInElem2 > pDsElem1.InUsed; // End of data structure reached => next
+               pPtElem2 = pDsElem1.PtNext;
+               pInElem2 = 1;
+             endif;
+
+             if IntCompare(pDsElem1.PtData(PInElem1)
+                          :pDsElem1.InSize(PInElem1)
+                          :pDsElem2.PtData(PInElem2)
+                          :pDsElem2.InSize(PInElem2)) > 0; // a > b
+
+               ArrayListSwap(pPtArray:j:j+1);
+               pBoSwap = *On;
+             endif;
+
+             pPtElem1 = pDsArray.PtFirst;       // Element Size-j
+             for x = 1 by 1 to %div((pDsArray.InElem-j)-1:%elem(DsElem_t.PtData));
+               pPtElem1 = pDsElem1.PtNext;
+             endfor;
+             pInElem1 = %rem((pDsArray.InElem-j)-1:%elem(DsElem_t.PtData)) + 1;
+
+             pPtElem2 = pPtElem1;
+             pInElem2 = pInElem1 + 1;       // Element Size-j+1
+             if pInElem2 > pDsElem1.InUsed; // End of data structure reached => next
+               pPtElem2 = pDsElem1.PtNext;
+               pInElem2 = 1;
+             endif;
+
+             if IntCompare(pDsElem1.PtData(PInElem1)
+                          :pDsElem1.InSize(PInElem1)
+                          :pDsElem2.PtData(PInElem2)
+                          :pDsElem2.InSize(PInElem2)) > 0; // a > b
+
+               ArrayListSwap(pPtArray:pDsArray.InElem-j:pDsArray.InElem-j+1);
+               pBoSwap = *On;
+             endif;
+
+           endfor;
+
+           if not pBoSwap;
+             return 0;
+           endif;
+
+         endfor;
+
+         return 0;
+
+       end-proc ArrayListShakerSort;
+      //---------------------------------------------------------------*
+      //  ArrayListQuickSort
+      //---------------------------------------------------------------*
+      //* Sort ArrayList with QuickSort (instable sort).
+      //* <P>
+      //* The function implements the interface IntSort, which is described
+      //* in @link #ArrayListSort.
+      //*
+      //* @param pInArray - Array list @link #ArrayListNew
+      //* @param pPtCompare - Function pointer to compare
+      //*                     function which implements the interface IntCompare.
+      //*
+      //* @return 0 - List successful sorted, else -1.
+      //*
+      //* @diag xxxxxx
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListQuickSort export;
+         dcl-pi *N int(10);
+           pPtArray   pointer value;
+           pPtCompare pointer(*proc) const;
+         end-pi;
+
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         if pDsArray.InElem <= 1;
+           return 0;
+         endif;
+
+         ArrayListQuickSortInt(pPtArray:pPtCompare:1:pDsArray.InElem);
+
+         return 0;
+
+       end-proc ArrayListQuickSort;
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListQuickSortInt;
+         dcl-pi *N;
+           pPtArray   pointer value;
+           pPtCompare pointer(*proc) const;
+           pInLeft    int(10) value;
+           pInRight   int(10) value;
+         end-pi;
+
+         dcl-s pInSize int(10);
+
+         dcl-s pInL int(10);
+         dcl-s pInR int(10);
+
+         dcl-s pPtPivot pointer;
+         dcl-s pInPivot int(10);
+
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s  pPtElem pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         dcl-pr IntCompare int(10) extproc(pPtCompare);
+                  pPtData1 pointer value;
+                  pInSize1 int(10) value;
+                  pPtData2 pointer value;
+                  pInSize2 int(10) value;
+         end-pr;
+
+         if pInLeft >= pInRight;
+           return;
+         endif;
+
+         pInL = pInLeft;
+         pInR = pInRight;
+
+         //-----
+         // search pivot element
+         pPtPivot = ArrayListGetIntern(pPtArray:PInRight:PInPivot);
+
+         dou pInL > pInR;
+
+            dow IntCompare(ArrayListGetIntern(pPtArray:PInL:PInSize)
+                          :PInSize
+                          :pPtPivot
+                          :PInPivot) < 0;
+              pInL += 1;
+            enddo;
+
+            dow IntCompare(ArrayListGetIntern(pPtArray:PInR:PInSize)
+                          :PInSize
+                          :pPtPivot
+                          :PInPivot) > 0;
+              pInR -= 1;
+            enddo;
+
+            if pInL <= pInR;
+              ArrayListSwap(pPtArray:PInL:PInR);
+              pInL += 1;
+              pInR -= 1;
+            endif;
+
+         enddo;
+
+         ArrayListQuickSortInt(pPtArray:pPtCompare:PInLeft:PInR);  // left list
+         ArrayListQuickSortInt(pPtArray:pPtCompare:PInL:PInRight); // right list
+
+         return;
+
+       end-proc ArrayListQuickSortInt;
+      //---------------------------------------------------------------*
+      //  ArrayListCompareAsc
+      //---------------------------------------------------------------*
+      //* Compare two storage areas with each other.
+      //* <P>
+      //* The result will be a list in ascending order.
+      //* <P>
+      //* The function implements the interface IntCompare, which is described
+      //* in @link #ArrayListSort.
+      //*
+      //* @param pPtData1 - Pointer on data 1
+      //* @param pPtSize1 - Length of data 1
+      //* @param pPtData2 - Pointer on data 2
+      //* @param pPtSize2 - Length of data 2
+      //*
+      //* @return 0 - data are identical
+      //* @return > 0 - pPtData1 > pPtData2
+      //* @return < 0 - pPtData1 < pPtData2
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListCompareAsc export;
+         dcl-pi *N int(10);
+           pPtData1 pointer value;
+           pInSize1 int(10) value;
+           pPtData2 pointer value;
+           pInSize2 int(10) value;
+         end-pi;
+
+         dcl-s pInSize int(10);
+         dcl-s pInRes  int(10);
+
+         pInSize = pInSize1;
+         if pInSize1 > pInSize2;
+           pInSize = pInSize2;
+         endif;
+
+         pInRes = memcmp(pPtData1:pPtData2:PInSize);
+
+         if pInRes > 0 And pInSize1 > pInSize2;
+           return 1;
+         elseif pInRes > 0 And pInSize1 < pInSize2;
+           return -1;
+         endif;
+
+         return pInRes;
+
+       end-proc ArrayListCompareAsc;
+      //---------------------------------------------------------------*
+      //  ArrayListCompareDesc
+      //---------------------------------------------------------------*
+      //* Compare two storage areas with each other.
+      //* <P>
+      //* The result will be a list in descending order.
+      //* <P>
+      //* The function implements the interface IntCompare, which is described
+      //* in @link #ArrayListSort.
+      //*
+      //* @param pPtData1 - Pointer on data 1
+      //* @param pPtSize1 - Length of data 1
+      //* @param pPtData2 - Pointer on data 2
+      //* @param pPtSize2 - Length of data 2
+      //*
+      //* @return 0 - data are identical
+      //* @return > 0 - pPtData1 < pPtData2
+      //* @return < 0 - pPtData1 > pPtData2
+      //*
+      //* @Author S.Allbach
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListCompareDesc export;
+         dcl-pi *n int(10);
+           pPtData1 pointer value;
+           pInSize1 int(10) value;
+           pPtData2 pointer value;
+           pInSize2 int(10) value;
+         end-pi;
+
+         return ArrayListCompareAsc(pPtData1:pInSize1:pPtData2:pInSize2) * -1;
+
+       end-proc ArrayListCompareDesc;
+      //---------------------------------------------------------------*
+      //  ArrayListSwap
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListSwap;
+         dcl-pi *N;
+           pPtArray  pointer value;
+           pInDstIdx int(10) value;
+           pInSrcIdx int(10) value;
+         end-pi;
+
+         dcl-s i int(10);
+
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s  pInSrc int(10);
+         dcl-s  pPtSrc pointer;
+         dcl-ds pDsSrc likeds(DsElem_t) based(pPtSrc);
+
+         dcl-s  pInDst int(10);
+         dcl-s  pPtDst pointer;
+         dcl-ds pDsDst likeds(DsElem_t) based(pPtDst);
+
+         dcl-s pPtData like(DsElem_t.PtData);
+         dcl-s pInSize like(DsElem_t.InSize);
+
+         //----
+         // Zu Quell-Datenstruktur gehen
+         pPtSrc = pDsArray.PtFirst;
+         for i = 1 by 1 to %div(PInSrcIdx-1:%elem(DsElem_t.PtData));
+           pPtSrc = pDsSrc.PtNext;
+         endfor;
+
+         pInSrc = %rem(PInSrcIdx-1:%elem(DsElem_t.PtData)) + 1;
+
+         //----
+         // go to destination structure
+         pPtDst = pDsArray.PtFirst;
+         for i = 1 by 1 to %div(PInDstIdx-1:%elem(DsElem_t.PtData));
+           pPtDst = pDsDst.PtNext;
+         endfor;
+
+         pInDst = %rem(PInDstIdx-1:%elem(DsElem_t.PtData)) + 1;
+
+         //----
+         // switch
+         pPtData = pDsSrc.PtData(PInSrc);
+         pInSize = pDsSrc.InSize(PInSrc);
+
+         pDsSrc.PtData(PInSrc) = pDsDst.PtData(PInDst);
+         pDsSrc.InSize(PInSrc) = pDsDst.InSize(PInDst);
+
+         pDsDst.PtData(PInDst) = pPtData;
+         pDsDst.InSize(PInDst) = pInSize;
+
+         return;
+
+       end-proc ArrayListSwap;
+      //---------------------------------------------------------------*
+      // ArrayListGetIntern
+      //---------------------------------------------------------------*
+       dcl-proc ArrayListGetIntern;
+         dcl-pi *N pointer;
+           pPtArray pointer value;
+           pInIndex int(10) value;
+           pInSize  int(10);
+         end-pi;
+
+         dcl-s i int(10);
+
+         dcl-ds pDsArray likeds(DsArray_t) based(pPtArray);
+
+         dcl-s pPtElem pointer;
+         dcl-ds pDsElem likeds(DsElem_t) based(pPtElem);
+
+         //----
+         // go to requested data strucutr
+         pPtElem = pDsArray.PtFirst;
+         for i = 1 by 1 to %div(PInIndex-1:%elem(DsElem_t.PtData));
+           pPtElem = pDsElem.PtNext;
+         endfor;
+
+         i       = %rem(PInIndex-1:%elem(DsElem_t.PtData)) + 1;
+         pInSize = pDsElem.InSize(i);
+
+         return pDsElem.PtData(i);
+
+       end-proc ArrayListGetIntern;

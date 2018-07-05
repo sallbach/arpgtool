@@ -1,0 +1,31 @@
+      /IF NOT DEFINED (AR_JMSR__)
+
+      /DEFINE AR_JMSR__
+      /INCLUDE ARPG_H,ARCTYPES
+
+      //---------------------------------------------------------------*
+      // constants
+      //---------------------------------------------------------------*
+       dcl-c JMS_FOLDER_MCD 'mcd';  
+       dcl-c JMS_FOLDER_JMS 'jms';  
+       dcl-c JMS_FOLDER_USR 'usr';  
+       dcl-c JMS_FOLDER_MQPS 'mqps'; 
+
+       dcl-c JMS_TYPE_STRING 'string';
+       dcl-c JMS_TYPE_BINHEX 'bin.hex';
+       dcl-c JMS_TYPE_I1 'i1';  
+       dcl-c JMS_TYPE_I2 'i2';  
+       dcl-c JMS_TYPE_I4 'i4':  
+       dcl-c JMS_TYPE_I8 'i8';  
+       dcl-c JMS_TYPE_INT 'int';  
+       dcl-c JMS_TYPE_R4 'r4';  
+       dcl-c JMS_TYPE_R8 'r8';  
+
+      //---------------------------------------------------------------*
+      // JmsNew
+      //---------------------------------------------------------------*
+       dcl-pr JmsNew int(10) extproc(*dclcase);
+         ptMessage const options(*nopass);
+       end-pr;
+
+      /ENDIF
