@@ -1,0 +1,42 @@
+             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSSQLR__')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSSQLR - Dynamic SQL Access                                          */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('SqlPreparedStatement')
+             EXPORT     SYMBOL('SqlPreparedStatementExecuteQuery')
+             EXPORT     SYMBOL('SqlPreparedStatementFree')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSSQL01 - ResultSet                                                  */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('SqlRsNext')                 
+             EXPORT     SYMBOL('SqlRsClose')                 
+             EXPORT     SYMBOL('SqlRsGetString')  
+             EXPORT     SYMBOL('SqlRsGetStringUcs')
+             EXPORT     SYMBOL('SqlRsGetDecimal')
+             EXPORT     SYMBOL('SqlRsGetDouble')
+             EXPORT     SYMBOL('SqlRsGetDate')
+             EXPORT     SYMBOL('SqlRsGetTime')
+             EXPORT     SYMBOL('SqlRsGetTimeStamp')
+             EXPORT     SYMBOL('SqlRsGetLong')  
+             EXPORT     SYMBOL('SqlRsGetHex')
+             EXPORT     SYMBOL('SqlRsIsNull')
+             EXPORT     SYMBOL('SqlRsHasError')
+             
+             EXPORT     SYMBOL('SqlRsFindColumn') 
+             EXPORT     SYMBOL('SqlRsGetColumnName')
+             EXPORT     SYMBOL('SqlRsGetColumnCount')
+             EXPORT     SYMBOL('SqlRsGetSysColumnName')
+             EXPORT     SYMBOL('SqlRsGetLongColumnName')
+             EXPORT     SYMBOL('SqlRsGetColumnPrefix')
+             EXPORT     SYMBOL('SqlRsGetColumnType')
+             EXPORT     SYMBOL('SqlRsGetPrecision')
+             EXPORT     SYMBOL('SqlRsGetScale')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSSQL01 - Dynamic SQL Access                                         */
+     /*-----------------------------------------------------------------------*/
+        /*     EXPORT     SYMBOL('SqlStatement')*/
+
+             ENDPGMEXP

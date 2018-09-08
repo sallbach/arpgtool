@@ -1,0 +1,140 @@
+**free
+/IF NOT DEFINED (AR_QSQPRC__)
+
+/DEFINE AR_QSQPRC__
+/INCLUDE ARPG_H,ARCQUSEC
+/INCLUDE QSYSINC/QRPGLESRC,QSQPRCED
+
+//---------------------------------------------------------------*
+//  constants
+//---------------------------------------------------------------*
+dcl-c SQL_ALLOW_COPY_OF_DATA_AUTO 'A';
+dcl-c SQL_ALLOW_COPY_OF_DATA_SYSTEM 'S';
+dcl-c SQL_ALLOW_COPY_OF_DATA_NO 'N';
+
+dcl-c SQL_ALLOW_BLOCKING_READ 'S';
+dcl-c SQL_ALLOW_BLOCKING_NONE 'F';
+dcl-c SQL_ALLOW_BLOCKING_ALLREAD 'L';
+
+dcl-c SQL_AUTOCOMMIT_NO '0';
+dcl-c SQL_AUTOCOMMIT_YES '1';
+
+dcl-c SQL_COMMIT_CONTROL_CHG 'C';
+dcl-c SQL_COMMIT_CONTROL_CS 'S';
+dcl-c SQL_COMMIT_CONTROL_ALL 'A';
+dcl-c SQL_COMMIT_CONTROL_NONE 'N';
+
+dcl-c SQL_CONCURRENT_ACCESS_WAIT 'W';
+dcl-c SQL_CONCURRENT_ACCESS_SKIP 'S';
+dcl-c SQL_CONCURRENT_ACCESS_USE 'U';
+
+dcl-c SQL_DATE_FORMAT_USA 'USA';
+dcl-c SQL_DATE_FORMAT_ISO 'ISO';
+dcl-c SQL_DATE_FORMAT_EUR 'EUR';
+dcl-c SQL_DATE_FORMAT_JIS 'JIS';
+dcl-c SQL_DATE_FORMAT_MDY 'MDY';
+dcl-c SQL_DATE_FORMAT_DMY 'DMY';
+dcl-c SQL_DATE_FORMAT_YMD 'YMD';
+dcl-c SQL_DATE_FORMAT_JUL 'JUL';
+
+dcl-c SQL_DIRECT_MAP_YES 'Y';
+dcl-c SQL_DIRECT_MAP_NO 'N';
+
+dcl-c SQL_EXTENDED_INDICATOR_YES 'Y';
+dcl-c SQL_EXTENDED_INDICATOR_NO 'N';
+
+dcl-c SQL_FUNCTION_BUILD_PACKAGE '1';
+dcl-c SQL_FUNCTION_PREPARE '2';
+dcl-c SQL_FUNCTION_EXECUTE '3';
+dcl-c SQL_FUNCTION_OPEN '4';
+dcl-c SQL_FUNCTION_FETCH '5';
+dcl-c SQL_FUNCTION_CLOSE '6';
+dcl-c SQL_FUNCTION_DESCRIBE '7';
+dcl-c SQL_FUNCTION_CLOSE_DELETE '8';
+dcl-c SQL_FUNCTION_PREPARE_DESCRIBE '9';
+dcl-c SQL_FUNCTION_INQUIRE 'A';
+dcl-c SQL_FUNCTION_CLOSE_PSEUDO_CLOSED 'B';
+dcl-c SQL_FUNCTION_DELETE_PACKAGE 'C';
+dcl-c SQL_FUNCTION_DIAG 'D';
+
+dcl-c SQL_HEX_LITERAL_AS_CHAR '0';
+dcl-c SQL_HEX_LITERAL_AS_BINARY '1';
+
+dcl-c SQL_LANGUAGE_ID_JOB '*JOB';
+dcl-c SQL_LANGUAGE_ID_JOBRUN '*JOBRUN';
+
+dcl-c SQL_NAME_CHECK_YES 'Y';
+dcl-c SQL_NAME_CHECK_NO 'N';
+
+dcl-c SQL_NAMING_SYS 'SYS';
+dcl-c SQL_NAMING_SQL 'SQL';
+
+dcl-c SQL_OPEN_READ x'80'; // b'10000000'
+dcl-c SQL_OPEN_WRITE x'40'; // b'01000000'
+dcl-c SQL_OPEN_UPDATE x'20'; // b'00100000'
+dcl-c SQL_OPEN_DELETE x'10'; // b'00010000'
+
+dcl-c SQL_FETCH_NEXT 0;
+dcl-c SQL_FETCH_PRIOR 1;
+dcl-c SQL_FETCH_FIRST 2;
+dcl-c SQL_FETCH_LAST 3;
+dcl-c SQL_FETCH_BEFORE 4;
+dcl-c SQL_FETCH_AFTER 5;
+dcl-c SQL_FETCH_CURRENT 6;
+dcl-c SQL_FETCH_RELATIVE 7;
+
+dcl-c SQL_REOPEN_YES '1';
+dcl-c SQL_REOPEN_NO '0';
+
+dcl-c SQL_PERFORMANCE_AREA_YES '1';
+dcl-c SQL_PERFORMANCE_AREA_NO '0'; 
+
+dcl-c SQL_REUSE_SQLDA_YES 'Y';
+dcl-c SQL_REUSE_SQLDA_NO 'N';
+
+dcl-c SQL_CURSOR_SCROLLABLE_YES 1;
+dcl-c SQL_CURSOR_SCROLLABLE_NO 0;
+
+dcl-c SQL_SORT_TABLE_JOB '*JOB';
+dcl-c SQL_SORT_TABLE_JOBRUN '*JOBRUN';
+dcl-c SQL_SORT_TABLE_LANGIDUNQ '*LANGIDUNQ';
+dcl-c SQL_SORT_TABLE_LANGIDSHR '*LANGIDSHR';
+dcl-c SQL_SORT_TABLE_HEX '*HEX';
+
+dcl-c SQL_LENGTH_TYPE_2 '0';
+dcl-c SQL_LENGTH_TYPE_4 '1';
+
+dcl-c SQL_TIME_FORMAT_HMS 'HMS';
+dcl-c SQL_TIME_FORMAT_USA 'USA';
+dcl-c SQL_TIME_FORMAT_ISO 'ISO';
+dcl-c SQL_TIME_FORMAT_EUR 'EUR';
+dcl-c SQL_TIME_FORMAT_JIS 'JIS';
+
+dcl-c SQL_USE_POINTERS_YES '1';
+dcl-c SQL_USE_POINTERS_NO '0';
+
+dcl-c SQL_USING_CLAUSE_NAMES 'N';
+dcl-c SQL_USING_CLAUSE_LABELS 'L';
+dcl-c SQL_USING_CLAUSE_BOTH 'B';
+dcl-c SQL_USING_CLAUSE_ANY 'A';
+
+dcl-c SQL_WITH_HOLD 'Y';
+dcl-c SQL_WITHOUT_HOLD 'N';
+
+dcl-c SQL_MAX_PRECISION_31 '1';
+dcl-c SQL_MAX_PRECISION_63 '2';
+
+//---------------------------------------------------------------*
+//  Process Extended Dynamic SQL (QSQPRCED) API
+//---------------------------------------------------------------*
+dcl-pr SqPrcEd extpgm('QSQPRCED');
+  SqlCa likeds(QSQS);
+  SqlDa char(65535) options(*varsize) const;
+  FuncTemplateFmt char(8) const;
+  FuncTemplate char(65535) options(*varsize) const;
+  USec char(65535) options(*varsize) noopt;
+  SqlOut char(65535) options(*varsize:*nopass);
+  SqlOutLen int(10) const options(*nopass);
+end-pr;
+
+/ENDIF

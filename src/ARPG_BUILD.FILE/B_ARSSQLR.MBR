@@ -1,0 +1,31 @@
+             INCLUDE    SRCMBR(B_INCLUDE)
+
+             CRTSQLRPGI OBJ(&LIBOBJ/ARSSQLR) +                     
+                          SRCFILE(&LIBSRC/ARPG_RPGLE) +            
+                          OBJTYPE(*MODULE) DBGVIEW(*SOURCE)        
+                          /* optimize ... source */                
+             CRTSQLRPGI OBJ(&LIBOBJ/ARSSQL01) +                     
+                          SRCFILE(&LIBSRC/ARPG_RPGLE) +            
+                          OBJTYPE(*MODULE) DBGVIEW(*SOURCE)        
+                          /* optimize ... source */                
+             CRTSRVPGM  SRVPGM(&LIBOBJ/ARSSQLR) +                  
+                          MODULE(&LIBOBJ/ARSSQLR &LIBOBJ/ARSSQL01) +
+                          SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Sql +    
+                          functions') BNDSRVPGM((ARSOORR)) +       
+                          OPTION(&RSLVREF)                         
+                          
+/* Only build testcases if RPGUnit exists */
+             IF         COND(&RSLVREF = '*UNRSLVREF') THEN(GOTO CMDLBL(END))
+             CHKOBJ     OBJ(RUTESTCASE) OBJTYPE(*SRVPGM)
+             MONMSG     MSGID(CPF9801) EXEC(GOTO CMDLBL(END))
+
+             CRTSQLRPGI OBJ(&LIBSRC/T_ARSSQLR) +               
+                          SRCFILE(&LIBSRC/ARPG_TEST) +         
+                          OBJTYPE(*MODULE) DBGVIEW(*SOURCE)    
+             CRTSRVPGM  SRVPGM(T_ARSSQLR) EXPORT(*ALL) +       
+                          BNDSRVPGM((ARSSQLR) (RUTESTCASE)) +  
+                          OPTION(&RSLVREF)                     
+                          
+             CALL       PGM(B_UNITTEST) PARM('T_ARSSQLR' &RSLVREF)
+
+ END:        ENDPGM

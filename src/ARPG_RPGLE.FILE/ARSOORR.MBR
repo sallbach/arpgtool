@@ -18,7 +18,7 @@
        dcl-ds DsObj_t qualified align template;
          inPos  int(10)  inz(0);
          inFree int(10)  inz(BUCKET_SIZE);
-         anRef  char(8)  inz        dim(BUCKET_SIZE);
+         anRef  char(11) inz        dim(BUCKET_SIZE);
          ptData pointer  inz(*Null) dim(BUCKET_SIZE);
          ptNext pointer  inz(*Null);
        end-ds;
@@ -42,7 +42,7 @@
       //---------------------------------------------------------------*
        dcl-proc OoRObjectNew export;
          dcl-pi *N int(10);
-           pAnRef  char(8) value;
+           pAnRef  char(11) value;
            pPtRef  pointer;
            pInSize like(size_t) value options(*nopass);
          end-pi;
@@ -146,7 +146,7 @@
       //---------------------------------------------------------------*
        dcl-proc OoRObjectGet export;
          dcl-pi *N pointer;
-           pAnRef char(8) value;
+           pAnRef char(11) value;
            pInObj int(10)  value;
          end-pi;
 
@@ -206,7 +206,7 @@
       //---------------------------------------------------------------*
        dcl-proc OoRObjectIsValid export;
          dcl-pi *N ind;
-           pAnRef char(8) value;
+           pAnRef char(11) value;
            pInObj int(10)  value;
          end-pi;
 
@@ -230,7 +230,7 @@
       //---------------------------------------------------------------*
        dcl-proc OoRObjectFree export;
          dcl-pi *N int(10);
-           pAnRef char(8) value;
+           pAnRef char(11) value;
            pInObj int(10)  value;
          end-pi;
 

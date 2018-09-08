@@ -1,0 +1,308 @@
+**Free
+ctl-opt nomain;
+ctl-opt ccsid(*ucs2:13488);
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCSQLR
+/COPY ARPG_H,ARCOORR
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCFCNTL
+/COPY ARPG_H,ARCQSQPRC
+
+//---------------------------------------------------------------*
+// typedefs
+//---------------------------------------------------------------*
+dcl-ds DsPrepStm_t qualified align template;
+  sqp0400 likeds(QSQP0400);
+  SqlStm like(sqlstm_t);
+  ptOpenDa pointer; // SqlDa
+  ptDescribeDa pointer; // SqlDa
+end-ds;
+
+//---------------------------------------------------------------*
+// constants
+//---------------------------------------------------------------*
+dcl-c SQL_NUM 1; 
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatement
+//---------------------------------------------------------------*
+//* A SQL statement is precompiled and stored in a PreparedStatement  
+//* object. This object can then be used to efficiently execute this 
+//* statement multiple times.
+//*
+//* @param pAnSqlStm - A SQL statement.
+//*
+//* @return 
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlPreparedStatement export;
+  dcl-pi *N int(10);
+    pAnSqlStm like(sqlstmvar_t) const;
+  end-pi;
+
+  dcl-s pInPrepStm int(10);
+  dcl-s pPtPrepStm pointer inz(*Null);
+  dcl-ds pDsPrepStm likeds(DsPrepStm_t) based(pPtPrepStm); 
+
+  dcl-s pPtOpenDa pointer;
+  dcl-ds pDsOpenDa likeds(SqlDa) based(pPtOpenDa);
+  
+  dcl-s pPtDescribeDa pointer;
+  dcl-ds pDsDescribeDa likeds(SqlDa) based(pPtDescribeDa);
+
+  dcl-s SqlVarOccur int(10);
+  
+  Exec Sql Include SqlDa;
+  Exec Sql Include Sqlca;
+
+  // New Object
+  pInPrepStm = OoRObjectNew(s#Prog:pPtPrepStm:%size(DsPrepStm_t));
+  if pInPrepStm = -1;
+    return -1;
+  endif;
+  clear pDsPrepStm;
+
+  // Inz OpenDa (SQLDA)
+  pDsPrepStm.ptOpenDa = %alloc(%size(SqlDa));
+  pPtOpenDa = pDsPrepStm.ptOpenDa;
+  clear pDsOpenDa;
+  
+  pDsOpenDa.SQLDAID = 'SQLDA'; 
+  pDsOpenDa.SQLDABC = %size(SqlDa);  
+  pDsOpenDa.SQLN = 0;
+  pDsOpenDa.SQLD = 0;
+
+  pDsPrepStm.ptDescribeDa = %alloc(%size(SqlDa)); 
+  pPtDescribeDa = pDsPrepStm.ptDescribeDa;
+  pDsDescribeDa = pDsOpenDa;
+
+  // Create SQL Package
+  if SqlCreatePackage(pDsPrepStm) <> 0;
+    SqlPreparedStatementFree(pInPrepStm);
+    return -1;
+  endif;  
+  
+  // Statement  
+  pDsPrepStm.SqlStm = pAnSqlStm;
+  pDsPrepStm.sqp0400.QSQSL07 = %len(pAnSqlStm);
+  
+  // Parms for PREPARE and DESCRIBE
+  pDsPrepStm.sqp0400.QSQCFD05 = SQL_USING_CLAUSE_BOTH; // Using clause for describe
+  pDsPrepStm.sqp0400.QSQSO07 = SQL_CURSOR_SCROLLABLE_NO; // Scrollable Option
+  pDsPrepStm.sqp0400.QSQPO03 = SQL_FETCH_NEXT; // Position Option
+  pDsPrepStm.sqp0400.QSQRR03 = 0; // Relative Record
+  pDsPrepStm.sqp0400.QSQRTI03 = 0; // Rows To Insert
+
+  PDSPREPSTM.SQP0400.QSQMP07 = 'T_ARSSQLR'; // todo get caller
+  PDSPREPSTM.SQP0400.QSQML06 = API_LIBL;  
+
+  // PREPARE & DESCRIBE to retrieve number of fields
+  pDsPrepStm.sqp0400.QSQCTION06 = SQL_FUNCTION_PREPARE_DESCRIBE;
+  SqPrcEd(SqlCa:pDsDescribeDa:'SQLP0400':pDsPrepStm:QUSecExcp);
+  
+  if SqlCode < 0;
+    // todo message
+    SqlPreparedStatementFree(pInPrepStm);
+    return -1;
+  endif;
+
+  // not a SELECT statement ?
+  if pDsDescribeDa.SQLD = 0;
+    return pInPrepStm;
+  endif;
+
+  // more SQL_VARs per field
+  SqlVarOccur = 1;
+  if %subst(pDsDescribeDa.SQLDAID:7:1) <> *blanks;
+    SqlVarOccur = %dec(%subst(pDsDescribeDa.SQLDAID:7:1):1:0);
+  endif;
+
+  // PREPARE & DESCRIBE to retrieve field description
+  pDsDescribeDa.SQLN = pDsDescribeDa.SQLD * SqlVarOccur;
+  pDsDescribeDa.SQLDABC = %size(SqlDa) + %size(SQL_VAR) * (pDsDescribeDa.SQLN-1);  
+  pDsPrepStm.ptDescribeDa = %realloc(pDsPrepStm.ptDescribeDa:pDsDescribeDa.SQLDABC); 
+  pPtDescribeDa = pDsPrepStm.ptDescribeDa;
+  pDsPrepStm.sqp0400.QSQCTION06 = SQL_FUNCTION_PREPARE_DESCRIBE;
+  SqPrcEd(SqlCa:pDsDescribeDa:'SQLP0400':pDsPrepStm:QUSecExcp);
+  
+  if SqlCode <> 0;
+    // todo message
+    SqlPreparedStatementFree(pInPrepStm);
+    return -1;
+  endif;
+  
+  return pInPrepStm;
+
+end-proc SqlPreparedStatement;
+//---------------------------------------------------------------*
+//  SqlPreparedStatementExecuteQuery
+//---------------------------------------------------------------*
+//* Executes the SQL statement of this PreparedStatement object.
+//*
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
+//*
+//* @return ccc
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlPreparedStatementExecuteQuery export;
+  dcl-pi *N int(10);
+    pInPrepStm int(10) const;
+  end-pi;
+
+  dcl-s pInResultSet int(10);
+
+  dcl-s pPtPrepStm pointer inz(*Null);
+  dcl-ds pDsPrepStm likeds(DsPrepStm_t) based(pPtPrepStm); 
+
+  // Statement
+  pPtPrepStm = OoRObjectGet(s#prog:pInPrepStm);
+  if pPtPrepStm = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  pInResultSet = SqlRsNew(pInPrepStm:pDsPrepStm.ptDescribeDa:pDsPrepStm.sqp0400.QSQBF05);
+  if pInResultSet = -1;
+    // todo message
+    return -1;
+  endif;
+
+  if SqlPreparedStatementFunction(pInPrepStm
+                                 :pInResultSet
+                                 :pDsPrepStm.ptOpenDa
+                                 :SQL_FUNCTION_OPEN) <> 0;
+    // todo message
+    SqlRsClose(pInResultSet);
+    return -1;
+  endif;
+
+  return pInResultSet;
+
+end-proc SqlPreparedStatementExecuteQuery;
+//---------------------------------------------------------------*
+//  SqlPreparedStatementFree
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInPrepStm - 
+//*
+//* @return ccc
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlPreparedStatementFree export;
+  dcl-pi *N int(10);
+    pInPrepStm int(10) const;
+  end-pi;
+
+  dcl-s pPtPrepStm pointer inz(*Null);
+  dcl-ds pDsPrepStm likeds(DsPrepStm_t) based(pPtPrepStm); 
+
+  pPtPrepStm = OoRObjectGet(s#prog:pInPrepStm);
+  if pPtPrepStm = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  dealloc(ne) pDsPrepStm.ptOpenDa;
+  dealloc(ne) pDsPrepStm.ptDescribeDa;
+  
+  OoRObjectFree(s#prog:pInPrepStm);
+
+  return 0;
+
+end-proc SqlPreparedStatementFree;
+//---------------------------------------------------------------*
+//  SqlPreparedStatementFunction
+//---------------------------------------------------------------*
+dcl-proc SqlPreparedStatementFunction export;
+  dcl-pi *N int(10);
+    pInPrepStm int(10) const;
+    pInResultSet int(10) const;
+    pPtDescribeDa pointer const;
+    pAnFunction char(1) const;
+  end-pi;
+
+  dcl-s pPtPrepStm pointer inz(*Null);
+  dcl-ds pDsPrepStm likeds(DsPrepStm_t) based(pPtPrepStm); 
+
+  dcl-s pPtDescribeDa_ pointer inz(*Null);
+  dcl-ds pDsDescribeDa likeds(SqlDa) based(pPtDescribeDa_);
+
+  pPtDescribeDa_ = pPtDescribeDa;
+
+  pPtPrepStm = OoRObjectGet(s#prog:pInPrepStm);
+  if pPtPrepStm = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  pDsPrepStm.sqp0400.QSQCTION06 = pAnFunction;
+  pDsPrepStm.sqp0400.QSQCN05 = 'ARSCUR_' + %char(pInResultSet); // Cursor Name
+  SqPrcEd(SqlCa:pDsDescribeDa:'SQLP0400':pDsPrepStm:QUSecExcp
+          :QUSecExcp:$size(QUSecExcp));
+
+  return SqlCode;
+
+end-proc SqlPreparedStatementFunction;
+//---------------------------------------------------------------*
+//  Create Sql Package
+//---------------------------------------------------------------*
+dcl-proc SqlCreatePackage;
+  dcl-pi *N int(10);
+    pDsPrepStm likeds(DsPrepStm_t); 
+  end-pi;
+
+  dcl-s pPtOpenDa pointer;
+  dcl-ds pDsOpenDa likeds(SqlDa) based(pPtOpenDa);
+
+  pPtOpenDa = pDsPrepStm.ptOpenDa;
+
+  pDsPrepStm.sqp0400.QSQSQLPN05 = 'TESTPKG'; // SQL Package Name
+  pDsPrepStm.sqp0400.QSQLIBN05 = 'QTEMP'; // Library Name
+  pDsPrepStm.sqp0400.QSQMP07 = '*ENDACTGRP'; // Main program name.
+  //--pDsPrepStm.sqp0400.QSQMP07 = 'MAINPGM'; // Main Pgm
+  //--pDsPrepStm.sqp0400.QSQML06 = 'MPGMLIB'; // Main Lib
+  pDsPrepStm.sqp0400.QSQSN05 = 'TESTSTM'; // Statement Name
+  pDsPrepStm.sqp0400.QSQACD = SQL_ALLOW_COPY_OF_DATA_AUTO; // Allow copy of data
+  pDsPrepStm.sqp0400.QSQAB = SQL_ALLOW_BLOCKING_ALLREAD; // Allow blocking
+  pDsPrepStm.sqp0400.QSQCC07 = SQL_COMMIT_CONTROL_NONE; // Commitment control
+  pDsPrepStm.sqp0400.QSQDF06 = SQL_DATE_FORMAT_ISO; // Date Format
+  pDsPrepStm.sqp0400.QSQDS06 = '-'; // Date Separator
+  pDsPrepStm.sqp0400.QSQTF06 = SQL_TIME_FORMAT_HMS; // Time Format
+  pDsPrepStm.sqp0400.QSQTS06 = ':'; // Time Separator
+  pDsPrepStm.sqp0400.QSQNO06 = SQL_NAMING_SYS; // Naming Option
+  pDsPrepStm.sqp0400.QSQDP06 = '.'; // Decimal Point
+  pDsPrepStm.sqp0400.QSQMS01 = 11; // Max Scale
+  pDsPrepStm.sqp0400.QSQMP08 = SQL_MAX_PRECISION_31; // Max Precision
+  pDsPrepStm.sqp0400.QSQCCSID01 = CCSID_JOB; // CCSID_UTF8; // Statement Text CCSID
+  pDsPrepStm.sqp0400.QSQBF05 = 1; // Blocking Factor
+  pDsPrepStm.sqp0400.QSQDM01 = SQL_DIRECT_MAP_NO; // Direct map
+  pDsPrepStm.sqp0400.QSQLID = SQL_LANGUAGE_ID_JOB; // Language identifier.
+  pDsPrepStm.sqp0400.QSQSST = SQL_SORT_TABLE_JOB; // Sort sequence table name.
+  
+  pDsPrepStm.sqp0400.QSQCTION06 = SQL_FUNCTION_BUILD_PACKAGE;
+  
+  SqPrcEd(SqlCa:pDsOpenDa:'SQLP0400':pDsPrepStm:QUSecExcp);
+
+  if SqlCode <> 0 And SqlCode <> SQL_CODE_ALREADY_EXISTS;
+    // todo message
+    return -1;
+  endif;
+  
+  return 0;
+
+end-proc SqlCreatePackage;
+    
