@@ -3,7 +3,7 @@ ctl-opt nomain;
 ctl-opt ccsid(*ucs2:13488);
 /COPY ARPG_H,ARCALLCTL
 //---------------------------------------------------------------*
-// extern prototypes
+// includes
 //---------------------------------------------------------------*
 /COPY ARPG_H,ARCSYSR
 /COPY ARPG_H,ARCSQLR
@@ -53,6 +53,20 @@ end-ds;
 //---------------------------------------------------------------*
 //  SqlRsNew - protected
 //---------------------------------------------------------------*
+//*   
+//*  
+//* 
+//*
+//* @param pInPrepStm -
+//* @param pPtDescribeDa -
+//* @param pInBlocking -
+//*
+//* @return 
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
 dcl-proc SqlRsNew export;
   dcl-pi *N int(10);
     pInPrepStm int(10) const;
@@ -73,8 +87,6 @@ dcl-proc SqlRsNew export;
   dcl-s pInAlloc int(10) inz(0);
   dcl-s pInPrevious int(10) inz(0);
   dcl-s i int(10);
-
-  Exec Sql Include SqlDa;
 
   // New result object
   pInResultSet = OoRObjectNew(s#Prog:pPtResultSet:%size(DsResultSet_t));
@@ -143,15 +155,10 @@ dcl-proc SqlRsNext export;
     return *off;
   endif;
 
-  //SQLVAR = pDsResultDa.Sql_Var(1); 
-  //SqlData = pDsResultSet.ptData;
-  //SqlInd = pDsResultSet.ptInd;
-  //pDsResultDa.Sql_Var(1) = SQLVAR; 
-
-  if SqlPreparedStatementFunction(pDsResultSet.inPrepStm
-                                 :pInResultSet
-                                 :pDsResultSet.ptResultDa
-                                 :SQL_FUNCTION_FETCH) <> 0;
+  if SqlPreparedStatementCursor(pDsResultSet.inPrepStm
+                               :pInResultSet
+                               :pDsResultSet.ptResultDa
+                               :SQL_FUNCTION_FETCH) <> 0;
     // todo message
     SqlRsClose(pInResultSet);
     return *off;
@@ -187,10 +194,10 @@ dcl-proc SqlRsClose export;
     return -1;
   endif;
  
-  SqlPreparedStatementFunction(pDsResultSet.inPrepStm
-                              :pInResultSet
-                              :pDsResultSet.ptResultDa
-                              :SQL_FUNCTION_CLOSE);
+  SqlPreparedStatementCursor(pDsResultSet.inPrepStm
+                            :pInResultSet
+                            :pDsResultSet.ptResultDa
+                            :SQL_FUNCTION_CLOSE);
 
   dealloc(ne) pDsResultSet.ptData;
   dealloc(ne) pDsResultSet.ptInd;
@@ -814,8 +821,21 @@ dcl-proc SqlRsFindColumn export;
     pAnColName varchar(256) const;
   end-pi;
        
-  // todo search     
-  return -1;     
+  dcl-s pInColumns int(10);     
+  dcl-s i int(10);     
+       
+  pInColumns = SqlRsGetColumnCount(pInResultSet);      
+  for i=1 by 1 to pInColumns;
+    if SqlGetSqlVar(pInResultSet:i) <> 0; // ??
+      return -1; 
+    endif;  
+    if gDsSqlVar.SqlLongName = PAnColName Or
+         gDsSqlVar.SqlSysName = PAnColName;
+      return i;
+    endif;       
+  endfor; 
+
+  return -1;
        
 end-proc SqlRsFindColumn;
 //---------------------------------------------------------------*
@@ -1121,11 +1141,9 @@ dcl-proc SqlGetSqlVar;
     when gDsSqlVar.SqlType = SQL_TYPE_GRAPHIC;
       gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen * 2;
            
-    when gDsSqlVar.SqlType = SQL_TYPE_VARGRAPHIC;
+    when gDsSqlVar.SqlType = SQL_TYPE_VARGRAPHIC Or
+          gDsSqlVar.SqlType = SQL_TYPE_LONGVARGRAPHIC;
       gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen * 2 + 2;
-
-    when gDsSqlVar.SqlType = SQL_TYPE_LONGVARGRAPHIC;
-      gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen * 2 + 4;
 
   endsl;
 

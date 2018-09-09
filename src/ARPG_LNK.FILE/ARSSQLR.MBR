@@ -5,6 +5,16 @@
      /*-----------------------------------------------------------------------*/
              EXPORT     SYMBOL('SqlPreparedStatement')
              EXPORT     SYMBOL('SqlPreparedStatementExecuteQuery')
+             EXPORT     SYMBOL('SqlPreparedStatementExecuteUpdate')
+             EXPORT     SYMBOL('SqlPreparedStatementClearParameters')
+             EXPORT     SYMBOL('SqlPreparedStatementSetString')  
+             EXPORT     SYMBOL('SqlPreparedStatementSetStringUcs')
+             EXPORT     SYMBOL('SqlPreparedStatementSetDecimal')
+             EXPORT     SYMBOL('SqlPreparedStatementSetDouble')
+             EXPORT     SYMBOL('SqlPreparedStatementSetDate')
+             EXPORT     SYMBOL('SqlPreparedStatementSetTime')
+             EXPORT     SYMBOL('SqlPreparedStatementSetTimeStamp')
+             EXPORT     SYMBOL('SqlPreparedStatementSetLong')  
              EXPORT     SYMBOL('SqlPreparedStatementFree')
 
      /*-----------------------------------------------------------------------*/
@@ -35,8 +45,9 @@
              EXPORT     SYMBOL('SqlRsGetScale')
 
      /*-----------------------------------------------------------------------*/
-     /* ARSSQL01 - Dynamic SQL Access                                         */
+     /* ARSSQL02 - Dynamic SQL Access                                         */
      /*-----------------------------------------------------------------------*/
-        /*     EXPORT     SYMBOL('SqlStatement')*/
+             EXPORT     SYMBOL('SqlStatement')
+             EXPORT     SYMBOL('SqlExecute')
 
              ENDPGMEXP

@@ -31,143 +31,74 @@ end-ds;
 //* @Author S.Allbach
 //---------------------------------------------------------------*
 dcl-proc SqlStatement export;
-  dcl-pi *N pointer;
+  dcl-pi *N int(10);
     pAnSqlStm like(sqlstmvar_t) const;
+    pInCcsid int(10) const options(*nopass);
   end-pi;
 
-  dcl-s pInStm int(10);
-  dcl-s pPtStm pointer inz(*Null);
-  dcl-ds pDsStm likeds(DsStm_t) based(pPtStm); 
+  dcl-s pInPrepStm int(10);
+  dcl-s pInResultSet int(10);
 
-  pInStm = OoRObjectNew(s#Prog:pPtStm:%size(DsStm_t));
-  if pInStm = -1;
-    return -1;
+  if %parms() >= %parmnum(pInCcsid);
+    pInPrepStm = SqlPreparedStatement(pAnSqlStm:pInCcsid);
+  else;
+    pInPrepStm = SqlPreparedStatement(pAnSqlStm);
   endif;
-
-  pDsStm.inPrepStm = SqlPreparedStatement(pAnSqlStm);
-  if pDsStm.inPrepStm = -1;
-    return -1;
-  endif;
-
   
-  pInResult = SqlPreparedStatementExecuteQuery(pInPrepStm);
+  if pInPrepStm = -1;
+     // todo message and move
+    return -1;
+  endif;
 
-  return pInResult;
+  pInResultSet = SqlPreparedStatementExecuteQuery(pInPrepStm);
+  if pInResultSet < 0;
+     // todo message and move
+     SqlPreparedStatementFree(pInPrepStm);
+  endif;  
+
+  return pInResultSet;
 
 end-proc SqlStatement;
+//---------------------------------------------------------------*
+//  SqlExecute
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pAnSqlStm - Program reference. You should use the field
+//*
+//* @return ccc
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlExecute export;
+  dcl-pi *N int(10);
+    pAnSqlStm like(sqlstmvar_t) const;
+    pInCcsid int(10) const options(*nopass);
+  end-pi;
 
+  dcl-s pInPrepStm int(10);
+  dcl-s pInSqlCode int(10);
 
+  if %parms() >= %parmnum(pInCcsid);
+    pInPrepStm = SqlPreparedStatement(pAnSqlStm:pInCcsid);
+  else;
+    pInPrepStm = SqlPreparedStatement(pAnSqlStm);
+  endif;
+  
+  if pInPrepStm = -1;
+     // todo message and move
+    return -1;
+  endif;
 
-  select;
-    // Date
-    when pDsSqlVar.SqlType = 384 or pDsSqlVar.SqlType = 385;  
-        
-    // Time
-    when pDsSqlVar.SqlType = 388 or pDsSqlVar.SqlType = 389;  
-  
-    // Timestamp
-    when pDsSqlVar.SqlType = 392 or pDsSqlVar.SqlType = 393;  
-  
-    // DataLink
-    when pDsSqlVar.SqlType = 396 or pDsSqlVar.SqlType = 397;  
-  
-    // NUL-terminated graphic string
-    when pDsSqlVar.SqlType = 400 or pDsSqlVar.SqlType = 401;  
-  
-    // BLOB
-    when pDsSqlVar.SqlType = 404 or pDsSqlVar.SqlType = 405;  
-  
-    // CLOB
-    when pDsSqlVar.SqlType = 408 or pDsSqlVar.SqlType = 409;  
-  
-    // DBCLOB
-    when pDsSqlVar.SqlType = 412 or pDsSqlVar.SqlType = 413;  
-  
-    // Varying-length character string
-    when pDsSqlVar.SqlType = 448 or pDsSqlVar.SqlType = 449;  
-  
-    // Fixed-length character string
-    when pDsSqlVar.SqlType = 452 or pDsSqlVar.SqlType = 453;  
-  
-    // Long varying-length character string
-    when pDsSqlVar.SqlType = 456 or pDsSqlVar.SqlType = 457;  
-  
-    // NUL-terminated character string
-    when pDsSqlVar.SqlType = 460 or pDsSqlVar.SqlType = 461;  
-  
-    // Varying-length graphic string
-    when pDsSqlVar.SqlType = 464 or pDsSqlVar.SqlType = 465;  
-  
-    // Fixed-length graphic string
-    when pDsSqlVar.SqlType = 468 or pDsSqlVar.SqlType = 469;  
-  
-    // Long varying-length graphic string
-    when pDsSqlVar.SqlType = 472 or pDsSqlVar.SqlType = 473;  
-  
-    // PASCAL L-string
-    when pDsSqlVar.SqlType = 476 or pDsSqlVar.SqlType = 477;  
-  
-    // Floating point
-    when pDsSqlVar.SqlType = 480 or pDsSqlVar.SqlType = 481;  
-  
-    // Packed decimal
-    when pDsSqlVar.SqlType = 484 or pDsSqlVar.SqlType = 485;  
-  
-    // Zoned decimal
-    when pDsSqlVar.SqlType = 488 or pDsSqlVar.SqlType = 489;  
-  
-    // Big integer
-    when pDsSqlVar.SqlType = 492 or pDsSqlVar.SqlType = 493;  
-  
-    // Large integer
-    when pDsSqlVar.SqlType = 496 or pDsSqlVar.SqlType = 497;  
-  
-    // Small integer
-    when pDsSqlVar.SqlType = 500 or pDsSqlVar.SqlType = 501;  
-  
-    // DISPLAY SIGN LEADING SEPARATE
-    when pDsSqlVar.SqlType = 504 or pDsSqlVar.SqlType = 505;  
-  
-    // ROWID
-    when pDsSqlVar.SqlType = 904 or pDsSqlVar.SqlType = 905;  
-  
-    // Varying-length binary string
-    when pDsSqlVar.SqlType = 908 or pDsSqlVar.SqlType = 909;  
-  
-    // Fixed-length binary string
-    when pDsSqlVar.SqlType = 912 or pDsSqlVar.SqlType = 913;  
-  
-    // BLOB file reference variable
-    when pDsSqlVar.SqlType = 916 or pDsSqlVar.SqlType = 917;  
-  
-    // CLOB file reference variable
-    when pDsSqlVar.SqlType = 920 or pDsSqlVar.SqlType = 921;  
-  
-    // DBCLOB file reference variable
-    when pDsSqlVar.SqlType = 924 or pDsSqlVar.SqlType = 925;  
-  
-    // BLOB locator
-    when pDsSqlVar.SqlType = 960 or pDsSqlVar.SqlType = 961;  
-  
-    // CLOB locator
-    when pDsSqlVar.SqlType = 964 or pDsSqlVar.SqlType = 965;  
-  
-    // DBCLOB locator
-    when pDsSqlVar.SqlType = 968 or pDsSqlVar.SqlType = 969;  
-  
-    // Result set locator
-    when pDsSqlVar.SqlType = 972;  
-  
-    // XML
-    when pDsSqlVar.SqlType = 988 or pDsSqlVar.SqlType = 989;  
-  
-    // DECFLOAT
-    when pDsSqlVar.SqlType = 996 or pDsSqlVar.SqlType = 997;  
-  
-    // XML locator
-    when pDsSqlVar.SqlType = 2452 or pDsSqlVar.SqlType = 2453;  
-  
-  endsl;
+  pInSqlCode = SqlPreparedStatementExecuteUpdate(pInPrepStm);
+  if PInSqlCode < 0;
+     // todo message and move
+  endif;  
 
-  return 0;
+  SqlPreparedStatementFree(pInPrepStm);
 
+  return pInSqlCode;
+
+end-proc SqlExecute;

@@ -58,6 +58,15 @@ dcl-s sqlstm_t char(32765) template;
 //---------------------------------------------------------------*
 dcl-pr SqlStatement int(10) extproc(*dclcase);
   pAnSqlStm like(sqlstmvar_t) const;
+  pInCcsid int(10) const options(*nopass);
+end-pr;
+       
+//---------------------------------------------------------------*
+//  SqlExecute
+//---------------------------------------------------------------*
+dcl-pr SqlExecute int(10) extproc(*dclcase);
+  pAnSqlStm like(sqlstmvar_t) const;
+  pInCcsid int(10) const options(*nopass);
 end-pr;
        
 //---------------------------------------------------------------*
@@ -65,6 +74,7 @@ end-pr;
 //---------------------------------------------------------------*
 dcl-pr SqlPreparedStatement int(10) extproc(*dclcase);
   pAnSqlStm like(sqlstmvar_t) const;
+  pInCcsid int(10) const options(*nopass);
 end-pr;
 
 //---------------------------------------------------------------*
@@ -75,6 +85,84 @@ dcl-pr SqlPreparedStatementExecuteQuery int(10) extproc(*dclcase);
 end-pr;
 
 //---------------------------------------------------------------*
+//  SqlPreparedStatementExecuteUpdate
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementExecuteUpdate int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementClearParameters
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementClearParameters int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetString
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetString int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pAnString varchar(32767) value;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetStringUcs
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetStringUcs int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pAnString varucs2(16383) value;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetDecimal
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetDecimal int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pNuDecimal packed(31:11) value;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetDouble
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetDouble int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pDbDouble float(8) value;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetDate
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetDate int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pDaDate date value;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetTime
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetTime int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pTiTime time value;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetTimeStamp
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetTimeStamp int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pTsTimeStamp timestamp value;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetLong
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetLong int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pInLong int(20) value;
+end-pr;
+
+//---------------------------------------------------------------*
 //  SqlPreparedStatementFree
 //---------------------------------------------------------------*
 dcl-pr SqlPreparedStatementFree int(10) extproc(*dclcase);
@@ -82,9 +170,9 @@ dcl-pr SqlPreparedStatementFree int(10) extproc(*dclcase);
 end-pr;
 
 //---------------------------------------------------------------*   
-//  SqlPreparedStatementFunction - for internal use only !                                                       
+//  SqlPreparedStatementCursor - for internal use only !                                                       
 //---------------------------------------------------------------*   
-dcl-pr SqlPreparedStatementFunction int(10) extproc(*dclcase);
+dcl-pr SqlPreparedStatementCursor int(10) extproc(*dclcase);
   pInPrepStm int(10) const;
   pInResultSet int(10) const;
   pPtDescribeDa pointer const;

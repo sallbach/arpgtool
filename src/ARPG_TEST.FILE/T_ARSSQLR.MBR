@@ -142,9 +142,12 @@ dcl-proc test_Sql_PreparedStatement export;
   //             F_DATE, -     
   //             F_TIME, - 
   //             F_TIMESTAMP from TSTARSSQLF');
-  F_VARCHAR = 'Select * from SYSFEATURE'; 
+  F_VARCHAR = 'Select * from SYSFEATURE -
+                WHERE FEATURE_ID like ? and FEATURE_NAME like ?'; 
   pInPreparedSt = SqlPreparedStatement(F_VARCHAR);
-
+  SqlPreparedStatementSetString(pInPreparedSt:'%2%');
+  SqlPreparedStatementSetString(pInPreparedSt:'%table%');
+ 
   pInResultSet = SqlPreparedStatementExecuteQuery(pInPreparedSt);
   dow SqlRsNext(pInResultSet);
 
@@ -154,6 +157,20 @@ dcl-proc test_Sql_PreparedStatement export;
 
   enddo;
   SqlRsClose(pInResultSet);
+  SqlPreparedStatementFree(pInPreparedSt);
+
+  // Test Update
+  F_VARCHAR = 'INSERT INTO SALLBACH2/TSTARSSQLF (F1) VALUES(?)';    
+  pInPreparedSt = SqlPreparedStatement(F_VARCHAR);
+                    
+  SqlPreparedStatementSetDecimal(pInPreparedSt:10);                 
+  SqlPreparedStatementExecuteUpdate(pInPreparedSt);
+  
+  SqlPreparedStatementClearParameters(pInPreparedSt);                 
+  SqlPreparedStatementSetDecimal(pInPreparedSt:11);                 
+  SqlPreparedStatementExecuteUpdate(pInPreparedSt);
+                   
+  SqlPreparedStatementFree(pInPreparedSt);                            
 
   // execute again
   //pInResultSet = SqlPreparedStatementExecuteQuery(pInPreparedSt);
@@ -163,6 +180,6 @@ dcl-proc test_Sql_PreparedStatement export;
   //SqlRsClose(pInResultSet);    	
 
   // close and free all resources 
-  SqlPreparedStatementFree(pInPreparedSt);
+  //SqlPreparedStatementFree(pInPreparedSt);
 
 end-proc test_Sql_PreparedStatement;

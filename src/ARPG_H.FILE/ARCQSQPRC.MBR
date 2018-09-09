@@ -6,6 +6,84 @@
 /INCLUDE QSYSINC/QRPGLESRC,QSQPRCED
 
 //---------------------------------------------------------------*
+//  sqlca & sqlda
+//---------------------------------------------------------------*
+// Exec Sql Include SQLCA;
+DCL-DS SQLCA;                                 
+  SQLCAID CHAR(8) INZ(X'0000000000000000');   
+   SQLAID CHAR(8) OVERLAY(SQLCAID);           
+  SQLCABC INT(10);                            
+   SQLABC BINDEC(9) OVERLAY(SQLCABC);         
+  SQLCODE INT(10);                            
+   SQLCOD BINDEC(9) OVERLAY(SQLCODE);         
+  SQLERRML INT(5);                            
+   SQLERL BINDEC(4) OVERLAY(SQLERRML);        
+  SQLERRMC CHAR(70);                          
+   SQLERM CHAR(70) OVERLAY(SQLERRMC);         
+  SQLERRP CHAR(8);                            
+   SQLERP CHAR(8) OVERLAY(SQLERRP);           
+  SQLERR CHAR(24);                            
+   SQLER1 BINDEC(9) OVERLAY(SQLERR:*NEXT);    
+   SQLER2 BINDEC(9) OVERLAY(SQLERR:*NEXT);    
+   SQLER3 BINDEC(9) OVERLAY(SQLERR:*NEXT);    
+   SQLER4 BINDEC(9) OVERLAY(SQLERR:*NEXT);    
+   SQLER5 BINDEC(9) OVERLAY(SQLERR:*NEXT); 
+   SQLER6 BINDEC(9) OVERLAY(SQLERR:*NEXT); 
+   SQLERRD INT(10) DIM(6) OVERLAY(SQLERR); 
+  SQLWRN CHAR(11);                         
+   SQLWN0 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN1 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN2 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN3 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN4 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN5 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN6 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN7 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN8 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN9 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWNA CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWARN CHAR(1) DIM(11) OVERLAY(SQLWRN);
+  SQLSTATE CHAR(5);                        
+   SQLSTT CHAR(5) OVERLAY(SQLSTATE);       
+END-DS SQLCA;      
+   
+// Exec Sql Include SQLDA;
+/SET CCSID(*CHAR:*JOBRUNMIX)  
+// SQL DESCRIPTOR AREA        
+DCL-DS SQLDA;                         
+  SQLDAID CHAR(8);                    
+  SQLDABC INT(10);                    
+  SQLN INT(5);                        
+  SQLD INT(5);                        
+  SQL_VAR CHAR(80) DIM(SQL_NUM);      
+   *N POINTER OVERLAY(SQL_VAR:17);    
+   *N POINTER OVERLAY(SQL_VAR:33);                  
+END-DS SQLDA;                                       
+DCL-DS SQLVAR;                                      
+  SQLTYPE INT(5);                                   
+  SQLLEN INT(5);                                    
+  SQLRES CHAR(12);                                  
+  SQLINFO1 CHAR(16);                                
+   SQLDATA POINTER OVERLAY(SQLINFO1);               
+   SQL_RESULT_SET_LOCATOR INT(20) OVERLAY(SQLINFO1);
+  SQLINFO2 CHAR(16);                                
+   SQLIND POINTER OVERLAY(SQLINFO2);                
+   SQL_ROW_CHANGE INT(10) OVERLAY(SQLINFO2);        
+   SQL_RESULT_SET_ROWS INT(10) OVERLAY(SQLINFO2);   
+  SQLNAMELEN INT(5);                                
+  SQLNAME CHAR(30);                                 
+END-DS SQLVAR;                                      
+// EXTENDED SQLDA     
+DCL-DS SQLVAR2;       
+  SQLLONGL INT(10);   
+  SQLRSVDL CHAR(28);  
+  SQLDATAL POINTER;   
+  SQLTNAMELN INT(5);  
+  SQLTNAME CHAR(30);  
+END-DS SQLVAR2;       
+/RESTORE CCSID(*CHAR)    
+
+//---------------------------------------------------------------*
 //  constants
 //---------------------------------------------------------------*
 dcl-c SQL_ALLOW_COPY_OF_DATA_AUTO 'A';
