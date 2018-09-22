@@ -2,11 +2,14 @@
 /IF NOT DEFINED (AR_SQLR__)
 
 /DEFINE AR_SQLR__
+/INCLUDE ARPG_H,ARCQSQPRC
 /INCLUDE ARPG_H,ARCTYPES
 
 //---------------------------------------------------------------*
 //  constants
 //---------------------------------------------------------------*
+dcl-c SQL_CONNECTION_LOCAL -2;
+
 dcl-c SQL_CODE_EOF 100;
 dcl-c SQL_CODE_ALREADY_EXISTS -601;
 
@@ -54,27 +57,43 @@ dcl-s sqlstmvar_t varchar(32765) template;
 dcl-s sqlstm_t char(32765) template;
 
 //---------------------------------------------------------------*
+//  SqlConnection
+//---------------------------------------------------------------*
+dcl-pr SqlConnection int(10) extproc(*dclcase);
+  pAnSystem char(10) const;
+  pAnUser varchar(30) const options(*nopass);
+  pAnPass varchar(128) const options(*nopass);
+end-pr;
+       
+//---------------------------------------------------------------*
+//  SqlConnectionIsActive
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionIsActive ind extproc(*dclcase);
+  pInConnection int(10) const;
+end-pr;
+       
+//---------------------------------------------------------------*
 //  SqlStatement
 //---------------------------------------------------------------*
 dcl-pr SqlStatement int(10) extproc(*dclcase);
+  pInConnection int(10) const;
   pAnSqlStm like(sqlstmvar_t) const;
-  pInCcsid int(10) const options(*nopass);
 end-pr;
        
 //---------------------------------------------------------------*
 //  SqlExecute
 //---------------------------------------------------------------*
 dcl-pr SqlExecute int(10) extproc(*dclcase);
+  pInConnection int(10) const;
   pAnSqlStm like(sqlstmvar_t) const;
-  pInCcsid int(10) const options(*nopass);
 end-pr;
        
 //---------------------------------------------------------------*
 //  SqlPreparedStatement
 //---------------------------------------------------------------*
 dcl-pr SqlPreparedStatement int(10) extproc(*dclcase);
+  pInConnection int(10) const;
   pAnSqlStm like(sqlstmvar_t) const;
-  pInCcsid int(10) const options(*nopass);
 end-pr;
 
 //---------------------------------------------------------------*
@@ -167,25 +186,6 @@ end-pr;
 //---------------------------------------------------------------*
 dcl-pr SqlPreparedStatementFree int(10) extproc(*dclcase);
   pInPrepStm int(10) const;
-end-pr;
-
-//---------------------------------------------------------------*   
-//  SqlPreparedStatementCursor - for internal use only !                                                       
-//---------------------------------------------------------------*   
-dcl-pr SqlPreparedStatementCursor int(10) extproc(*dclcase);
-  pInPrepStm int(10) const;
-  pInResultSet int(10) const;
-  pPtDescribeDa pointer const;
-  pAnFunction char(1) const;
-end-pr;
-
-//---------------------------------------------------------------*   
-//  SqlRsNew - for internal use only !                                                       
-//---------------------------------------------------------------*   
-dcl-pr SqlRsNew int(10) extproc(*dclcase);
-  pInPrepStm int(10) const;
-  pPtDescribeDa pointer;
-  pInBlocking int(10) const;
 end-pr;
 
 //---------------------------------------------------------------*   
@@ -373,6 +373,22 @@ end-pr;
 dcl-pr SqlRsGetScale int(10) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlConnectionGetSettings - for internal use only !                                                       
+//---------------------------------------------------------------*   
+dcl-pr SqlConnectionGetSettings likeds(DsSqPrcEd_t) extproc(*dclcase);
+  pInConnection int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlRsNew - for internal use only !                                                       
+//---------------------------------------------------------------*   
+dcl-pr SqlRsNew int(10) extproc(*dclcase);
+  pDsSqPrcEd likeds(DsSqPrcEd_t) const;
+  pPtOpenDa pointer;
+  pPtDescribeDa pointer;
 end-pr;
 
 /ENDIF

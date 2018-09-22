@@ -9,10 +9,14 @@
              CRTRPGMOD  MODULE(&LIBOBJ/ARSSQL02) +
                           SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBG) +
                           OPTIMIZE(&OPTIMIZE)
+             CRTRPGMOD  MODULE(&LIBOBJ/ARSSQL03) +
+                          SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBG) +
+                          OPTIMIZE(&OPTIMIZE)
              CRTSRVPGM  SRVPGM(&LIBOBJ/ARSSQLR) +                  
                           MODULE(&LIBOBJ/ARSSQLR +
                                  &LIBOBJ/ARSSQL01 +                         
-                                 &LIBOBJ/ARSSQL02) +                         
+                                 &LIBOBJ/ARSSQL02 +                         
+                                 &LIBOBJ/ARSSQL03) +                         
                           SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Sql +    
                           functions') BNDSRVPGM((ARSOORR)) +       
                           OPTION(&RSLVREF)                         

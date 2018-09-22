@@ -1,70 +1,156 @@
 **Free
 ctl-opt nomain;
+ctl-opt ccsid(*ucs2:13488);
 /COPY ARPG_H,ARCALLCTL
 //---------------------------------------------------------------*
-// extern prototypes
+// includes
 //---------------------------------------------------------------*
+/DEFINE AR_QSQPRC_SQLCA__
+/COPY ARPG_H,ARCSYSR
 /COPY ARPG_H,ARCSQLR
+/COPY ARPG_H,ARCOORR
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCFCNTL
+/COPY ARPG_H,ARCQSQPRC
+/COPY ARPG_H,ARCSTDLIB
+/COPY ARPG_H,ARCSTRING
 
 //---------------------------------------------------------------*
 // typedefs
 //---------------------------------------------------------------*
-dcl-ds DsStm_t qualified align template; 
-  inPrepStm int(10) inz(-1);
+dcl-ds DsResultSet_t qualified align template;
+  SqlVarOccur int(10);
+  ptResultDa pointer; // SqlDa
+  ptData pointer; // Data
+  ptInd pointer; // Indicators
+  SqPrcEd likeds(DsSqPrcEd_t);
 end-ds;
 
 //---------------------------------------------------------------*
 // constants
 //---------------------------------------------------------------*
+dcl-c SQL_NUM 1; 
 
 //---------------------------------------------------------------*
-//  SqlStatement
+// global
 //---------------------------------------------------------------*
+dcl-ds gDsSqlVar qualified;
+  SqlType int(10);
+  SqlTypeOrig int(10);
+  SqlPrecision int(10);
+  SqlScale int(10);
+  SqlLen int(10);
+  SqlBytes int(10);
+  SqlData pointer;
+  SqlInd int(10);
+  SqlIsNull ind;
+  SqlHasError ind;
+  SqlCcsid int(10);
+  SqlSysName varchar(30);
+  SqlLongName varchar(30);
+  SqlText varchar(30);
+end-ds; 
+
+//---------------------------------------------------------------*
+//  SqlRsNew - protected
+//---------------------------------------------------------------*
+//*   
+//*  
 //* 
 //*
-//* @param pAnSqlStm - Program reference. You should use the field
+//* @param pInPrepStm -
+//* @param pPtDescribeDa -
+//* @param pInBlocking -
 //*
-//* @return ccc
+//* @return 
 //*
 //* @diag messageCode to be defined
 //*
 //* @Author S.Allbach
 //---------------------------------------------------------------*
-dcl-proc SqlStatement export;
+dcl-proc SqlRsNew export;
   dcl-pi *N int(10);
-    pAnSqlStm like(sqlstmvar_t) const;
-    pInCcsid int(10) const options(*nopass);
+    pDsSqPrcEd likeds(DsSqPrcEd_t) const;
+    pPtOpenDa pointer;
+    pPtDescribeDa pointer;
   end-pi;
 
-  dcl-s pInPrepStm int(10);
   dcl-s pInResultSet int(10);
+  dcl-s pPtResultSet pointer inz(*Null);
+  dcl-ds pDsResultSet likeds(DsResultSet_t) based(pPtResultSet); 
 
-  if %parms() >= %parmnum(pInCcsid);
-    pInPrepStm = SqlPreparedStatement(pAnSqlStm:pInCcsid);
-  else;
-    pInPrepStm = SqlPreparedStatement(pAnSqlStm);
-  endif;
-  
-  if pInPrepStm = -1;
-     // todo message and move
+  dcl-ds pDsDescribeDa likeds(SqlDa) based(pPtDescribeDa);
+
+  dcl-s pPtResultDa pointer;
+  dcl-ds pDsResultDa likeds(SqlDa) based(pPtResultDa);
+  dcl-ds pDsOpenDa likeds(SqlDa) based(pPtOpenDa);
+
+  dcl-s pPtSqlVar pointer;
+  dcl-ds pDsSqlVar likeds(SqlVar) based(pPtSqlVar);
+
+  dcl-s pInAlloc int(10) inz(0);
+  dcl-s pInPrevious int(10) inz(0);
+  dcl-s i int(10);
+
+  // New result object
+  pInResultSet = OoRObjectNew(s#Prog:pPtResultSet:%size(DsResultSet_t));
+  if pInResultSet = -1;
     return -1;
   endif;
+  clear pDsResultSet;
+  
+  // save prepared statement 
+  pPtResultDa = %alloc(pDsDescribeDa.SQLDABC);
+  memcpy(pPtResultDa:pPtDescribeDa:pDsDescribeDa.SQLDABC);
+  pDsResultSet.ptResultDa = pPtResultDa;
+  pDsResultSet.SqPrcEd = pDsSqPrcEd;
 
-  pInResultSet = SqlPreparedStatementExecuteQuery(pInPrepStm);
-  if pInResultSet < 0;
-     // todo message and move
-     SqlPreparedStatementFree(pInPrepStm);
-  endif;  
+  // more SQL_VARs per field
+  pDsResultSet.SqlVarOccur = 1;
+  if %subst(pDsResultDa.SQLDAID:7:1) <> *blanks;
+    pDsResultSet.SqlVarOccur = %dec(%subst(pDsResultDa.SQLDAID:7:1):1:0);
+  endif;
 
+  // calculate storage
+  for i=1 by 1 to pDsResultDa.SQLD;
+    SqlGetSqlVar(pInResultSet:i);
+    pInAlloc += gDsSqlVar.SqlBytes;
+  endfor; 
+  
+  // allocate storage
+  pDsResultSet.ptData = %alloc(pInAlloc * pDsSqPrcEd.blocking); 
+  pDsResultSet.ptInd = %alloc(2 * pDsResultDa.SQLD * pDsSqPrcEd.blocking); 
+   
+  // set storage
+  for i=0 by 1 to pDsResultDa.SQLD-1;
+    pPtSqlVar = %Addr(pDsResultDa.Sql_Var(1)) + %size(SQLVAR) * i; 
+    pDsSqlVar.SqlData = pDsResultSet.ptData + pInPrevious;
+    pDsSqlVar.SqlInd = pDsResultSet.ptInd + 2 * i; 
+    SqlGetSqlVar(pInResultSet:i+1);
+    pInPrevious += gDsSqlVar.SqlBytes;
+  endfor; 
+  
+  pDsResultSet.SqPrcEd.openopt = SQL_OPEN_READ; 
+  pDsResultSet.SqPrcEd.function = SQL_FUNCTION_OPEN;
+  pDsResultSet.SqPrcEd.cursorname = 'ARSCUR_' + %char(pInResultSet);
+  
+  SqPrcEd(SqlCa:pDsOpenDa:'SQLP0400':pDsResultSet.SqPrcEd:QUSecExcp);
+  
+  if SqlCode <> 0;
+    // todo message
+    SqlRsClose(pInResultSet);
+    return -1;
+  endif;
+  
   return pInResultSet;
 
-end-proc SqlStatement;
+end-proc SqlRsNew;
 //---------------------------------------------------------------*
-//  SqlExecute
+//  SqlRsNext
 //---------------------------------------------------------------*
 //* 
 //*
-//* @param pAnSqlStm - Program reference. You should use the field
+//* @param pInResultSet - 
 //*
 //* @return ccc
 //*
@@ -72,33 +158,1025 @@ end-proc SqlStatement;
 //*
 //* @Author S.Allbach
 //---------------------------------------------------------------*
-dcl-proc SqlExecute export;
-  dcl-pi *N int(10);
-    pAnSqlStm like(sqlstmvar_t) const;
-    pInCcsid int(10) const options(*nopass);
+dcl-proc SqlRsNext export;
+  dcl-pi *N ind;
+    pInResultSet int(10) const;
   end-pi;
 
-  dcl-s pInPrepStm int(10);
-  dcl-s pInSqlCode int(10);
+  dcl-s pPtResultSet pointer inz(*Null);
+  dcl-ds pDsResultSet likeds(DsResultSet_t) based(pPtResultSet); 
 
-  if %parms() >= %parmnum(pInCcsid);
-    pInPrepStm = SqlPreparedStatement(pAnSqlStm:pInCcsid);
-  else;
-    pInPrepStm = SqlPreparedStatement(pAnSqlStm);
+  dcl-s pPtResultDa pointer;
+  dcl-ds pDsResultDa likeds(SqlDa) based(pPtResultDa);
+
+  pPtResultSet = OoRObjectGet(s#prog:pInResultSet);
+  if pPtResultSet = *Null;
+    // todo message
+    return *off;
+  endif;
+
+  pPtResultDa = pDsResultSet.ptResultDa;
+  pDsResultSet.SqPrcEd.openopt = SQL_OPEN_READ; 
+  pDsResultSet.SqPrcEd.function = SQL_FUNCTION_FETCH;
+  pDsResultSet.SqPrcEd.position = SQL_FETCH_NEXT;
+  pDsResultSet.SqPrcEd.cursorname = 'ARSCUR_' + %char(pInResultSet);
+  
+  SqPrcEd(SqlCa:pDsResultDa:'SQLP0400':pDsResultSet.SqPrcEd:QUSecExcp);
+
+  if SqlCode <> 0; 
+    // todo message
+    SqlRsClose(pInResultSet);
+    return *off;
   endif;
   
-  if pInPrepStm = -1;
-     // todo message and move
+  return *on;
+
+end-proc SqlRsNext;
+//---------------------------------------------------------------*
+//  SqlRsClose
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//*
+//* @return ccc
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsClose export;
+  dcl-pi *N int(10);
+    pInResultSet int(10) const;
+  end-pi;
+
+  dcl-s pPtResultSet pointer inz(*Null);
+  dcl-ds pDsResultSet likeds(DsResultSet_t) based(pPtResultSet); 
+
+  dcl-s pPtResultDa pointer;
+  dcl-ds pDsResultDa likeds(SqlDa) based(pPtResultDa);
+
+  pPtResultSet = OoRObjectGet(s#prog:pInResultSet);
+  if pPtResultSet = *Null;
+    // todo message
     return -1;
   endif;
+ 
+  pPtResultDa = pDsResultSet.ptResultDa;
+  pDsResultSet.SqPrcEd.openopt = SQL_OPEN_READ; 
+  pDsResultSet.SqPrcEd.function = SQL_FUNCTION_CLOSE;
+  pDsResultSet.SqPrcEd.cursorname = 'ARSCUR_' + %char(pInResultSet);
+  
+  SqPrcEd(SqlCa:SqlDa:'SQLP0400':pDsResultSet.SqPrcEd:QUSecExcp);
 
-  pInSqlCode = SqlPreparedStatementExecuteUpdate(pInPrepStm);
-  if PInSqlCode < 0;
-     // todo message and move
+  dealloc(ne) pDsResultSet.ptData;
+  dealloc(ne) pDsResultSet.ptInd;
+
+  OoRObjectFree(s#prog:pInResultSet);
+
+  return 0;
+
+end-proc SqlRsClose;
+//---------------------------------------------------------------*
+//  SqlRsGetString
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return String
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetString export;
+  dcl-pi *N varchar(32767);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+    pBoNullId ind options(*nopass);
+  end-pi;
+       
+  dcl-s inLen int(5) based(gDsSqlVar.SqlData);     
+  dcl-s inLongLen int(10) based(gDsSqlVar.SqlData);     
+       
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = *on;    
+  endif;     
+
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return '';
   endif;  
 
-  SqlPreparedStatementFree(pInPrepStm);
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = gDsSqlVar.SqlIsNull;    
+  endif;     
 
-  return pInSqlCode;
+  if gDsSqlVar.SqlIsNull Or gDsSqlVar.SqlHasError;
+    return '';
+  endif;
 
-end-proc SqlExecute;
+  if gDsSqlVar.SqlType = SQL_TYPE_CHAR;
+    return %str(gDsSqlVar.SqlData:gDsSqlVar.SqlLen);     
+  endif;     
+
+  if gDsSqlVar.SqlType = SQL_TYPE_VARCHAR And inLen > 0;
+    return %str(gDsSqlVar.SqlData + %size(inLen):inLen);     
+  endif;     
+
+  if gDsSqlVar.SqlType = SQL_TYPE_LONGVARCHAR And inLongLen > 0;
+    return %str(gDsSqlVar.SqlData  + %size(inLongLen):inLongLen);     
+  endif;     
+
+  if gDsSqlVar.SqlType = SQL_TYPE_GRAPHIC Or
+       gDsSqlVar.SqlType = SQL_TYPE_VARGRAPHIC Or
+       gDsSqlVar.SqlType = SQL_TYPE_LONGVARGRAPHIC;
+    return %char(SqlRsGetStringUcs(pInResultSet:pInColIndex));     
+  endif;     
+
+  return '';     
+       
+end-proc SqlRsGetString;
+//---------------------------------------------------------------*
+//  SqlRsGetStringUcs
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return String
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetStringUcs export;
+  dcl-pi *N varucs2(16383);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+    pBoNullId ind options(*nopass);
+  end-pi;
+       
+  dcl-s pAnUcs2 ucs2(16383) based(gDsSqlVar.SqlData);     
+  dcl-s pAnVarUcs2 varucs2(16383:2) based(gDsSqlVar.SqlData);     
+  dcl-s pAnLongUcs2 varucs2(16383:4) based(gDsSqlVar.SqlData);     
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = *on;    
+  endif;     
+
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return %ucs2('');
+  endif;  
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = gDsSqlVar.SqlIsNull;    
+  endif;     
+
+  if gDsSqlVar.SqlIsNull Or gDsSqlVar.SqlHasError;
+    return %ucs2('');
+  endif;
+
+  // todo char with ccsid 
+
+  if gDsSqlVar.SqlType = SQL_TYPE_GRAPHIC; 
+    return %subst(pAnUcs2:1:gDsSqlVar.SqlLen);     
+  endif;     
+
+  if gDsSqlVar.SqlType = SQL_TYPE_VARGRAPHIC; 
+    return %subst(pAnVarUcs2:1:%len(pAnVarUcs2));     
+  endif;     
+
+  if gDsSqlVar.SqlType = SQL_TYPE_LONGVARGRAPHIC; 
+    return %subst(pAnLongUcs2:1:%len(pAnLongUcs2));     
+  endif;     
+
+  if gDsSqlVar.SqlType = SQL_TYPE_CHAR Or
+       gDsSqlVar.SqlType = SQL_TYPE_VARCHAR Or
+       gDsSqlVar.SqlType = SQL_TYPE_LONGVARCHAR;
+    return %ucs2(SqlRsGetString(pInResultSet:pInColIndex));     
+  endif;     
+
+  return %ucs2('');
+       
+end-proc SqlRsGetStringUcs;
+//---------------------------------------------------------------*
+//  SqlRsGetDecimal
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return Decimal
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetDecimal export;
+  dcl-pi *N packed(31:11);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+    pBoNullId ind options(*nopass);
+  end-pi;
+       
+  dcl-s pNuPacked packed(31:0) inz(0);     
+  dcl-s pNuZoned zoned(31:0) inz(0);     
+       
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = *on;    
+  endif;     
+
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return 0;
+  endif;  
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = gDsSqlVar.SqlIsNull;    
+  endif;     
+
+  if gDsSqlVar.SqlIsNull Or gDsSqlVar.SqlHasError;
+    return 0;
+  endif;
+
+  if gDsSqlVar.SqlType = SQL_TYPE_PACKED;
+    memcpy(%addr(pNuPacked)
+          :gDsSqlVar.SqlData + %size(pNuPacked) - gDsSqlVar.SqlBytes 
+          :gDsSqlVar.SqlBytes);
+    return pNuPacked / 10 ** gDsSqlVar.SqlScale;
+  endif;
+    
+  if gDsSqlVar.SqlType = SQL_TYPE_ZONED;
+    memcpy(%addr(pNuZoned)
+          :gDsSqlVar.SqlData + %size(pNuZoned) - gDsSqlVar.SqlBytes 
+          :gDsSqlVar.SqlBytes);
+    return pNuPacked / 10 ** gDsSqlVar.SqlScale;
+  endif;       
+
+  if gDsSqlVar.SqlType = SQL_TYPE_FLOAT;
+    return(h) SqlRsGetDouble(pInResultSet:pInColIndex);
+  endif;       
+
+  if gDsSqlVar.SqlType = SQL_TYPE_SMALLINT Or
+       gDsSqlVar.SqlType = SQL_TYPE_INT Or
+       gDsSqlVar.SqlType = SQL_TYPE_BIGINT;
+    return SqlRsGetLong(pInResultSet:pInColIndex);
+  endif;       
+
+  return 0;     
+       
+end-proc SqlRsGetDecimal;
+//---------------------------------------------------------------*
+//  SqlRsGetDouble
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return Double
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetDouble export;
+  dcl-pi *N float(8);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+    pBoNullId ind options(*nopass);
+  end-pi;
+
+  dcl-s pDbDouble float(8) based(gDsSqlVar.SqlData);
+  dcl-s pFlFloat float(4) based(gDsSqlVar.SqlData);
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = *on;    
+  endif;     
+
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return 0;
+  endif;  
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = gDsSqlVar.SqlIsNull;    
+  endif;     
+
+  if gDsSqlVar.SqlIsNull Or gDsSqlVar.SqlHasError;
+    return 0;
+  endif;
+
+  if gDsSqlVar.SqlType = SQL_TYPE_FLOAT And gDsSqlVar.SqlBytes = %size(pFlFloat); 
+    return pFlFloat;
+  endif;
+    
+  if gDsSqlVar.SqlType = SQL_TYPE_FLOAT And gDsSqlVar.SqlBytes = %size(pDbDouble);
+    return pDbDouble;
+  endif;
+  
+  if gDsSqlVar.SqlType = SQL_TYPE_PACKED Or
+       gDsSqlVar.SqlType = SQL_TYPE_ZONED;
+    return SqlRsGetDecimal(pInResultSet:pInColIndex);
+  endif;       
+
+  if gDsSqlVar.SqlType = SQL_TYPE_SMALLINT Or
+       gDsSqlVar.SqlType = SQL_TYPE_INT Or
+       gDsSqlVar.SqlType = SQL_TYPE_BIGINT;
+    return SqlRsGetLong(pInResultSet:pInColIndex);
+  endif;       
+
+  return 0;     
+       
+end-proc SqlRsGetDouble;
+//---------------------------------------------------------------*
+//  SqlRsGetDate
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return Date
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetDate export;
+  dcl-pi *N date;
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+    pBoNullId ind options(*nopass);
+  end-pi;
+      
+  dcl-s pDaDate date based(gDsSqlVar.SqlData);    
+       
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = *on;    
+  endif;     
+
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return *loval;
+  endif;  
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = gDsSqlVar.SqlIsNull;    
+  endif;     
+
+  if gDsSqlVar.SqlIsNull Or gDsSqlVar.SqlHasError;
+    return *loval;
+  endif;
+
+  if gDsSqlVar.SqlType = SQL_TYPE_DATE;
+    return pDaDate; 
+  endif;
+
+  if gDsSqlVar.SqlType = SQL_TYPE_TIMESTAMP;
+    return %date(SqlRsGetTimeStamp(pInResultSet:pInColIndex));
+  endif;
+  
+  return *loval;     
+       
+end-proc SqlRsGetDate;
+//---------------------------------------------------------------*
+//  SqlRsGetTime
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return Time
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetTime export;
+  dcl-pi *N time;
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+    pBoNullId ind options(*nopass);
+  end-pi;
+       
+  dcl-s pTiTime time based(gDsSqlVar.SqlData);    
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = *on;    
+  endif;     
+
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return *loval;
+  endif;  
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = gDsSqlVar.SqlIsNull;    
+  endif;     
+
+  if gDsSqlVar.SqlIsNull Or gDsSqlVar.SqlHasError;
+    return *loval;
+  endif;
+
+  if gDsSqlVar.SqlType = SQL_TYPE_TIME;
+    return pTiTime; 
+  endif;
+  
+  if gDsSqlVar.SqlType = SQL_TYPE_TIMESTAMP;
+    return %time(SqlRsGetTimeStamp(pInResultSet:pInColIndex));
+  endif;
+  
+  return *loval;     
+       
+end-proc SqlRsGetTime;
+//---------------------------------------------------------------*
+//  SqlRsGetTimeStamp
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetTimeStamp export;
+  dcl-pi *N timestamp;
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+    pBoNullId ind options(*nopass);
+  end-pi;
+       
+  dcl-s pTsTime timestamp based(gDsSqlVar.SqlData);    
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = *on;    
+  endif;     
+
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return *loval;
+  endif;  
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = gDsSqlVar.SqlIsNull;    
+  endif;     
+
+  if gDsSqlVar.SqlIsNull Or gDsSqlVar.SqlHasError;
+    return *loval;
+  endif;
+
+  if gDsSqlVar.SqlType = SQL_TYPE_TIMESTAMP;
+    return pTsTime; 
+  endif;
+  
+  if gDsSqlVar.SqlType = SQL_TYPE_DATE;
+    return %timestamp(SqlRsGetDate(pInResultSet:pInColIndex)
+                      + t'00.00.00'); 
+  endif;
+
+  return *loval;     
+       
+end-proc SqlRsGetTimeStamp;
+//---------------------------------------------------------------*
+//  SqlRsGetLong
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetLong export;
+  dcl-pi *N int(20);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+    pBoNullId ind options(*nopass);
+  end-pi;
+       
+  dcl-s pInSmall int(5) based(gDsSqlVar.SqlData);
+  dcl-s pInInt int(10) based(gDsSqlVar.SqlData);
+  dcl-s pInBig int(20) based(gDsSqlVar.SqlData);
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = *on;    
+  endif;     
+
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return 0;
+  endif;  
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = gDsSqlVar.SqlIsNull;    
+  endif;     
+
+  if gDsSqlVar.SqlIsNull Or gDsSqlVar.SqlHasError;
+    return 0;
+  endif;
+
+  if gDsSqlVar.SqlType = SQL_TYPE_BIGINT;
+    return pInBig;
+  endif;
+    
+  if gDsSqlVar.SqlType = SQL_TYPE_INT;
+    return pInInt;
+  endif;
+  
+  if gDsSqlVar.SqlType = SQL_TYPE_SMALLINT;  
+    return pInSmall;
+  endif;
+
+  if gDsSqlVar.SqlType = SQL_TYPE_PACKED Or
+       gDsSqlVar.SqlType = SQL_TYPE_ZONED;
+    return SqlRsGetDecimal(pInResultSet:pInColIndex);
+  endif;       
+
+  if gDsSqlVar.SqlType = SQL_TYPE_FLOAT;
+    return SqlRsGetDecimal(pInResultSet:pInColIndex);
+  endif;       
+
+  return 0;     
+       
+end-proc SqlRsGetLong;
+//---------------------------------------------------------------*
+//  SqlRsGetHex
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetHex export;
+  dcl-pi *N varchar(32767);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+    pBoNullId ind options(*nopass);
+  end-pi;
+       
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = *on;    
+  endif;     
+
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return '';
+  endif;  
+
+  if %parms() >= %parmnum(pBoNullId) Or 
+       %parms() = -1 And %addr(pBoNullId) <> *Null;
+    pBoNullId = gDsSqlVar.SqlIsNull;    
+  endif;     
+
+  if gDsSqlVar.SqlIsNull Or gDsSqlVar.SqlHasError;
+    return '';
+  endif;
+
+  return %str(gDsSqlVar.SqlData:gDsSqlVar.SqlBytes); 
+
+end-proc SqlRsGetHex;
+//---------------------------------------------------------------*
+//  SqlRsIsNull
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsIsNull export;
+  dcl-pi *N ind;
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return *on;
+  endif;  
+
+  return gDsSqlVar.SqlIsNull;    
+
+end-proc SqlRsIsNull;
+//---------------------------------------------------------------*
+//  SqlRsHasError
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsHasError export;
+  dcl-pi *N ind;
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return *on;
+  endif;  
+
+  return gDsSqlVar.SqlHasError;    
+
+end-proc SqlRsHasError;
+//---------------------------------------------------------------*
+//  SqlRsFindColumn
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//* @param pBoNullId - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsFindColumn export;
+  dcl-pi *N int(10);
+    pInResultSet int(10) const;
+    pAnColName varchar(256) const;
+  end-pi;
+       
+  dcl-s pInColumns int(10);     
+  dcl-s i int(10);     
+       
+  pInColumns = SqlRsGetColumnCount(pInResultSet);      
+  for i=1 by 1 to pInColumns;
+    if SqlGetSqlVar(pInResultSet:i) <> 0; // ??
+      return -1; 
+    endif;  
+    if gDsSqlVar.SqlLongName = PAnColName Or
+         gDsSqlVar.SqlSysName = PAnColName;
+      return i;
+    endif;       
+  endfor; 
+
+  return -1;
+       
+end-proc SqlRsFindColumn;
+//---------------------------------------------------------------*
+//  SqlRsGetColumnCount
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetColumnCount export;
+  dcl-pi *N int(10);
+    pInResultSet int(10) const;
+  end-pi;
+        
+  dcl-s pPtResultSet pointer inz(*Null);
+  dcl-ds pDsResultSet likeds(DsResultSet_t) based(pPtResultSet); 
+
+  dcl-s pPtResultDa pointer;
+  dcl-ds pDsResultDa likeds(SqlDa) based(pPtResultDa);
+
+  pPtResultSet = OoRObjectGet(s#prog:pInResultSet);
+  if pPtResultSet = *Null;
+    // todo message
+    return 0;
+  endif;
+
+  pPtResultDa = pDsResultSet.ptResultDa; 
+  return pDsResultDa.SqlD;
+              
+end-proc SqlRsGetColumnCount;
+//---------------------------------------------------------------*
+//  SqlRsGetColumnName
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetColumnName export;
+  dcl-pi *N varchar(256);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return '';
+  endif;  
+  
+  if gDsSqlVar.SqlLongName <> *Blanks;
+    return gDsSqlVar.SqlLongName;     
+  endif; 
+  
+  return gDsSqlVar.SqlSysName;     
+              
+end-proc SqlRsGetColumnName;
+//---------------------------------------------------------------*
+//  SqlRsGetSysColumnName
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetSysColumnName export;
+  dcl-pi *N varchar(10);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return '';
+  endif;  
+  
+  return gDsSqlVar.SqlSysName;     
+       
+end-proc SqlRsGetSysColumnName;
+//---------------------------------------------------------------*
+//  SqlRsGetLongColumnName
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetLongColumnName export;
+  dcl-pi *N varchar(256);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return '';
+  endif;  
+  
+  return gDsSqlVar.SqlLongName;     
+       
+end-proc SqlRsGetLongColumnName;
+//---------------------------------------------------------------*
+//  SqlRsGetColumnPrefix
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetColumnPrefix export;
+  dcl-pi *N char(1);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  // TODO     
+  return '';     
+       
+end-proc SqlRsGetColumnPrefix;
+//---------------------------------------------------------------*
+//  SqlRsGetColumnType
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetColumnType export;
+  dcl-pi *N int(10);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return 0;
+  endif;  
+       
+  return gDsSqlVar.SqlType;     
+       
+end-proc SqlRsGetColumnType;
+//---------------------------------------------------------------*
+//  SqlRsGetPrecision
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetPrecision export;
+  dcl-pi *N int(10);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return 0;
+  endif;  
+
+  return gDsSqlVar.SqlPrecision;          
+       
+end-proc SqlRsGetPrecision;
+//---------------------------------------------------------------*
+//  SqlRsGetScale
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pInResultSet - 
+//* @param pInColIndex - 
+//*
+//* @return Timestamp
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlRsGetScale export;
+  dcl-pi *N int(10);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  if SqlGetSqlVar(pInResultSet:pInColIndex) <> 0;
+    return 0;
+  endif;  
+
+  return gDsSqlVar.SqlScale;          
+       
+end-proc SqlRsGetScale;
+//---------------------------------------------------------------*
+//  SqlGetSqlVar
+//---------------------------------------------------------------*
+dcl-proc SqlGetSqlVar;
+  dcl-pi *N int(10);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  dcl-s pPtResultSet pointer inz(*Null);
+  dcl-ds pDsResultSet likeds(DsResultSet_t) based(pPtResultSet); 
+
+  dcl-s pPtResultDa pointer;
+  dcl-ds pDsResultDa likeds(SqlDa) based(pPtResultDa);
+
+  dcl-s pPtSqlVar pointer;
+  dcl-ds pDsSqlVar likeds(SqlVar) based(pPtSqlVar);
+
+  dcl-s inInd int(5) based(pDsSqlVar.SqlInd);
+
+  dcl-ds *n;
+    inLen int(5);
+    inPrecision int(3) overlay(inLen:*next); 
+    inScale int(3) overlay(inLen:*next); 
+  end-ds;
+
+  pPtResultSet = OoRObjectGet(s#prog:pInResultSet);
+  if pPtResultSet = *Null;
+    // todo message
+    return 0;
+  endif;
+
+  clear gDsSqlVar;
+  pPtResultDa = pDsResultSet.ptResultDa; 
+  if pInColIndex > pDsResultDa.SqlD;
+    return -1;
+  endif;  
+  
+  pPtSqlVar = %Addr(pDsResultDa.Sql_Var(1)) + %size(SQLVAR) * (pInColIndex-1); 
+
+  gDsSqlVar.SqlType = pDsSqlVar.SqlType - %rem(pDsSqlVar.SqlType:2); 
+  gDsSqlVar.SqlTypeOrig = pDsSqlVar.SqlType;
+  gDsSqlVar.SqlLen = pDsSqlVar.SqlLen; 
+  gDsSqlVar.SqlData = pDsSqlVar.SqlData;
+  if pDsSqlVar.SqlInd <> *Null; 
+    gDsSqlVar.SqlInd = inInd;
+    gDsSqlVar.SqlIsNull = (inInd = -1);
+    gDsSqlVar.SqlHasError = (inInd < -1);
+  endif;  
+  //SqlCcsid int(10);
+  //SqlSysName varchar(30);
+  //SqlLongName varchar(30);
+  //SqlText varchar(30);
+
+  // calculate byte length
+  gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen;
+  
+  select; 
+    when gDsSqlVar.SqlType = SQL_TYPE_PACKED;
+      inLen = pDsSqlVar.SqlLen; 
+      gDsSqlVar.SqlPrecision = inPrecision; 
+      gDsSqlVar.SqlScale = inScale; 
+      gDsSqlVar.SqlBytes = %div(gDsSqlVar.SqlPrecision+1:2)
+                         + %rem(gDsSqlVar.SqlPrecision+1:2);
+           
+    when gDsSqlVar.SqlType = SQL_TYPE_ZONED;
+      inLen = pDsSqlVar.SqlLen; 
+      gDsSqlVar.SqlPrecision = inPrecision; 
+      gDsSqlVar.SqlScale = inScale; 
+      gDsSqlVar.SqlBytes = gDsSqlVar.SqlPrecision;
+           
+    when gDsSqlVar.SqlType = SQL_TYPE_VARCHAR Or
+           gDsSqlVar.SqlType = SQL_TYPE_LONGVARCHAR;
+      gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen + 2;
+           
+    when gDsSqlVar.SqlType = SQL_TYPE_GRAPHIC;
+      gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen * 2;
+           
+    when gDsSqlVar.SqlType = SQL_TYPE_VARGRAPHIC Or
+          gDsSqlVar.SqlType = SQL_TYPE_LONGVARGRAPHIC;
+      gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen * 2 + 2;
+
+  endsl;
+
+  return 0;      
+       
+end-proc SqlGetSqlVar;

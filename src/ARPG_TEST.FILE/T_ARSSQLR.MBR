@@ -6,6 +6,7 @@ ctl-opt nomain;
 //---------------------------------------------------------------*
 /COPY ARPG_H,ARCSQLR
 /COPY ARPG_H,ARCERRNO
+/COPY ARPG_H,ARCFCNTL
 
 /COPY RPGUNIT1,TESTCASE
 
@@ -128,6 +129,9 @@ dcl-proc test_Sql_PreparedStatement export;
   dcl-s F_TIME time; 
   dcl-s F_TIMESTAMP timestamp;
   dcl-s i int(10);
+  dcl-s PInConnection int(10);
+
+  PInConnection = SqlConnection('');
 
   // select * from SYSIXADV
   //pInPreparedSt = SqlPreparedStatement('Select * from SYSFEATURE');   
@@ -144,7 +148,7 @@ dcl-proc test_Sql_PreparedStatement export;
   //             F_TIMESTAMP from TSTARSSQLF');
   F_VARCHAR = 'Select * from SYSFEATURE -
                 WHERE FEATURE_ID like ? and FEATURE_NAME like ?'; 
-  pInPreparedSt = SqlPreparedStatement(F_VARCHAR);
+  pInPreparedSt = SqlPreparedStatement(PInConnection:F_VARCHAR);
   SqlPreparedStatementSetString(pInPreparedSt:'%2%');
   SqlPreparedStatementSetString(pInPreparedSt:'%table%');
  
@@ -161,7 +165,7 @@ dcl-proc test_Sql_PreparedStatement export;
 
   // Test Update
   F_VARCHAR = 'INSERT INTO SALLBACH2/TSTARSSQLF (F1) VALUES(?)';    
-  pInPreparedSt = SqlPreparedStatement(F_VARCHAR);
+  pInPreparedSt = SqlPreparedStatement(PInConnection:F_VARCHAR);
                     
   SqlPreparedStatementSetDecimal(pInPreparedSt:10);                 
   SqlPreparedStatementExecuteUpdate(pInPreparedSt);

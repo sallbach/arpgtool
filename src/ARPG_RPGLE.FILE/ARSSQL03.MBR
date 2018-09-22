@@ -1,0 +1,99 @@
+**Free
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCSQLR
+/COPY ARPG_H,ARCOORR
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCFCNTL
+
+//---------------------------------------------------------------*
+// typedefs
+//---------------------------------------------------------------*
+dcl-ds DsStm_t qualified align template; 
+  inPrepStm int(10) inz(-1);
+end-ds;
+
+//---------------------------------------------------------------*
+// constants
+//---------------------------------------------------------------*
+dcl-c SQL_NUM 1; 
+
+//---------------------------------------------------------------*
+//  SqlStatement
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pAnSqlStm - Program reference. You should use the field
+//*
+//* @return ccc
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlStatement export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pAnSqlStm like(sqlstmvar_t) const;
+  end-pi;
+
+  dcl-s pInPrepStm int(10);
+  dcl-s pInResultSet int(10);
+
+  pInPrepStm = SqlPreparedStatement(PInConnection:pAnSqlStm);
+  if pInPrepStm = -1;
+     // todo message and move
+    return -1;
+  endif;
+
+  pInResultSet = SqlPreparedStatementExecuteQuery(pInPrepStm);
+  if pInResultSet < 0;
+     // todo message and move
+     SqlPreparedStatementFree(pInPrepStm);
+  endif;  
+
+  return pInResultSet;
+
+end-proc SqlStatement;
+//---------------------------------------------------------------*
+//  SqlExecute
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pAnSqlStm - Program reference. You should use the field
+//*
+//* @return ccc
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlExecute export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pAnSqlStm like(sqlstmvar_t) const;
+  end-pi;
+
+  dcl-s pInPrepStm int(10);
+  dcl-s pInSqlCode int(10);
+
+  pInPrepStm = SqlPreparedStatement(PInConnection:pAnSqlStm);
+  if pInPrepStm = -1;
+     // todo message and move
+    return -1;
+  endif;
+
+  pInSqlCode = SqlPreparedStatementExecuteUpdate(pInPrepStm);
+  if PInSqlCode < 0;
+     // todo message and move
+  endif;  
+
+  SqlPreparedStatementFree(pInPrepStm);
+
+  return pInSqlCode;
+
+end-proc SqlExecute;

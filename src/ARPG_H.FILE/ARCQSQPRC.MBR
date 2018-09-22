@@ -9,6 +9,7 @@
 //  sqlca & sqlda
 //---------------------------------------------------------------*
 // Exec Sql Include SQLCA;
+/IF DEFINED (AR_QSQPRC_SQLCA__)
 DCL-DS SQLCA;                                 
   SQLCAID CHAR(8) INZ(X'0000000000000000');   
    SQLAID CHAR(8) OVERLAY(SQLCAID);           
@@ -51,10 +52,10 @@ END-DS SQLCA;
 /SET CCSID(*CHAR:*JOBRUNMIX)  
 // SQL DESCRIPTOR AREA        
 DCL-DS SQLDA;                         
-  SQLDAID CHAR(8);                    
-  SQLDABC INT(10);                    
-  SQLN INT(5);                        
-  SQLD INT(5);                        
+  SQLDAID CHAR(8) INZ('SQLDA');                    
+  SQLDABC INT(10) INZ(%size(SqlDa));                    
+  SQLN INT(5) INZ;                        
+  SQLD INT(5) INZ;                        
   SQL_VAR CHAR(80) DIM(SQL_NUM);      
    *N POINTER OVERLAY(SQL_VAR:17);    
    *N POINTER OVERLAY(SQL_VAR:33);                  
@@ -82,6 +83,54 @@ DCL-DS SQLVAR2;
   SQLTNAME CHAR(30);  
 END-DS SQLVAR2;       
 /RESTORE CCSID(*CHAR)    
+/ENDIF
+
+dcl-ds DsSqPrcEd_t qualified template; // SQLP0400
+  function char(1) inz;     
+  packagename char(10) inz; 
+  packagelib char(10) inz('QTEMP');  
+  mainpgm char(10) inz;     
+  mainlib char(10) inz(API_LIBL);     
+  stmname char(18) inz;     
+  cursorname char(18) inz;  
+  openopt char(1) inz;      
+  describe char(1) inz(SQL_USING_CLAUSE_BOTH);     
+  commitctl char(1) inz(SQL_COMMIT_CONTROL_NONE);       
+  datfmt char(3) inz(SQL_DATE_FORMAT_ISO);       
+  datsep char(1) inz('-');        
+  timfmt char(3) inz(SQL_TIME_FORMAT_HMS);       
+  timsep char(1) inz(':');       
+  naming char(3) inz(SQL_NAMING_SYS);       
+  decpoint char(1) inz('.');     
+  blocking int(5) inz(1);      
+  scroll int(5) inz(SQL_CURSOR_SCROLLABLE_NO);        
+  position int(5) inz;      
+  rrn int(10) inz(0);          
+  insert int(10) inz(0);       
+  directmap char(1) inz(SQL_DIRECT_MAP_NO);    
+  reuseda char(1) inz;      
+  namecheck char(1) inz;    
+  useptrs char(1) inz;      
+  withhold char(1) inz;     
+  userdef char(18) inz;     
+  closefile char(10) inz;   
+  closelib char(10) inz;    
+  reopen char(1) inz;       
+  useperf char(1) inz;      
+  reval char(1) inz;        
+  maxscale uns(5) inz(11);     
+  maxprec char(1) inz(SQL_MAX_PRECISION_31);      
+  mindiv char(1) inz;       
+  stmccsid int(10) inz(CCSID_JOB);     
+  packsyp pointer inz(*Null);          
+  mainsyp pointer inz(*Null);      
+  sorttab char(10) inz(SQL_SORT_TABLE_JOB);     
+  sortlib char(10) inz;     
+  langid char(10) inz(SQL_LANGUAGE_ID_JOB);      
+  allowcpy char(1) inz(SQL_ALLOW_COPY_OF_DATA_AUTO);     
+  allowblk char(1) inz(SQL_ALLOW_BLOCKING_ALLREAD);     
+  sqlstm like(sqlstmvar_t);    
+end-ds;
 
 //---------------------------------------------------------------*
 //  constants
