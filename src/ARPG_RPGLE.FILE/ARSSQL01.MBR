@@ -16,7 +16,7 @@ ctl-opt ccsid(*ucs2:13488);
 //---------------------------------------------------------------*
 // typedefs
 //---------------------------------------------------------------*
-dcl-ds DsPrepStm_t qualified align template;
+dcl-ds DsPrepStm_t qualified align(*full) template;
   SqPrcEd likeds(DsSqPrcEd_t);
   ptDescribeDa pointer; // SqlDa
   ptOpenDa pointer; // SqlDa

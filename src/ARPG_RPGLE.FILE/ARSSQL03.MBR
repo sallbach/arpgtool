@@ -13,7 +13,7 @@ ctl-opt nomain;
 //---------------------------------------------------------------*
 // typedefs
 //---------------------------------------------------------------*
-dcl-ds DsStm_t qualified align template; 
+dcl-ds DsStm_t qualified align(*full) template; 
   inPrepStm int(10) inz(-1);
 end-ds;
 

@@ -18,9 +18,11 @@ ctl-opt ccsid(*ucs2:13488);
 //---------------------------------------------------------------*
 // typedefs
 //---------------------------------------------------------------*
-dcl-ds DsResultSet_t qualified align template;
-  SqlVarOccur int(10);
+dcl-ds DsResultSet_t qualified align(*full) template;
+  inSqlVarOccur int(10);
+  inFields int(10);
   ptResultDa pointer; // SqlDa
+  ptSqlVars pointer; 
   ptData pointer; // Data
   ptInd pointer; // Indicators
   SqPrcEd likeds(DsSqPrcEd_t);
@@ -34,7 +36,8 @@ dcl-c SQL_NUM 1;
 //---------------------------------------------------------------*
 // global
 //---------------------------------------------------------------*
-dcl-ds gDsSqlVar qualified;
+dcl-s gPtSqlVar pointer;
+dcl-ds gDsSqlVar qualified based(gPtSqlVar) align(*full);
   SqlType int(10);
   SqlTypeOrig int(10);
   SqlPrecision int(10);
@@ -42,10 +45,12 @@ dcl-ds gDsSqlVar qualified;
   SqlLen int(10);
   SqlBytes int(10);
   SqlData pointer;
-  SqlInd int(10);
+  SqlInd pointer;
+  SqlFile int(10);
+  SqlCcsid int(10);
+  SqlIndVal int(10);
   SqlIsNull ind;
   SqlHasError ind;
-  SqlCcsid int(10);
   SqlSysName varchar(30);
   SqlLongName varchar(30);
   SqlText varchar(30);
@@ -106,14 +111,18 @@ dcl-proc SqlRsNew export;
   pDsResultSet.SqPrcEd = pDsSqPrcEd;
 
   // more SQL_VARs per field
-  pDsResultSet.SqlVarOccur = 1;
+  pDsResultSet.inSqlVarOccur = 1;
   if %subst(pDsResultDa.SQLDAID:7:1) <> *blanks;
-    pDsResultSet.SqlVarOccur = %dec(%subst(pDsResultDa.SQLDAID:7:1):1:0);
+    pDsResultSet.inSqlVarOccur = %dec(%subst(pDsResultDa.SQLDAID:7:1):1:0);
   endif;
+
+  pDsResultSet.ptSqlVars =  %alloc(%size(gDsSqlVar) * pDsResultDa.SQLD); 
+  pDsResultSet.inFields = pDsResultDa.SQLD;
 
   // calculate storage
   for i=1 by 1 to pDsResultDa.SQLD;
-    SqlGetSqlVar(pInResultSet:i);
+    gPtSqlVar = pDsResultSet.ptSqlVars + %size(gDsSqlVar) * (i-1); 
+    SqlFillSqlVar(pPtResultDa:i:pDsResultSet.inSqlVarOccur:pDsResultDa.SQLD);
     pInAlloc += gDsSqlVar.SqlBytes;
   endfor; 
   
@@ -126,7 +135,9 @@ dcl-proc SqlRsNew export;
     pPtSqlVar = %Addr(pDsResultDa.Sql_Var(1)) + %size(SQLVAR) * i; 
     pDsSqlVar.SqlData = pDsResultSet.ptData + pInPrevious;
     pDsSqlVar.SqlInd = pDsResultSet.ptInd + 2 * i; 
-    SqlGetSqlVar(pInResultSet:i+1);
+    gPtSqlVar = pDsResultSet.ptSqlVars + %size(gDsSqlVar) * i; 
+    gDsSqlVar.SqlData = pDsSqlVar.SqlData;
+    gDsSqlVar.SqlInd = pDsSqlVar.SqlInd; 
     pInPrevious += gDsSqlVar.SqlBytes;
   endfor; 
   
@@ -229,6 +240,8 @@ dcl-proc SqlRsClose export;
   
   SqPrcEd(SqlCa:SqlDa:'SQLP0400':pDsResultSet.SqPrcEd:QUSecExcp);
 
+  dealloc(ne) pDsResultSet.ptResultDa;
+  dealloc(ne) pDsResultSet.ptSqlVars;
   dealloc(ne) pDsResultSet.ptData;
   dealloc(ne) pDsResultSet.ptInd;
 
@@ -1094,24 +1107,20 @@ dcl-proc SqlRsGetScale export;
        
 end-proc SqlRsGetScale;
 //---------------------------------------------------------------*
-//  SqlGetSqlVar
+//  SqlFillSqlVar
 //---------------------------------------------------------------*
-dcl-proc SqlGetSqlVar;
+dcl-proc SqlFillSqlVar;
   dcl-pi *N int(10);
-    pInResultSet int(10) const;
+    pPtResultDa pointer const;
     pInColIndex int(10) const;
+    inSqlVarOccur int(10) const;
+    inFields int(10) const;
   end-pi;
        
-  dcl-s pPtResultSet pointer inz(*Null);
-  dcl-ds pDsResultSet likeds(DsResultSet_t) based(pPtResultSet); 
-
-  dcl-s pPtResultDa pointer;
   dcl-ds pDsResultDa likeds(SqlDa) based(pPtResultDa);
 
   dcl-s pPtSqlVar pointer;
   dcl-ds pDsSqlVar likeds(SqlVar) based(pPtSqlVar);
-
-  dcl-s inInd int(5) based(pDsSqlVar.SqlInd);
 
   dcl-ds *n;
     inLen int(5);
@@ -1119,33 +1128,24 @@ dcl-proc SqlGetSqlVar;
     inScale int(3) overlay(inLen:*next); 
   end-ds;
 
-  pPtResultSet = OoRObjectGet(s#prog:pInResultSet);
-  if pPtResultSet = *Null;
-    // todo message
-    return 0;
-  endif;
-
-  clear gDsSqlVar;
-  pPtResultDa = pDsResultSet.ptResultDa; 
-  if pInColIndex > pDsResultDa.SqlD;
-    return -1;
-  endif;  
-  
+  clear gDsSqlVar; 
   pPtSqlVar = %Addr(pDsResultDa.Sql_Var(1)) + %size(SQLVAR) * (pInColIndex-1); 
 
-  gDsSqlVar.SqlType = pDsSqlVar.SqlType - %rem(pDsSqlVar.SqlType:2); 
+  gDsSqlVar.SqlType = pDsSqlVar.SqlType - %rem(pDsSqlVar.SqlType:2);
+  if %rem(pDsSqlVar.SqlType:2) = 0;
+    pDsSqlVar.SqlType += 1;
+  endif; 
   gDsSqlVar.SqlTypeOrig = pDsSqlVar.SqlType;
-  gDsSqlVar.SqlLen = pDsSqlVar.SqlLen; 
-  gDsSqlVar.SqlData = pDsSqlVar.SqlData;
-  if pDsSqlVar.SqlInd <> *Null; 
-    gDsSqlVar.SqlInd = inInd;
-    gDsSqlVar.SqlIsNull = (inInd = -1);
-    gDsSqlVar.SqlHasError = (inInd < -1);
-  endif;  
-  //SqlCcsid int(10);
-  //SqlSysName varchar(30);
-  //SqlLongName varchar(30);
-  //SqlText varchar(30);
+  gDsSqlVar.SqlLen = pDsSqlVar.SqlLen;
+  gDsSqlVar.SqlFile = 0;
+  memcpy(%Addr(gDsSqlVar.SqlFile) + 2
+        :%Addr(pDsSqlVar.SqlRes) + 8:2);
+  memcpy(%Addr(gDsSqlVar.SqlCcsid)
+        :%Addr(pDsSqlVar.SqlInfo1)
+        :%size(gDsSqlVar.SqlCcsid));
+  gDsSqlVar.SqlSysName = %subst(pDsSqlVar.SqlName:1:pDsSqlVar.SqlNameLen);
+  pDsSqlVar.SqlNameLen = 8;
+  pDsSqlVar.SqlName = pDsSqlVar.SqlInfo1;
 
   // calculate byte length
   gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen;
@@ -1176,6 +1176,56 @@ dcl-proc SqlGetSqlVar;
       gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen * 2 + 2;
 
   endsl;
+
+  if inSqlVarOccur = 1;
+    return 0;
+  endif;
+    
+  pPtSqlVar = %Addr(pDsResultDa.Sql_Var(1)) + %size(SQLVAR) * (inFields + pInColIndex-1); 
+  gDsSqlVar.SqlLongName = %subst(pDsSqlVar.SqlName:1:pDsSqlVar.SqlNameLen);
+
+  if inSqlVarOccur = 2;
+    return 0;
+  endif;
+    
+  pPtSqlVar = %Addr(pDsResultDa.Sql_Var(1)) + %size(SQLVAR) * (inFields*2 + pInColIndex-1); 
+  gDsSqlVar.SqlText = %subst(pDsSqlVar.SqlName:1:pDsSqlVar.SqlNameLen);
+
+  return 0;      
+       
+end-proc SqlFillSqlVar;
+//---------------------------------------------------------------*
+//  SqlGetSqlVar
+//---------------------------------------------------------------*
+dcl-proc SqlGetSqlVar;
+  dcl-pi *N int(10);
+    pInResultSet int(10) const;
+    pInColIndex int(10) const;
+  end-pi;
+       
+  dcl-s pPtResultSet pointer inz(*Null);
+  dcl-ds pDsResultSet likeds(DsResultSet_t) based(pPtResultSet); 
+
+  //dcl-s inInd int(5) based(pDsSqlVar.SqlInd);
+
+  pPtResultSet = OoRObjectGet(s#prog:pInResultSet);
+  if pPtResultSet = *Null;
+    // todo message
+    return 0;
+  endif;
+
+  if pInColIndex > pDsResultSet.inFields;
+    return -1;
+  endif;  
+  
+  gPtSqlVar = pDsResultSet.ptSqlVars + %size(gDsSqlVar) * (pInColIndex-1); 
+
+  //gDsSqlVar.SqlData = pDsSqlVar.SqlData;
+  //if pDsSqlVar.SqlInd <> *Null; 
+  //  gDsSqlVar.SqlIndVal = inInd;
+  //  gDsSqlVar.SqlIsNull = (inInd = -1);
+  //  gDsSqlVar.SqlHasError = (inInd < -1);
+  //endif;  
 
   return 0;      
        

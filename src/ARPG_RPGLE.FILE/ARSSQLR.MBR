@@ -15,7 +15,7 @@ ctl-opt ccsid(*ucs2:13488);
 //---------------------------------------------------------------*
 // typedefs
 //---------------------------------------------------------------*
-dcl-ds DsConnection_t qualified align template;
+dcl-ds DsConnection_t qualified align(*full) template;
   SqPrcEd likeds(DsSqPrcEd_t) inz(*likeds);
 end-ds;
 
