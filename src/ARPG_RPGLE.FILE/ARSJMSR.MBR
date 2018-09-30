@@ -57,20 +57,7 @@
          dcl-ds dsMsg likeds(JmsMessage_t) based(ptMsg) end-ds;
 
          // leeres Objekt erstellen
-         PPtMsg = %alloc(%size(PDsMsg));
-         PInMsg = HandleNew(S#Prog:PPtMsg);
-         if PInMsg = -1;
-           MhMovPm(*Blanks:MSGMOVALL:MSGMOVALLN:'*':1:QUSecF);
-           ExpExcp  = 'DZP1019';
-           ExpExcpA = MsgFmtMsg(ExpExcp);
-           ExpExcpM = DZPMSGF;
-           MhSndPM(ExpExcp:ExpExcpM:ExpExcpA:
-                      %size(ExpExcpA):API_DIAG:'*':1:ExpMKey:QUsecF);
-           if PPtMsg <> *Null;
-             dealloc PPtMsg;
-           endif;
-           return -1;
-         endif;
+         PInMsg = OoRObjectNew(S#Prog:PPtMsg:%size(PDsMsg));
 
          // Init
          clear PDsMsg;
