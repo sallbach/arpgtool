@@ -1,18 +1,18 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCIFSR
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCIFSR
 
-      /COPY RPGUNIT1,TESTCASE
+/COPY RPGUNIT1,TESTCASE
 
-      //---------------------------------------------------------------*
-      // test_nothing
-      //---------------------------------------------------------------*
-       dcl-proc test_nothing export;
+//---------------------------------------------------------------*
+// test_nothing
+//---------------------------------------------------------------*
+dcl-proc test_nothing export;
 
 
 
-       end-proc test_nothing;
+end-proc test_nothing;

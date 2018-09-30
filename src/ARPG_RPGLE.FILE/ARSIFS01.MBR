@@ -1,65 +1,65 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCIFSR
-      /COPY ARPG_H,ARCQP0LSTD
-      /COPY ARPG_H,ARCQLG
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCIFSR
+/COPY ARPG_H,ARCQP0LSTD
+/COPY ARPG_H,ARCQLG
 
-      //---------------------------------------------------------------*
-      //  IfsSetFileCcsid
-      //---------------------------------------------------------------*
-      //* Set Ccsid of given file.
-      //*
-      //* @param pPtPath - path name of the file to be opened.
-      //* @param pInCcsid int(10) - Ccsid to set.
-      //*
-      //* @return 0 - OK
-      //* @return -1 - Fail
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc IfsSetFileCcsid export;
-         dcl-pi *N int(10);
-           pPtPath  pointer const options(*string);
-           pInCcsid int(10) const options(*nopass);
-         end-pi;
+//---------------------------------------------------------------*
+//  IfsSetFileCcsid
+//---------------------------------------------------------------*
+//* Set Ccsid of given file.
+//*
+//* @param pPtPath - path name of the file to be opened.
+//* @param pInCcsid int(10) - Ccsid to set.
+//*
+//* @return 0 - OK
+//* @return -1 - Fail
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc IfsSetFileCcsid export;
+  dcl-pi *N int(10);
+    pPtPath  pointer const options(*string);
+    pInCcsid int(10) const options(*nopass);
+  end-pi;
 
-         dcl-ds Qlg_Path_Name likeds(Qlg_Path_Name_t);
+  dcl-ds Qlg_Path_Name likeds(Qlg_Path_Name_t);
 
-         dcl-ds pDsSetAtr qualified align;
-           Offc int(10) inz(0);
-           Attr int(10) inz(QP0L_ATTR_CCSID);
-           Size int(10) inz(%size(PDsSetAtr.Data));
-           Rese char(4) inz(*allx'00');
-           Data int(10) inz(0);
-         end-ds;
+  dcl-ds pDsSetAtr qualified align;
+    Offc int(10) inz(0);
+    Attr int(10) inz(QP0L_ATTR_CCSID);
+    Size int(10) inz(%size(PDsSetAtr.Data));
+    Rese char(4) inz(*allx'00');
+    Data int(10) inz(0);
+  end-ds;
 
-         // maybe check the given ccsid !?
+  // maybe check the given ccsid !?
 
-         // Set CCSID
-         PDsSetAtr.Data = pInCcsid;
-         Qlg_Path_Name.CCSID = QLG_CURRENT_JOB_CCSID;
-         Qlg_Path_Name.Country_ID = QLG_CURRENT_JOB_REGION;
-         Qlg_Path_Name.Language_ID = QLG_CURRENT_JOB_LANGUAGE;
-         Qlg_Path_Name.Reserved = *allx'00';
-         Qlg_Path_Name.Path_Type = QLG_CHAR_SINGLE;
-         Qlg_Path_Name.Path_Length = %len(%str(PPtPath));
-         Qlg_Path_Name.Path_Name_Delimiter = '/';
-         Qlg_Path_Name.Reserved2 = *allx'00';
-         Qlg_Path_Name.Path_Name = %str(pPtPath);
+  // Set CCSID
+  PDsSetAtr.Data = pInCcsid;
+  Qlg_Path_Name.CCSID = QLG_CURRENT_JOB_CCSID;
+  Qlg_Path_Name.Country_ID = QLG_CURRENT_JOB_REGION;
+  Qlg_Path_Name.Language_ID = QLG_CURRENT_JOB_LANGUAGE;
+  Qlg_Path_Name.Reserved = *allx'00';
+  Qlg_Path_Name.Path_Type = QLG_CHAR_SINGLE;
+  Qlg_Path_Name.Path_Length = %len(%str(PPtPath));
+  Qlg_Path_Name.Path_Name_Delimiter = '/';
+  Qlg_Path_Name.Reserved2 = *allx'00';
+  Qlg_Path_Name.Path_Name = %str(pPtPath);
 
-         if Qp0lSetAttr(%Addr(Qlg_Path_Name)
-                       :%Addr(pDsSetAtr)
-                       :%size(pDsSetAtr)
-                       :QP0L_DONOT_FOLLOW_SYMLNK) = -1;
-           return -1;
-         endif;
+  if Qp0lSetAttr(%Addr(Qlg_Path_Name)
+                :%Addr(pDsSetAtr)
+                :%size(pDsSetAtr)
+                :QP0L_DONOT_FOLLOW_SYMLNK) = -1;
+    return -1;
+  endif;
 
-         return 0;
+  return 0;
 
-       end-proc IfsSetFileCcsid;
+end-proc IfsSetFileCcsid;

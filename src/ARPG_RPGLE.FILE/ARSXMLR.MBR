@@ -1,1311 +1,1317 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCXMLR
-      /COPY ARPG_H,ARCSTRR
-      /COPY ARPG_H,ARCSTRING
-      /COPY ARPG_H,ARCIFSR
-      /COPY ARPG_H,ARCB64R
-      /COPY ARPG_H,ARCQCEE
-      /COPY ARPG_H,ARCSTDLIB
-      /COPY ARPG_H,ARCAPRCORE
-
-      //---------------------------------------------------------------*
-      // global variables
-      //---------------------------------------------------------------*
-       dcl-ds DsNode_t qualified align; // no template to use it for *inz
-         ptName   pointer       inz(*Null);
-         inName   like(size_t)  inz(0);
-         ptData   pointer       inz(*Null);
-         inData   like(size_t)  inz(0);
-         inCcsid  int(10)       inz(CCSID_JOB);
-         ptAttrs  pointer       inz(*Null); // Addr(dim(inAttrs))
-         inAttrs  int(10)       inz(0);
-         ptComms  pointer       inz(*Null); // Addr(dim(inComms))
-         inComms  int(10)       inz(0);
-         ptNodes  pointer       inz(*Null); // Addr(dim(inNodes))
-         inNodes  int(10)       inz(0);
-         ptParent pointer       inz(*Null);
-         boNullONull ind        inz(*off);
-       end-ds;
-
-       dcl-ds DsAttr_t qualified align; // no template to use it for *inz
-         ptName  pointer       inz(*Null);
-         inName  like(size_t)  inz(0);
-         ptData  pointer       inz(*Null);
-         inData  like(size_t)  inz(0);
-         inCcsid int(10)       inz(CCSID_JOB);
-       end-ds;
-
-       dcl-ds DsComment_t qualified align; // no template to use it for *inz
-         ptData  pointer       inz(*Null);
-         inData  like(size_t)  inz(0);
-         inCcsid int(10)       inz(CCSID_JOB);
-       end-ds;
-
-       dcl-ds gDsXmlDoc likeds(DsNode_t) inz(*likeds);
-
-       dcl-ds *N;
-         // single byte ebcdic search
-         gArQSearchInit char(5) inz('<>&''"');
-           gArQSearch   char(1) dim(5) overlay(gArQSearchInit);
-
-         // single byte ebcdic replace
-         gArQRplInit  char(30) inz('&lt;  &gt;  &amp; &apos;&quot;');
-           gArQRpl    char( 6) dim(5) overlay(gArQRplInit);
-         gArQRplLenInit  char( 5) inz('44566');
-           gArQRplLen    zoned(1) dim(5) overlay(gArQRplLenInit);
-
-         // single byte ascii search
-         gArQSearchAsInit char(5) inz(x'3c3e262722');
-           gArQSearchAs   char(1) dim(5) overlay(gArQSearchAsInit);
-
-         // single byte ascii replace
-         gArQRplAsInit  char(30)
-               inz(x'266c743b20202667743b202026616d703b202661706f733b2671756f743b');
-           gArQRplAs    char( 6) dim(5) overlay(gArQRplAsInit);
-         gArQRplAsLenInit  char( 5) inz('44566');
-           gArQRplAsLen    zoned(1) dim(5) overlay(gArQRplAsLenInit);
-       end-ds;
-
-       dcl-s gBoHeader ind inz(DFT_HEADER);
-       dcl-s gBoPretty ind inz(DFT_PRETTY);
-       dcl-s gInCcsid int(10);
-
-       dcl-s  gPtCurNode pointer;
-       dcl-ds gDsCurNode likeds(DsNode_t) based(gPtCurNode);
-
-       dcl-s  gPtAtrNode pointer;
-       dcl-ds gDsAtrNode likeds(DsNode_t) based(gPtAtrNode);
-
-       dcl-s gPtSeriealized pointer;
-       dcl-s gInSeriealized int(10);
-       dcl-s gInSeriealizedLen int(10);
-
-       dcl-s gPtUserWriter pointer(*proc);
-
-       dcl-s gInHeap int(10) inz(-1);
-       dcl-s gBoTeraspace  ind inz(*off);
-       dcl-s gBoNullOnNull ind inz(*off);
-
-       dcl-s gPtPi pointer inz(*null);
-       dcl-s gInPi int(10) inz(0);
-       dcl-ds DsPi_t qualified align; // no template to use it for *inz
-         ptData  pointer       inz(*Null);
-         inData  like(size_t)  inz(0);
-         inCcsid int(10)       inz(CCSID_JOB);
-       end-ds;
-
-      //---------------------------------------------------------------*
-      // constants
-      //---------------------------------------------------------------*
-       dcl-c ELEM_STR     '<';
-       dcl-c ELEM_END     '>';
-       dcl-c ELEM_STREND  '</';
-       dcl-c ELEM_EMPTY   ' />';
-       dcl-c ATTR_STR     '="';
-       dcl-c ATTR_END     '"';
-       dcl-c PI_STR       '<?';
-       dcl-c PI_END       ' ?>';
-       dcl-c COMMENT_STR  '<!-- ';
-       dcl-c COMMENT_END  ' -->';
-       dcl-c PRETTY_TAB   '  ';
-       dcl-c PRETTY_NL   x'25';
-
-       dcl-c START_HEAP  1048576; // 1M
-
-       dcl-c DFT_HEADER  *on;
-       dcl-c DFT_PRETTY  *off;
-
-      //---------------------------------------------------------------*
-      //  XmlDocument
-      //---------------------------------------------------------------*
-      //* Create a new XML document.
-      //*
-      //* @param pInCcsid - Ccsid of the XML document (optional, default UTF-8)
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlDocument export;
-         dcl-pi *N int(10);
-           pInCcsid int(10) const options(*nopass);
-         end-pi;
-
-         // CCSID of the document
-         gInCcsid = CCSID_UTF8;
-         if %parms() >= %parmnum(pInCcsid) and pInCcsid > 0;
-           gInCcsid = pInCcsid;
-         endif;
-
-         // free old document if not yet happened
-         xmlFreeNodes();
-
-         gPtCurNode = %addr(gDsXmlDoc);
-         gPtAtrNode = *Null;
-         gPtPi      = *Null;
-
-         // Create new heap
-         CeeCreateHeap(gInHeap:START_HEAP:*Omit:0:*Omit);
-
-         gBoPretty = DFT_PRETTY;
-         gBoHeader = DFT_HEADER;
-
-         return 0;
-
-       end-proc XmlDocument;
-      //---------------------------------------------------------------*
-      // XmlPrettyPrint
-      //---------------------------------------------------------------*
-      //* Generate pretty xml code.
-      //*
-      //* @param pBoPretty - Pretty print on/off
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlPrettyPrint export;
-         dcl-pi *N;
-           pBoPretty ind const;
-         end-pi;
-
-         gBoPretty = pBoPretty;
-
-       end-proc XmlPrettyPrint;
-      //---------------------------------------------------------------*
-      // XmlHeader
-      //---------------------------------------------------------------*
-      //* Print XML-Header.
-      //*
-      //* @param pBoHeader - Print header on/off (on-Default).
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlHeader export;
-         dcl-pi *N;
-           pBoHeader ind const;
-         end-pi;
-
-         gBoHeader = pBoHeader;
-
-       end-proc XmlHeader;
-      //---------------------------------------------------------------*
-      // XmlSetNullOnNull
-      //---------------------------------------------------------------*
-      //* Turn on/off Null on Null.
-      //*
-      //* @param pBoNullOnNull - Null on Null instead of empty element.
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlSetNullOnNull export;
-         dcl-pi *N;
-           pBoNullOnNull ind const;
-         end-pi;
-
-         gBoNullOnNull = pBoNullOnNull;
-
-       end-proc XmlSetNullOnNull;
-      //---------------------------------------------------------------*
-      // XmlNode
-      //---------------------------------------------------------------*
-      //* Create a new XML node.
-      //*
-      //* @param pPtName - Node name.
-      //* @param pPtData - Node data (optional/omit).
-      //* @param pBoNull - Null indicator (optional).
-      //* @param pInCcsid - Ccsid of the given data
-      //*                   (optional, default @const CCSID_JOB).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlNode export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pPtData pointer const options(*string:*nopass);
-           pBoNull ind const options(*nopass);
-           pInCcsid int(10) const options(*nopass);
-         end-pi;
-
-         dcl-s  pPtCurNode pointer;
-         dcl-ds pDsCurNode likeds(DsNode_t) based(pPtCurNode);
-         dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
-
-         if pPtName = *Null Or strlen(pPtName) = 0;
-           return -1;
-         endif;
-
-         if %parms() >= %parmnum(pInCcsid);
-           pInCcsid_ = pInCcsid;
-         endif;
-
-         // Don't print current(previous to this call) node if empty ?
-         if gPtAtrNode <> *Null And
-              gPtAtrNode <> gPtCurNode And
-              XmlNodeIsNull(gDsAtrNode);
-           gDsCurNode.inNodes -= 1; // overwrite this last added node
-         endif;
-
-         // new node
-         CeeGetHeap(gInHeap:%size(DsNode_t):pPtCurNode:*Omit);
-         pDsCurNode = DsNode_t; // inz(*likeds)
-
-         pDsCurNode.ptParent = gPtCurNode;
-         pDsCurNode.inName = strlen(pPtName);
-         CeeGetHeap(gInHeap:pDsCurNode.inName+1:pDsCurNode.ptName:*Omit);
-         strcpy(PDsCurNode.ptName:pPtName);
-         pDsCurNode.boNullONull = gBoNullOnNull;
-
-         // Node for following XmlAttribute() calls
-         gPtAtrNode = pPtCurNode;
-
-         // Add new node to parent
-         gDsCurNode.inNodes += 1;
-         if gDsCurNode.ptNodes = *Null;
-           CeeGetHeap(gInHeap:%size(pPtCurNode):gDsCurNode.ptNodes:*Omit);
-         else;
-           gDsCurNode.ptNodes = %realloc(gDsCurNode.ptNodes
-                                        :%size(pPtCurNode) * gDsCurNode.inNodes);
-         endif;
-         memcpy(gDsCurNode.ptNodes
-                + %size(pPtCurNode) * (gDsCurNode.inNodes-1)
-               :%Addr(pPtCurNode)
-               :%size(pPtCurNode));
-
-         // SubNode ?
-         if %parms() < %parmnum(pPtData);
-           gPtCurNode = pPtCurNode;
-           return 0;
-         endif;
-
-         // Add data and close node
-         if pPtData = *Null;
-           return 0;
-         endif;
-
-         PDsCurNode.InCcsid = pInCcsid_;
-         PDsCurNode.inData = strlen(pPtData);
-         if PDsCurNode.inData = 0 Or
-             %parms() >= %parmnum(pBoNull) And pBoNull;
-           PDsCurNode.inData = 0;
-           return 0;
-         endif;
-
-         PDsCurNode.ptData = XmlQuote(pPtData:PDsCurNode.inData:pInCcsid_);
-
-         return 0;
-
-       end-proc XmlNode;
-      //---------------------------------------------------------------*
-      // XmlNodeNum
-      //---------------------------------------------------------------*
-      //* Create a new XML node with a numeric value
-      //*
-      //* @param pPtName - Node name.
-      //* @param pNuNum - Number.
-      //* @param pBoNull - Null indicator (optional).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlNodeNum export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pNuNum  packed(31:11) const;
-           pBoNull ind const options(*nopass);
-         end-pi;
-
-         if %parms() >= %parmnum(pBoNull);
-           return XmlNode(pPtName:XmlNumber(pNuNum):pBoNull);
-         endif;
-
-         return XmlNode(pPtName:XmlNumber(pNuNum));
-
-       end-proc XmlNodeNum;
-      //---------------------------------------------------------------*
-      // XmlNodeBool
-      //---------------------------------------------------------------*
-      //* Create a new XML node with a boolean (true|false) value
-      //*
-      //* @param pPtName - Node name.
-      //* @param pBoInd - Indicator.
-      //* @param pBoNull - Null indicator (optional).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlNodeBool export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pBoInd  ind const;
-           pBoNull ind const options(*nopass);
-         end-pi;
-
-         if %parms() >= %parmnum(pBoNull);
-           return XmlNode(pPtName:XmlBoolean(pBoInd):pBoNull);
-         endif;
-
-         return XmlNode(pPtName:XmlBoolean(pBoInd));
-
-       end-proc XmlNodeBool;
-      //---------------------------------------------------------------*
-      // XmlNodeDate
-      //---------------------------------------------------------------*
-      //* Create a new XML node with a date (yyyy-mm-dd) value
-      //*
-      //* @param pPtName - Node name.
-      //* @param pDaDate - Date.
-      //* @param pBoNull - Null indicator (optional).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlNodeDate export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pDaDate date const;
-           pBoNull ind const options(*nopass);
-         end-pi;
-
-         if %parms() >= %parmnum(pBoNull);
-           return XmlNode(pPtName:XmlDate(pDaDate):pBoNull);
-         endif;
-
-         return XmlNode(pPtName:XmlDate(pDaDate));
-
-       end-proc XmlNodeDate;
-      //---------------------------------------------------------------*
-      // XmlNodeDateTime
-      //---------------------------------------------------------------*
-      //* Create a new XML node with a datetime (yyyy-mm-ddThh:mm:ss) value
-      //*
-      //* @param pPtName - Node name.
-      //* @param pTsTime - Timestamp.
-      //* @param pBoNull - Null indicator (optional).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlNodeDateTime export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pTsTime timestamp const;
-           pBoNull ind const options(*nopass);
-         end-pi;
-
-         if %parms() >= %parmnum(pBoNull);
-           return XmlNode(pPtName:XmlDateTime(pTsTime):pBoNull);
-         endif;
-
-         return XmlNode(pPtName:XmlDateTime(pTsTime));
-
-       end-proc XmlNodeDateTime;
-      //---------------------------------------------------------------*
-      // XmlNodeB64
-      //---------------------------------------------------------------*
-      //* Create a new XML node with binary data, which will be
-      //* transformed to base64.
-      //*
-      //* @param pPtName - Node name.
-      //* @param pPtData - Binary data.
-      //* @param pInLen - Length of data (optional).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlNodeB64 export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pPtData pointer const options(*string);
-           pInLen  like(size_t)  const options(*nopass);
-         end-pi;
-
-         if %parms() >= %parmnum(pInLen);
-           return XmlNode(pPtName
-                         :B64StringEncode(pPtData:pInLen
-                                         :isAsciiCcsid(gInCcsid) = 1)
-                         :*off
-                         :gInCcsid);
-         endif;
-
-         return XmlNode(pPtName
-                       :B64StringEncode(pPtData
-                                       :strlen(pPtData)
-                                       :isAsciiCcsid(gInCcsid) = 1)
-                       :*off
-                       :gInCcsid);
-
-       end-proc XmlNodeB64;
-      //---------------------------------------------------------------*
-      // XmlNodeB64Reader
-      //---------------------------------------------------------------*
-      //* Create a new XML node with binary data, which will be
-      //* transformed to base64.
-      //*
-      //* @param pPtName - Node name.
-      //* @param pPtReader - User function to read the date.
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlNodeB64Reader export;
-         dcl-pi *N int(10);
-           pPtName    pointer const options(*string);
-           pPtReader  pointer(*proc) const;
-           pInHandler int(10) const;
-         end-pi;
-
-         XmlNode(pPtName:'':*off:gInCcsid);
-
-         return B64StreamEncode(pPtReader
-                               :pInHandler
-                               :%paddr('XMLNODEB64WRITER')
-                               :0
-                               :isAsciiCcsid(gInCcsid) = 1);
-
-       end-proc XmlNodeB64Reader;
-      //---------------------------------------------------------------*
-       dcl-proc XmlNodeB64writer;
-         dcl-pi *N int(10);
-           pInHdl     int(10) value;
-           pPtData    pointer value;
-           pInLen     int(10) value;
-         end-pi;
-
-         if gDsAtrNode.ptData = *Null;
-           CeeGetHeap(gInHeap
-                     :gDsAtrNode.inData + pInLen:gDsAtrNode.ptData:*Omit);
-         else;
-           gDsAtrNode.ptData = %realloc(gDsAtrNode.ptData
-                                       :gDsAtrNode.inData + pInLen);
-         endif;
-         memcpy(gDsAtrNode.ptData + gDsAtrNode.inData
-               :pPtData
-               :pInLen);
-
-         gDsAtrNode.inData += pInLen;
-
-         return pInLen;
-
-       end-proc XmlNodeB64writer;
-      //---------------------------------------------------------------*
-      // XmlNodeEnd
-      //---------------------------------------------------------------*
-      //* Close current Node.
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlNodeEnd export;
-         dcl-pi *N int(10);
-         end-pi;
-
-         dcl-s pPtParent pointer;
-
-         if gPtCurNode = *Null Or gDsCurNode.ptParent = *Null;
-           return -1;
-         endif;
-
-         // Don't print current(previous to this call) node if empty ?
-         if gPtAtrNode <> *Null And
-              gPtAtrNode <> gPtCurNode And
-              XmlNodeIsNull(gDsAtrNode);
-           gDsCurNode.inNodes -= 1; // overwrite this last added node
-         endif;
-
-         pPtParent = gDsCurNode.ptParent;
-
-         // Don't print node if empty ?
-         if XmlNodeIsNull(gDsCurNode);
-           gPtCurNode = pPtParent;
-           gDsCurNode.inNodes -= 1; // overwrite this last added node
-         endif;
-
-         gPtCurNode = pPtParent;
-
-         // Node for following XmlAttribute() calls
-         gPtAtrNode = gPtCurNode;
-
-         return 0;
-
-       end-proc XmlNodeEnd;
-      //---------------------------------------------------------------*
-      // XmlAttribute
-      //---------------------------------------------------------------*
-      //* Add an attribute element to the current node.
-      //*
-      //* @param pPtName - Attribut name.
-      //* @param pPtData - Attribut data.
-      //* @param pBoNull - Null indicator (optional).
-      //* @param pInCcsid - Ccsid of the given data
-      //*                   (optional, default @const CCSID_JOB).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlAttribute export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pPtData pointer const options(*string);
-           pBoNull ind const options(*nopass);
-           pInCcsid int(10) const options(*nopass);
-         end-pi;
-
-         dcl-s  pPtAttr pointer;
-         dcl-ds pDsAttr likeds(DsAttr_t) based(pPtAttr);
-         dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
-
-         if gPtAtrNode = *Null;
-           return -1;
-         endif;
-
-         if pPtName = *Null Or strlen(pPtName) = 0;
-           return -1;
-         endif;
-
-         if gBoNullOnNull and
-              %parms() >= %parmnum(pBoNull) And pBoNull;
-           return 0;
-         endif;
-
-         if %parms() >= %parmnum(pInCcsid);
-           pInCcsid_ = pInCcsid;
-         endif;
-
-         // new attribute
-         CeeGetHeap(gInHeap:%size(DsAttr_t):pPtAttr:*Omit);
-         pDsAttr = DsAttr_t; // inz(*likeds)
-
-         pDsAttr.inName = strlen(pPtName);
-         CeeGetHeap(gInHeap:pDsAttr.inName+1:pDsAttr.ptName:*Omit);
-         strcpy(PDsAttr.ptName:pPtName);
-
-         pDsAttr.inData = strlen(pPtData);
-         if %parms() >= %parmnum(pBoNull) And pBoNull;
-           pDsAttr.inData = 0;
-         endif;
-         pDsAttr.ptData = XmlQuote(pPtData:pDsAttr.inData:pInCcsid_);
-         pDsAttr.InCcsid = pInCcsid_;
-
-         // Add new attribute to last node
-         gDsAtrNode.inAttrs += 1;
-         if gDsAtrNode.ptAttrs = *Null;
-           CeeGetHeap(gInHeap:%size(pPtAttr):gDsAtrNode.ptAttrs:*Omit);
-         else;
-           gDsAtrNode.ptAttrs = %realloc(gDsAtrNode.ptAttrs
-                                        :%size(pPtAttr) * gDsAtrNode.inAttrs);
-         endif;
-         memcpy(gDsAtrNode.ptAttrs
-                + %size(pPtAttr) * (gDsAtrNode.inAttrs-1)
-               :%Addr(pPtAttr)
-               :%size(pPtAttr));
-
-         return 0;
-
-       end-proc XmlAttribute;
-      //---------------------------------------------------------------*
-      // XmlAttributeNum
-      //---------------------------------------------------------------*
-      //* Add a numeric attribute element to the current node.
-      //*
-      //* @param pPtName - Attribut name.
-      //* @param pNuNum - Number.
-      //* @param pBoNull - Null indicator (optional).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlAttributeNum export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pNuNum  packed(31:11) const;
-           pBoNull ind const options(*nopass);
-         end-pi;
-
-         if %parms() >= %parmnum(pBoNull);
-           return XmlAttribute(pPtName:XmlNumber(pNuNum):pBoNull);
-         endif;
-
-         return XmlAttribute(pPtName:XmlNumber(pNuNum));
-
-       end-proc XmlAttributeNum;
-      //---------------------------------------------------------------*
-      // XmlAttributeBool
-      //---------------------------------------------------------------*
-      //* Add a boolean (true|false) attribute element to the current node.
-      //*
-      //* @param pPtName - Attribut name.
-      //* @param pBoInd - Indicator.
-      //* @param pBoNull - Null indicator (optional).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlAttributeBool export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pBoInd  ind const;
-           pBoNull ind const options(*nopass);
-         end-pi;
-
-         if %parms() >= %parmnum(pBoNull);
-           return XmlAttribute(pPtName:XmlBoolean(pBoInd):pBoNull);
-         endif;
-
-         return XmlAttribute(pPtName:XmlBoolean(pBoInd));
-
-       end-proc XmlAttributeBool;
-      //---------------------------------------------------------------*
-      // XmlAttributeDate
-      //---------------------------------------------------------------*
-      //* Add a date (yyyy-mm-dd) attribute element to the current node.
-      //*
-      //* @param pPtName - Attribut name.
-      //* @param pDaDate - Date.
-      //* @param pBoNull - Null indicator (optional).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlAttributeDate export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pDaDate date const;
-           pBoNull ind const options(*nopass);
-         end-pi;
-
-         if %parms() >= %parmnum(pBoNull);
-           return XmlAttribute(pPtName:XmlDate(pDaDate):pBoNull);
-         endif;
-
-         return XmlAttribute(pPtName:XmlDate(pDaDate));
-
-       end-proc XmlAttributeDate;
-      //---------------------------------------------------------------*
-      // XmlAttributeDateTime
-      //---------------------------------------------------------------*
-      //* Add a datetime (yyyy-mm-ddThh:mm:ss) attribute element to the current node.
-      //*
-      //* @param pPtName - Attribut name.
-      //* @param pTsTime - Timestamp.
-      //* @param pBoNull - Null indicator (optional).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlAttributeDateTime export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pTsTime timestamp const;
-           pBoNull ind const options(*nopass);
-         end-pi;
-
-         if %parms() >= %parmnum(pBoNull);
-           return XmlAttribute(pPtName:XmlDateTime(pTsTime):pBoNull);
-         endif;
-
-         return XmlAttribute(pPtName:XmlDateTime(pTsTime));
-
-       end-proc XmlAttributeDateTime;
-      //---------------------------------------------------------------*
-      // XmlNamespace
-      //---------------------------------------------------------------*
-      //* Add a namespace to the current node.
-      //*
-      //* @param pPtName - Namespace name (@const API_DEFAULT)
-      //* @param pPtData - Namespace data.
-      //* @param pInCcsid - Ccsid of the given data
-      //*                   (optional, default @const CCSID_JOB).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlNamespace export;
-         dcl-pi *N int(10);
-           pPtName pointer const options(*string);
-           pPtData pointer const options(*string);
-           pInCcsid int(10) const options(*nopass);
-         end-pi;
-
-         dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
-
-         if pPtName = *Null Or strlen(pPtName) = 0;
-           return -1;
-         endif;
-
-         if %parms() >= %parmnum(pInCcsid);
-           pInCcsid_ = pInCcsid;
-         endif;
-
-         if %str(pPtName) = API_DEFAULT;
-           return XmlAttribute('xmlns':pPtData:*off:pInCcsid_);
-         endif;
-
-         return XmlAttribute('xmlns:' + %str(pPtName):pPtData:*off:pInCcsid_);
-
-       end-proc XmlNamespace;
-      //---------------------------------------------------------------*
-      // XmlPi
-      //---------------------------------------------------------------*
-      //* Add a processing instruction.
-      //*
-      //* @param pPtData - Processing instruction.
-      //* @param pInCcsid - Ccsid of the given data
-      //*                   (optional, default @const CCSID_JOB).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlPi export;
-         dcl-pi *N int(10);
-           pPtData pointer const options(*string);
-           pInCcsid int(10) const options(*nopass);
-         end-pi;
-
-         dcl-s  pPtPi pointer;
-         dcl-ds pDsPi likeds(DsPi_t) based(pPtPi);
-         dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
-
-         if pPtData = *Null Or strlen(pPtData) = 0;
-           return -1;
-         endif;
-
-         if %parms() >= %parmnum(pInCcsid);
-           pInCcsid_ = pInCcsid;
-         endif;
-
-         // new process instruction
-         if gPtPi = *Null;
-           CeeGetHeap(gInHeap:%size(DsPi_t):gPtPi:*Omit);
-           gInPi = 1;
-         else;
-           gInPi += 1;
-           gPtPi = %realloc(gPtPi:%size(DsPi_t) * gInPi);
-         endif;
-
-         pPtPi = gPtPi + %size(DsPi_t) * (gInPi - 1);
-
-         pDsPi.inData = strlen(pPtData);
-         pDsPi.InCcsid = pInCcsid_;
-         CeeGetHeap(gInHeap:pDsPi.inData:pDsPi.ptData:*Omit);
-         memcpy(pDsPi.ptData:pPtData:pDsPi.inData);
-
-         return 0;
-
-       end-proc XmlPi;
-      //---------------------------------------------------------------*
-      // XmlComment
-      //---------------------------------------------------------------*
-      //* Add a comment.
-      //*
-      //* @param pPtData - Comment.
-      //* @param pInCcsid - Ccsid of the given data
-      //*                   (optional, default @const CCSID_JOB).
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlComment export;
-         dcl-pi *N int(10);
-           pPtData pointer const options(*string);
-           pInCcsid int(10) const options(*nopass);
-         end-pi;
-
-         dcl-s  pPtComm pointer;
-         dcl-ds pDsComm likeds(DsComment_t) based(pPtComm);
-         dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
-
-         if gPtAtrNode = *Null;
-           return -1;
-         endif;
-
-         if pPtData = *Null and strlen(pPtData) = 0;
-           return 0;
-         endif;
-
-         if %parms() >= %parmnum(pInCcsid);
-           pInCcsid_ = pInCcsid;
-         endif;
-
-         // new comment
-         CeeGetHeap(gInHeap:%size(DsComment_t):pPtComm:*Omit);
-         pDsComm = DsComment_t; // inz(*likeds)
-
-         pDsComm.inData = strlen(pPtData);
-         pDsComm.ptData = XmlQuote(pPtData:pDsComm.inData:pInCcsid_);
-         pDsComm.InCcsid = pInCcsid_;
-
-         gDsAtrNode.inComms += 1;
-         if gDsAtrNode.ptComms = *Null;
-           CeeGetHeap(gInHeap:%size(pPtComm):gDsAtrNode.ptComms:*Omit);
-         else;
-           gDsAtrNode.ptComms = %realloc(gDsAtrNode.ptComms
-                                        :%size(pPtComm) * gDsAtrNode.inComms);
-         endif;
-         memcpy(gDsAtrNode.ptComms
-                + %size(pPtComm) * (gDsAtrNode.inComms-1)
-               :%Addr(pPtComm)
-               :%size(pPtComm));
-
-         return 0;
-
-       end-proc XmlComment;
-      //---------------------------------------------------------------*
-      // XmlToString
-      //---------------------------------------------------------------*
-      //* Returns the XML document (max 16MB).
-      //* <P>
-      //*
-      //* @param pInLen - Return length of result string
-      //* @param pBoTeraspace - Allocate a teraspace pointer > 16MB.
-      //*                       You have to dealocat the pointer with C_TS_free()
-      //*
-      //* @return Pointer with the XML data - You have to deallocate it.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlToString export;
-         dcl-pi *N pointer;
-           pInLen like(size_t) options(*nopass);
-           pBoTeraspace ind options(*nopass);
-         end-pi;
-
-         gBoTeraspace = *off;
-         if %parms() >= %parmnum(pBoTeraspace);
-           gBoTeraspace = pBoTeraspace;
-         endif;
-
-         gInSeriealizedLen = 0;
-         gInSeriealized = 65535;
-
-         if gBoTeraspace;
-           gPtSeriealized = C_TS_malloc(gInSeriealized);
-         else;
-           gPtSeriealized = %alloc(gInSeriealized);
-         endif;
-
-         if gPtSeriealized = *Null;
-           return *Null;
-         endif;
-
-         XmlSerialize(%addr(gDsXmlDoc):%Paddr(XmlWritePointer):-1);
-         memset(gPtSeriealized + gInSeriealizedLen:NULL:1);
-         xmlFreeNodes();
-
-         if %parms() >= %parmnum(pInLen);
-           pInLen = gInSeriealizedLen;
-         endif;
-
-         return gPtSeriealized;
-
-       end-proc XmlToString;
-      //---------------------------------------------------------------*
-      // XmlToStmf
-      //---------------------------------------------------------------*
-      //* Creates a XML-STMF
-      //*
-      //* @param pAnFile - Filename
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlToStmf export;
-         dcl-pi *N int(10);
-           pPtFile pointer const options(*string);
-         end-pi;
-
-         dcl-s pInStat int(10);
-         dcl-s pInFile int(10);
-
-         pInFile = IfsOpenFile(pPtFile
-                              :O_WRONLY + O_CREAT + O_TRUNC // + O_EXCL
-                              :S_IRWXU);
-         if pInFile = -1;
-           return -1;
-         endif;
-
-         pInStat = XmlToWriter(%paddr('IfsWriteFile'):pInFile);
-
-         IfsCloseFile(pInFile);
-         IfsSetFileCcsid(pPtFile:gInCcsid);
-
-         return pInStat;
-
-       end-proc XmlToStmf;
-      //---------------------------------------------------------------*
-      // XmlToWriter
-      //---------------------------------------------------------------*
-      //* Writes the XML data to an user exit function.
-      //* <P>
-      //* The given funktion has to implement the following interface
-      //* ( like the function write() ) :
-      //* <P><pre>
-      //* dcl-pr UserWriter int(10);
-      //*   pInHandle int(10)      value; // for communication
-      //*   pPtString pointer      value options(*String); // string to write
-      //*   pInLen    like(size_t) value; // length of string
-      //* end-pr;
-      //* </pre>
-      //*
-      //* @param pPtWriter - Pointer to user writer funktion
-      //*
-      //* @return 0 - success, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlToWriter export;
-         dcl-pi *N int(10);
-           pPtWriter pointer(*proc) const;
-           pInHandle int(10) const;
-         end-pi;
-
-         gPtUserWriter  = pPtWriter;
-         gInSeriealized = pInHandle;
-         XmlSerialize(%addr(gDsXmlDoc):%Paddr(XmlUserWriter):-1);
-         xmlFreeNodes();
-
-         return 0;
-
-       end-proc XmlToWriter;
-      //---------------------------------------------------------------*
-      // XmlSerialize
-      //---------------------------------------------------------------*
-       dcl-proc XmlSerialize;
-         dcl-pi *N int(10);
-           pPtNode pointer value;
-           pPtWriter pointer(*proc) const;
-           pInLevel int(10) value;
-         end-pi;
-
-         dcl-pr XmlWriter int(10) extproc(pPtWriter);
-           pPtString pointer value options(*String);
-           pInLen    like(size_t)  value;
-           pInCcsid  int(10) const options(*nopass);
-         end-pr;
-
-         dcl-ds pDsNode likeds(DsNode_t) based(pPtNode);
-
-         dcl-s pPtNodes pointer;
-         dcl-s pPtNodes1 pointer based(pPtNodes);
-
-         dcl-s pPtAttrs pointer;
-         dcl-s pPtAttr pointer based(pPtAttrs);
-         dcl-ds pDsAttr likeds(DsAttr_t) based(pPtAttr);
-
-         dcl-s pPtComms pointer;
-         dcl-s pPtComm pointer based(pPtComms);
-         dcl-ds pDsComm likeds(DsComment_t) based(pPtComm);
-
-         dcl-s  pPtPi pointer;
-         dcl-ds pDsPi likeds(DsPi_t) based(pPtPi);
-
-         dcl-s i int(10);
-         dcl-s pAnHead varchar(100);
-
-         if pInLevel = -1 and gBoHeader;
-           pAnHead = '<?xml version="1.0" encoding="'
-                   + XmlCcsidToIana(gInCcsid)
-                   + '" ?>';
-           XmlWriter(pAnHead:%len(pAnHead));
-         endif;
-
-         if pInLevel = -1 and gPtPi <> *Null;
-           for i=0 by 1 to (gInPi - 1);
-             pPtPi = gPtPi + %size(DsPi_t) * i;
-             if gBoPretty And (i > 0 Or gBoHeader);
-               XmlWriter(PRETTY_NL:%size(PRETTY_NL));
-             endif;
-             XmlWriter(PI_STR:%size(PI_STR));
-             XmlWriter(pDsPi.PtData:pDsPi.InData:pDsPi.InCcsid);
-             XmlWriter(PI_END:%size(PI_END));
-           endfor;
-         endif;
-
-         // write all comments
-         for i=0 by 1 to pDsNode.inComms-1;
-           pPtComms = pDsNode.ptComms + %size(pPtComms) * i;
-           if gBoPretty And (pInLevel > 0 Or gBoHeader Or gPtPi <> *Null);
-             XmlWriter(PRETTY_NL:%size(PRETTY_NL));
-             for i=1 by 1 to pInLevel;
-               XmlWriter(PRETTY_TAB:%size(PRETTY_TAB));
-             endfor;
-           endif;
-           XmlWriter(COMMENT_STR:%size(COMMENT_STR));
-           XmlWriter(pDsComm.ptData:pDsComm.inData:pDsComm.inCcsid);
-           XmlWriter(COMMENT_END:%size(COMMENT_END));
-         endfor;
-
-         // write node name
-         if pDsNode.ptName <> *Null;
-           if gBoPretty;
-             XmlWriter(PRETTY_NL:%size(PRETTY_NL));
-             for i=1 by 1 to pInLevel;
-               XmlWriter(PRETTY_TAB:%size(PRETTY_TAB));
-             endfor;
-           endif;
-           XmlWriter(ELEM_STR:%size(ELEM_STR));
-           XmlWriter(pDsNode.ptName:pDsNode.inName);
-           // write all attributes
-           for i=0 by 1 to pDsNode.inAttrs-1;
-             pPtAttrs = pDsNode.ptAttrs + %size(pPtAttrs) * i;
-             XmlWriter(' ':1);
-             XmlWriter(pDsAttr.ptName:pDsAttr.inName);
-             XmlWriter(ATTR_STR:%size(ATTR_STR));
-             XmlWriter(pDsAttr.ptData:pDsAttr.inData:pDsAttr.inCcsid);
-             XmlWriter(ATTR_END:%size(ATTR_END));
-           endfor;
-           if pDsNode.ptNodes = *Null and pDsNode.ptData = *Null;
-             XmlWriter(ELEM_EMPTY:%size(ELEM_EMPTY));
-             return 0;
-           endif;
-           XmlWriter(ELEM_END:%size(ELEM_END));
-         endif;
-
-         // write data
-         if pDsNode.ptData <> *Null;
-           XmlWriter(pDsNode.ptData:pDsNode.inData:pDsNode.inCcsid);
-         endif;
-
-         // write all nodes
-         for i=0 by 1 to pDsNode.inNodes-1;
-           pPtNodes = pDsNode.ptNodes + %size(pPtNodes) * i;
-           XmlSerialize(pPtNodes1:pPtWriter:pInLevel+1);
-         endfor;
-
-         if pDsNode.ptName = *Null;
-           return 0;
-         endif;
-
-         if gBoPretty and pDsNode.ptData = *Null;
-           XmlWriter(PRETTY_NL:%size(PRETTY_NL));
-           for i=1 by 1 to pInLevel;
-             XmlWriter(PRETTY_TAB:%size(PRETTY_TAB));
-           endfor;
-         endif;
-
-         XmlWriter(ELEM_STREND:%size(ELEM_STREND));
-         XmlWriter(pDsNode.ptName:pDsNode.inName);
-         XmlWriter(ELEM_END:%size(ELEM_END));
-
-         return 0;
-
-       end-proc XmlSerialize;
-      //---------------------------------------------------------------*
-      // XmlWritePointer
-      //---------------------------------------------------------------*
-       dcl-proc XmlWritePointer;
-         dcl-pi *N int(10);
-           pPtString pointer value options(*String);
-           pInLen    like(size_t)  value;
-           pInCcsid  int(10) const options(*nopass);
-         end-pi;
-
-         dcl-s pInCcsid_ int(10) inz(CCSID_JOB);
-         dcl-s pPtIConv pointer;
-
-         if %parms() >= %parmnum(pInCcsid);
-           pInCcsid_ = pInCcsid;
-         endif;
-
-         pPtIConv = StrIConv(pPtString:pInCcsid_:gInCcsid:pInLen:pInLen);
-
-         // enough memory available ?
-         if gInSeriealized - gInSeriealizedLen - 1 < pInLen;
-           gInSeriealized += pInLen + 65535;
-           if gBoTeraspace;
-             gPtSeriealized = C_TS_realloc(gPtSeriealized:gInSeriealized);
-           else;
-             gPtSeriealized = %realloc(gPtSeriealized:gInSeriealized);
-           endif;
-           if gPtSeriealized = *Null;
-             return -1;
-           endif;
-         endif;
-
-         memcpy(gPtSeriealized+gInSeriealizedLen:pPtIConv:pInLen);
-         gInSeriealizedLen += pInLen;
-         dealloc pPtIConv;
-
-         return 0;
-
-       end-proc XmlWritePointer;
-      //---------------------------------------------------------------*
-      // XmlUserWriter
-      //---------------------------------------------------------------*
-       dcl-proc XmlUserWriter;
-         dcl-pi *N int(10);
-           pPtString pointer value options(*String);
-           pInLen    like(size_t)  value;
-           pInCcsid  int(10) const options(*nopass);
-         end-pi;
-
-         dcl-pr UserWriter int(10) extproc(gPtUserWriter);
-           pInHandle int(10) value;
-           pPtString pointer value options(*String);
-           pInLen    like(size_t)  value;
-         end-pr;
-
-         dcl-s pInStat int(10);
-         dcl-s pInCcsid_ int(10) inz(CCSID_JOB);
-         dcl-s pPtIConv pointer;
-
-         if %parms() >= %parmnum(pInCcsid);
-           pInCcsid_ = pInCcsid;
-         endif;
-
-         pPtIConv = StrIConv(pPtString:pInCcsid_:gInCcsid:pInLen:pInLen);
-         pInStat = UserWriter(gInSeriealized:pPtIConv:pInLen);
-         dealloc pPtIConv;
-
-         return pInStat;
-
-       end-proc XmlUserWriter;
-      //---------------------------------------------------------------*
-      // XmlFreeNodes
-      //---------------------------------------------------------------*
-       dcl-proc XmlFreeNodes;
-
-         if gInHeap <> -1;
-           CeeDiscardHeap(gInHeap:*Omit);
-         endif;
-
-         gInHeap = -1;
-         gDsXmlDoc = DsNode_t; // inz(*likeds)
-
-       end-proc XmlFreeNodes;
-      //---------------------------------------------------------------*
-      // XmlQuote
-      //---------------------------------------------------------------*
-       dcl-proc XmlQuote;
-         dcl-pi *N pointer;
-           pPtString pointer const;
-           pInLen like(size_t);
-           pInCcsid int(10) const;
-         end-pi;
-
-         dcl-s pPtSearch pointer;
-         dcl-s pAnSearch char(1) based(pPtSearch);
-
-         dcl-s pPtRes pointer;
-         dcl-s pPtDst pointer;
-         dcl-s pAnDst char(6) based(pPtDst);
-         dcl-s pInRes like(size_t);
-         dcl-s pBoAsciiCcsid ind;
-
-         dcl-s s like(size_t);
-         dcl-s d like(size_t);
-         dcl-s i like(size_t);
-
-         if pPtString = *Null or pInLen = 0;
-           return *Null;
-         endif;
-
-         pBoAsciiCcsid = (isAsciiCcsid(pInCcsid) = 1);
-         pInRes = pInLen;
-         CeeGetHeap(gInHeap:pInLen:pPtRes:*Omit);
-
-         d = 0;
-         for s=0 by 1 to pInLen-1;
-           pPtDst = pPtRes + d;
-           pPtSearch = pPtString + s;
-           if pBoAsciiCcsid;
-             i = %lookup(pAnSearch:gArQSearchAs);
-           else;
-             i = %lookup(pAnSearch:gArQSearch);
-           endif;
-           if i > 0;
-             pInRes += gArQRplLen(i) - 1;
-             pPtRes = %realloc(pPtRes:pInRes);
-             pPtDst = pPtRes + d;
-             if pBoAsciiCcsid;
-               %subst(pAnDst:1:gArQRplAsLen(i)) = gArQRplAs(i);
-               d += gArQRplAsLen(i);
-             else;
-               %subst(pAnDst:1:gArQRplLen(i)) = gArQRpl(i);
-               d += gArQRplLen(i);
-             endif;
-           else;
-             %subst(pAnDst:1:1) = pAnSearch;
-             d += 1;
-           endif;
-         endfor;
-
-         pInLen = pInRes;
-         return pPtRes;
-
-       end-proc XmlQuote;
-      //---------------------------------------------------------------*
-      // XmlNodeIsNull
-      //---------------------------------------------------------------*
-       dcl-proc XmlNodeIsNull;
-         dcl-pi *N ind;
-           pDsNode likeds(DsNode_t) const;
-         end-pi;
-
-         return (pDsNode.boNullONull And
-                   pDsNode.inData = 0 And
-                   pDsNode.inAttrs = 0 And
-                   pDsNode.inNodes = 0);
-
-       end-proc XmlNodeIsNull;
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCXMLR
+/COPY ARPG_H,ARCSTRR
+/COPY ARPG_H,ARCSTRING
+/COPY ARPG_H,ARCIFSR
+/COPY ARPG_H,ARCB64R
+/COPY ARPG_H,ARCQCEE
+/COPY ARPG_H,ARCSTDLIB
+/COPY ARPG_H,ARCAPRCORE
+
+//---------------------------------------------------------------*
+// global variables
+//---------------------------------------------------------------*
+dcl-ds DsNode_t qualified align; // no template to use it for *inz
+  ptName   pointer       inz(*Null);
+  inName   like(size_t)  inz(0);
+  ptData   pointer       inz(*Null);
+  inData   like(size_t)  inz(0);
+  inCcsid  int(10)       inz(CCSID_JOB);
+  ptAttrs  pointer       inz(*Null); // Addr(dim(inAttrs))
+  inAttrs  int(10)       inz(0);
+  ptComms  pointer       inz(*Null); // Addr(dim(inComms))
+  inComms  int(10)       inz(0);
+  ptNodes  pointer       inz(*Null); // Addr(dim(inNodes))
+  inNodes  int(10)       inz(0);
+  ptParent pointer       inz(*Null);
+  boNullONull ind        inz(*off);
+end-ds;
+
+dcl-ds DsAttr_t qualified align; // no template to use it for *inz
+  ptName  pointer       inz(*Null);
+  inName  like(size_t)  inz(0);
+  ptData  pointer       inz(*Null);
+  inData  like(size_t)  inz(0);
+  inCcsid int(10)       inz(CCSID_JOB);
+end-ds;
+
+dcl-ds DsComment_t qualified align; // no template to use it for *inz
+  ptData  pointer       inz(*Null);
+  inData  like(size_t)  inz(0);
+  inCcsid int(10)       inz(CCSID_JOB);
+end-ds;
+
+dcl-ds gDsXmlDoc likeds(DsNode_t) inz(*likeds);
+
+dcl-ds *N;
+  // single byte ebcdic search
+  gArQSearchInit char(5) inz('<>&''"');
+  gArQSearch   char(1) dim(5) overlay(gArQSearchInit);
+
+  // single byte ebcdic replace
+  gArQRplInit  char(30) inz('&lt;  &gt;  &amp; &apos;&quot;');
+    gArQRpl    char( 6) dim(5) overlay(gArQRplInit);
+  gArQRplLenInit  char( 5) inz('44566');
+    gArQRplLen    zoned(1) dim(5) overlay(gArQRplLenInit);
+
+  // single byte ascii search
+  gArQSearchAsInit char(5) inz(x'3c3e262722');
+    gArQSearchAs   char(1) dim(5) overlay(gArQSearchAsInit);
+
+  // single byte ascii replace
+  gArQRplAsInit  char(30)
+           inz(x'266c743b20202667743b202026616d703b202661706f733b2671756f743b');
+    gArQRplAs    char( 6) dim(5) overlay(gArQRplAsInit);
+  gArQRplAsLenInit  char( 5) inz('44566');
+    gArQRplAsLen    zoned(1) dim(5) overlay(gArQRplAsLenInit);
+end-ds;
+
+dcl-s gBoHeader ind inz(DFT_HEADER);
+dcl-s gBoPretty ind inz(DFT_PRETTY);
+dcl-s gInCcsid int(10);
+
+dcl-s  gPtCurNode pointer;
+dcl-ds gDsCurNode likeds(DsNode_t) based(gPtCurNode);
+
+dcl-s  gPtAtrNode pointer;
+dcl-ds gDsAtrNode likeds(DsNode_t) based(gPtAtrNode);
+
+dcl-s gPtSeriealized pointer;
+dcl-s gInSeriealized int(10);
+dcl-s gInSeriealizedLen int(10);
+
+dcl-s gPtUserWriter pointer(*proc);
+
+dcl-s gInHeap int(10) inz(-1);
+dcl-s gBoTeraspace  ind inz(*off);
+dcl-s gBoNullOnNull ind inz(*off);
+
+dcl-s gPtPi pointer inz(*null);
+dcl-s gInPi int(10) inz(0);
+dcl-ds DsPi_t qualified align; // no template to use it for *inz
+  ptData  pointer       inz(*Null);
+  inData  like(size_t)  inz(0);
+  inCcsid int(10)       inz(CCSID_JOB);
+end-ds;
+
+//---------------------------------------------------------------*
+// constants
+//---------------------------------------------------------------*
+/SET CCSID(*CHAR:37)
+dcl-c ELEM_STR     '<';
+dcl-c ELEM_END     '>';
+dcl-c ELEM_STREND  '</';
+dcl-c ELEM_EMPTY   ' />';
+dcl-c ATTR_STR     '="';
+dcl-c ATTR_END     '"';
+dcl-c PI_STR       '<?';
+dcl-c PI_END       ' ?>';
+dcl-c COMMENT_STR  '<!-- ';
+dcl-c COMMENT_END  ' -->';
+dcl-c PRETTY_TAB   '  ';
+dcl-c PRETTY_NL   x'25';
+/RESTORE CCSID(*CHAR)
+
+dcl-c START_HEAP  1048576; // 1M
+
+dcl-c DFT_HEADER  *on;
+dcl-c DFT_PRETTY  *off;
+
+//---------------------------------------------------------------*
+//  XmlDocument
+//---------------------------------------------------------------*
+//* Create a new XML document.
+//*
+//* @param pInCcsid - Ccsid of the XML document (optional, default UTF-8)
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlDocument export;
+  dcl-pi *N int(10);
+    pInCcsid int(10) const options(*nopass);
+  end-pi;
+
+  // CCSID of the document
+  gInCcsid = CCSID_UTF8;
+  if %parms() >= %parmnum(pInCcsid) and pInCcsid > 0;
+    gInCcsid = pInCcsid;
+  endif;
+
+  // free old document if not yet happened
+  xmlFreeNodes();
+
+  gPtCurNode = %addr(gDsXmlDoc);
+  gPtAtrNode = *Null;
+  gPtPi      = *Null;
+
+  // Create new heap
+  CeeCreateHeap(gInHeap:START_HEAP:*Omit:0:*Omit);
+
+  gBoPretty = DFT_PRETTY;
+  gBoHeader = DFT_HEADER;
+
+  return 0;
+
+end-proc XmlDocument;
+//---------------------------------------------------------------*
+// XmlPrettyPrint
+//---------------------------------------------------------------*
+//* Generate pretty xml code.
+//*
+//* @param pBoPretty - Pretty print on/off
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlPrettyPrint export;
+  dcl-pi *N;
+    pBoPretty ind const;
+  end-pi;
+
+  gBoPretty = pBoPretty;
+
+end-proc XmlPrettyPrint;
+//---------------------------------------------------------------*
+// XmlHeader
+//---------------------------------------------------------------*
+//* Print XML-Header.
+//*
+//* @param pBoHeader - Print header on/off (on-Default).
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlHeader export;
+  dcl-pi *N;
+    pBoHeader ind const;
+  end-pi;
+
+  gBoHeader = pBoHeader;
+
+end-proc XmlHeader;
+//---------------------------------------------------------------*
+// XmlSetNullOnNull
+//---------------------------------------------------------------*
+//* Turn on/off Null on Null.
+//*
+//* @param pBoNullOnNull - Null on Null instead of empty element.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlSetNullOnNull export;
+  dcl-pi *N;
+    pBoNullOnNull ind const;
+  end-pi;
+
+  gBoNullOnNull = pBoNullOnNull;
+
+end-proc XmlSetNullOnNull;
+//---------------------------------------------------------------*
+// XmlNode
+//---------------------------------------------------------------*
+//* Create a new XML node.
+//*
+//* @param pPtName - Node name.
+//* @param pPtData - Node data (optional/omit).
+//* @param pBoNull - Null indicator (optional).
+//* @param pInCcsid - Ccsid of the given data
+//*                   (optional, default @const CCSID_JOB).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlNode export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pPtData pointer const options(*string:*nopass);
+    pBoNull ind const options(*nopass);
+    pInCcsid int(10) const options(*nopass);
+  end-pi;
+
+  dcl-s  pPtCurNode pointer;
+  dcl-ds pDsCurNode likeds(DsNode_t) based(pPtCurNode);
+  dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
+
+  if pPtName = *Null Or strlen(pPtName) = 0;
+    return -1;
+  endif;
+
+  if %parms() >= %parmnum(pInCcsid);
+    pInCcsid_ = pInCcsid;
+  endif;
+
+  // Don't print current(previous to this call) node if empty ?
+  if gPtAtrNode <> *Null And
+       gPtAtrNode <> gPtCurNode And
+       XmlNodeIsNull(gDsAtrNode);
+    gDsCurNode.inNodes -= 1; // overwrite this last added node
+  endif;
+
+  // new node
+  CeeGetHeap(gInHeap:%size(DsNode_t):pPtCurNode:*Omit);
+  pDsCurNode = DsNode_t; // inz(*likeds)
+
+  pDsCurNode.ptParent = gPtCurNode;
+  pDsCurNode.inName = strlen(pPtName);
+  CeeGetHeap(gInHeap:pDsCurNode.inName+1:pDsCurNode.ptName:*Omit);
+  strcpy(PDsCurNode.ptName:pPtName);
+  pDsCurNode.boNullONull = gBoNullOnNull;
+
+  // Node for following XmlAttribute() calls
+  gPtAtrNode = pPtCurNode;
+
+  // Add new node to parent
+  gDsCurNode.inNodes += 1;
+  if gDsCurNode.ptNodes = *Null;
+    CeeGetHeap(gInHeap:%size(pPtCurNode):gDsCurNode.ptNodes:*Omit);
+  else;
+    gDsCurNode.ptNodes = %realloc(gDsCurNode.ptNodes
+                                 :%size(pPtCurNode) * gDsCurNode.inNodes);
+  endif;
+  memcpy(gDsCurNode.ptNodes
+         + %size(pPtCurNode) * (gDsCurNode.inNodes-1)
+        :%Addr(pPtCurNode)
+        :%size(pPtCurNode));
+
+  // SubNode ?
+  if %parms() < %parmnum(pPtData);
+    gPtCurNode = pPtCurNode;
+    return 0;
+  endif;
+
+  // Add data and close node
+  if pPtData = *Null;
+    return 0;
+  endif;
+
+  PDsCurNode.InCcsid = pInCcsid_;
+  PDsCurNode.inData = strlen(pPtData);
+  if PDsCurNode.inData = 0 Or
+       %parms() >= %parmnum(pBoNull) And pBoNull;
+    PDsCurNode.inData = 0;
+    return 0;
+  endif;
+
+  PDsCurNode.ptData = XmlQuote(pPtData:PDsCurNode.inData:pInCcsid_);
+
+  return 0;
+
+end-proc XmlNode;
+//---------------------------------------------------------------*
+// XmlNodeNum
+//---------------------------------------------------------------*
+//* Create a new XML node with a numeric value
+//*
+//* @param pPtName - Node name.
+//* @param pNuNum - Number.
+//* @param pBoNull - Null indicator (optional).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlNodeNum export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pNuNum  packed(31:11) const;
+    pBoNull ind const options(*nopass);
+  end-pi;
+
+  if %parms() >= %parmnum(pBoNull);
+    return XmlNode(pPtName:XmlNumber(pNuNum):pBoNull);
+  endif;
+
+  return XmlNode(pPtName:XmlNumber(pNuNum));
+
+end-proc XmlNodeNum;
+//---------------------------------------------------------------*
+// XmlNodeBool
+//---------------------------------------------------------------*
+//* Create a new XML node with a boolean (true|false) value
+//*
+//* @param pPtName - Node name.
+//* @param pBoInd - Indicator.
+//* @param pBoNull - Null indicator (optional).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlNodeBool export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pBoInd  ind const;
+    pBoNull ind const options(*nopass);
+  end-pi;
+
+  if %parms() >= %parmnum(pBoNull);
+    return XmlNode(pPtName:XmlBoolean(pBoInd):pBoNull);
+  endif;
+
+  return XmlNode(pPtName:XmlBoolean(pBoInd));
+
+end-proc XmlNodeBool;
+//---------------------------------------------------------------*
+// XmlNodeDate
+//---------------------------------------------------------------*
+//* Create a new XML node with a date (yyyy-mm-dd) value
+//*
+//* @param pPtName - Node name.
+//* @param pDaDate - Date.
+//* @param pBoNull - Null indicator (optional).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlNodeDate export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pDaDate date const;
+    pBoNull ind const options(*nopass);
+  end-pi;
+
+  if %parms() >= %parmnum(pBoNull);
+    return XmlNode(pPtName:XmlDate(pDaDate):pBoNull);
+  endif;
+
+  return XmlNode(pPtName:XmlDate(pDaDate));
+
+end-proc XmlNodeDate;
+//---------------------------------------------------------------*
+// XmlNodeDateTime
+//---------------------------------------------------------------*
+//* Create a new XML node with a datetime (yyyy-mm-ddThh:mm:ss) value
+//*
+//* @param pPtName - Node name.
+//* @param pTsTime - Timestamp.
+//* @param pBoNull - Null indicator (optional).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlNodeDateTime export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pTsTime timestamp const;
+    pBoNull ind const options(*nopass);
+  end-pi;
+
+  if %parms() >= %parmnum(pBoNull);
+    return XmlNode(pPtName:XmlDateTime(pTsTime):pBoNull);
+  endif;
+
+  return XmlNode(pPtName:XmlDateTime(pTsTime));
+
+end-proc XmlNodeDateTime;
+//---------------------------------------------------------------*
+// XmlNodeB64
+//---------------------------------------------------------------*
+//* Create a new XML node with binary data, which will be
+//* transformed to base64.
+//*
+//* @param pPtName - Node name.
+//* @param pPtData - Binary data.
+//* @param pInLen - Length of data (optional).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlNodeB64 export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pPtData pointer const options(*string);
+    pInLen  like(size_t)  const options(*nopass);
+  end-pi;
+
+  if %parms() >= %parmnum(pInLen);
+    return XmlNode(pPtName
+                  :B64StringEncode(pPtData:pInLen
+                                  :isAsciiCcsid(gInCcsid) = 1)
+                  :*off
+                  :gInCcsid);
+  endif;
+
+  return XmlNode(pPtName
+                :B64StringEncode(pPtData
+                                :strlen(pPtData)
+                                :isAsciiCcsid(gInCcsid) = 1)
+                :*off
+                :gInCcsid);
+
+end-proc XmlNodeB64;
+//---------------------------------------------------------------*
+// XmlNodeB64Reader
+//---------------------------------------------------------------*
+//* Create a new XML node with binary data, which will be
+//* transformed to base64.
+//*
+//* @param pPtName - Node name.
+//* @param pPtReader - User function to read the date.
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlNodeB64Reader export;
+  dcl-pi *N int(10);
+    pPtName    pointer const options(*string);
+    pPtReader  pointer(*proc) const;
+    pInHandler int(10) const;
+  end-pi;
+
+  XmlNode(pPtName:'':*off:gInCcsid);
+
+  return B64StreamEncode(pPtReader
+                        :pInHandler
+                        :%paddr('XMLNODEB64WRITER')
+                        :0
+                        :isAsciiCcsid(gInCcsid) = 1);
+
+end-proc XmlNodeB64Reader;
+//---------------------------------------------------------------*
+// XmlNodeB64writer
+//---------------------------------------------------------------*
+dcl-proc XmlNodeB64writer;
+  dcl-pi *N int(10);
+    pInHdl     int(10) value;
+    pPtData    pointer value;
+    pInLen     int(10) value;
+  end-pi;
+
+  if gDsAtrNode.ptData = *Null;
+    CeeGetHeap(gInHeap
+              :gDsAtrNode.inData + pInLen:gDsAtrNode.ptData:*Omit);
+  else;
+    gDsAtrNode.ptData = %realloc(gDsAtrNode.ptData
+                                :gDsAtrNode.inData + pInLen);
+  endif;
+  memcpy(gDsAtrNode.ptData + gDsAtrNode.inData
+        :pPtData
+        :pInLen);
+
+  gDsAtrNode.inData += pInLen;
+
+  return pInLen;
+
+end-proc XmlNodeB64writer;
+//---------------------------------------------------------------*
+// XmlNodeEnd
+//---------------------------------------------------------------*
+//* Close current Node.
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlNodeEnd export;
+  dcl-pi *N int(10);
+  end-pi;
+
+  dcl-s pPtParent pointer;
+
+  if gPtCurNode = *Null Or gDsCurNode.ptParent = *Null;
+    return -1;
+  endif;
+
+  // Don't print current(previous to this call) node if empty ?
+  if gPtAtrNode <> *Null And
+       gPtAtrNode <> gPtCurNode And
+       XmlNodeIsNull(gDsAtrNode);
+    gDsCurNode.inNodes -= 1; // overwrite this last added node
+  endif;
+
+  pPtParent = gDsCurNode.ptParent;
+
+  // Don't print node if empty ?
+  if XmlNodeIsNull(gDsCurNode);
+    gPtCurNode = pPtParent;
+    gDsCurNode.inNodes -= 1; // overwrite this last added node
+  endif;
+
+  gPtCurNode = pPtParent;
+
+  // Node for following XmlAttribute() calls
+  gPtAtrNode = gPtCurNode;
+
+  return 0;
+
+end-proc XmlNodeEnd;
+//---------------------------------------------------------------*
+// XmlAttribute
+//---------------------------------------------------------------*
+//* Add an attribute element to the current node.
+//*
+//* @param pPtName - Attribut name.
+//* @param pPtData - Attribut data.
+//* @param pBoNull - Null indicator (optional).
+//* @param pInCcsid - Ccsid of the given data
+//*                   (optional, default @const CCSID_JOB).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlAttribute export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pPtData pointer const options(*string);
+    pBoNull ind const options(*nopass);
+    pInCcsid int(10) const options(*nopass);
+  end-pi;
+
+  dcl-s  pPtAttr pointer;
+  dcl-ds pDsAttr likeds(DsAttr_t) based(pPtAttr);
+  dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
+
+  if gPtAtrNode = *Null;
+    return -1;
+  endif;
+
+  if pPtName = *Null Or strlen(pPtName) = 0;
+    return -1;
+  endif;
+
+  if gBoNullOnNull and
+       %parms() >= %parmnum(pBoNull) And pBoNull;
+    return 0;
+  endif;
+
+  if %parms() >= %parmnum(pInCcsid);
+    pInCcsid_ = pInCcsid;
+  endif;
+
+  // new attribute
+  CeeGetHeap(gInHeap:%size(DsAttr_t):pPtAttr:*Omit);
+  pDsAttr = DsAttr_t; // inz(*likeds)
+
+  pDsAttr.inName = strlen(pPtName);
+  CeeGetHeap(gInHeap:pDsAttr.inName+1:pDsAttr.ptName:*Omit);
+  strcpy(PDsAttr.ptName:pPtName);
+
+  pDsAttr.inData = strlen(pPtData);
+  if %parms() >= %parmnum(pBoNull) And pBoNull;
+    pDsAttr.inData = 0;
+  endif;
+
+  pDsAttr.ptData = XmlQuote(pPtData:pDsAttr.inData:pInCcsid_);
+  pDsAttr.InCcsid = pInCcsid_;
+
+  // Add new attribute to last node
+  gDsAtrNode.inAttrs += 1;
+  if gDsAtrNode.ptAttrs = *Null;
+    CeeGetHeap(gInHeap:%size(pPtAttr):gDsAtrNode.ptAttrs:*Omit);
+  else;
+    gDsAtrNode.ptAttrs = %realloc(gDsAtrNode.ptAttrs
+                                 :%size(pPtAttr) * gDsAtrNode.inAttrs);
+  endif;
+
+  memcpy(gDsAtrNode.ptAttrs
+         + %size(pPtAttr) * (gDsAtrNode.inAttrs-1)
+        :%Addr(pPtAttr)
+        :%size(pPtAttr));
+
+  return 0;
+
+end-proc XmlAttribute;
+//---------------------------------------------------------------*
+// XmlAttributeNum
+//---------------------------------------------------------------*
+//* Add a numeric attribute element to the current node.
+//*
+//* @param pPtName - Attribut name.
+//* @param pNuNum - Number.
+//* @param pBoNull - Null indicator (optional).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlAttributeNum export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pNuNum  packed(31:11) const;
+    pBoNull ind const options(*nopass);
+  end-pi;
+
+  if %parms() >= %parmnum(pBoNull);
+    return XmlAttribute(pPtName:XmlNumber(pNuNum):pBoNull);
+  endif;
+
+  return XmlAttribute(pPtName:XmlNumber(pNuNum));
+
+end-proc XmlAttributeNum;
+//---------------------------------------------------------------*
+// XmlAttributeBool
+//---------------------------------------------------------------*
+//* Add a boolean (true|false) attribute element to the current node.
+//*
+//* @param pPtName - Attribut name.
+//* @param pBoInd - Indicator.
+//* @param pBoNull - Null indicator (optional).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlAttributeBool export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pBoInd  ind const;
+    pBoNull ind const options(*nopass);
+  end-pi;
+
+  if %parms() >= %parmnum(pBoNull);
+    return XmlAttribute(pPtName:XmlBoolean(pBoInd):pBoNull);
+  endif;
+
+  return XmlAttribute(pPtName:XmlBoolean(pBoInd));
+
+end-proc XmlAttributeBool;
+//---------------------------------------------------------------*
+// XmlAttributeDate
+//---------------------------------------------------------------*
+//* Add a date (yyyy-mm-dd) attribute element to the current node.
+//*
+//* @param pPtName - Attribut name.
+//* @param pDaDate - Date.
+//* @param pBoNull - Null indicator (optional).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlAttributeDate export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pDaDate date const;
+    pBoNull ind const options(*nopass);
+  end-pi;
+
+  if %parms() >= %parmnum(pBoNull);
+    return XmlAttribute(pPtName:XmlDate(pDaDate):pBoNull);
+  endif;
+
+  return XmlAttribute(pPtName:XmlDate(pDaDate));
+
+end-proc XmlAttributeDate;
+//---------------------------------------------------------------*
+// XmlAttributeDateTime
+//---------------------------------------------------------------*
+//* Add a datetime (yyyy-mm-ddThh:mm:ss) attribute element to the current node.
+//*
+//* @param pPtName - Attribut name.
+//* @param pTsTime - Timestamp.
+//* @param pBoNull - Null indicator (optional).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlAttributeDateTime export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pTsTime timestamp const;
+    pBoNull ind const options(*nopass);
+  end-pi;
+
+  if %parms() >= %parmnum(pBoNull);
+    return XmlAttribute(pPtName:XmlDateTime(pTsTime):pBoNull);
+  endif;
+
+  return XmlAttribute(pPtName:XmlDateTime(pTsTime));
+
+end-proc XmlAttributeDateTime;
+//---------------------------------------------------------------*
+// XmlNamespace
+//---------------------------------------------------------------*
+//* Add a namespace to the current node.
+//*
+//* @param pPtName - Namespace name (@const API_DEFAULT)
+//* @param pPtData - Namespace data.
+//* @param pInCcsid - Ccsid of the given data
+//*                   (optional, default @const CCSID_JOB).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlNamespace export;
+  dcl-pi *N int(10);
+    pPtName pointer const options(*string);
+    pPtData pointer const options(*string);
+    pInCcsid int(10) const options(*nopass);
+  end-pi;
+
+  dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
+
+  if pPtName = *Null Or strlen(pPtName) = 0;
+    return -1;
+  endif;
+
+  if %parms() >= %parmnum(pInCcsid);
+    pInCcsid_ = pInCcsid;
+  endif;
+
+  if %str(pPtName) = API_DEFAULT;
+    return XmlAttribute('xmlns':pPtData:*off:pInCcsid_);
+  endif;
+
+  return XmlAttribute('xmlns:' + %str(pPtName):pPtData:*off:pInCcsid_);
+
+end-proc XmlNamespace;
+//---------------------------------------------------------------*
+// XmlPi
+//---------------------------------------------------------------*
+//* Add a processing instruction.
+//*
+//* @param pPtData - Processing instruction.
+//* @param pInCcsid - Ccsid of the given data
+//*                   (optional, default @const CCSID_JOB).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlPi export;
+  dcl-pi *N int(10);
+    pPtData pointer const options(*string);
+    pInCcsid int(10) const options(*nopass);
+  end-pi;
+
+  dcl-s  pPtPi pointer;
+  dcl-ds pDsPi likeds(DsPi_t) based(pPtPi);
+  dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
+
+  if pPtData = *Null Or strlen(pPtData) = 0;
+    return -1;
+  endif;
+
+  if %parms() >= %parmnum(pInCcsid);
+    pInCcsid_ = pInCcsid;
+  endif;
+
+  // new process instruction
+  if gPtPi = *Null;
+    CeeGetHeap(gInHeap:%size(DsPi_t):gPtPi:*Omit);
+    gInPi = 1;
+  else;
+    gInPi += 1;
+    gPtPi = %realloc(gPtPi:%size(DsPi_t) * gInPi);
+  endif;
+
+  pPtPi = gPtPi + %size(DsPi_t) * (gInPi - 1);
+
+  pDsPi.inData = strlen(pPtData);
+  pDsPi.InCcsid = pInCcsid_;
+  CeeGetHeap(gInHeap:pDsPi.inData:pDsPi.ptData:*Omit);
+  memcpy(pDsPi.ptData:pPtData:pDsPi.inData);
+
+  return 0;
+
+end-proc XmlPi;
+//---------------------------------------------------------------*
+// XmlComment
+//---------------------------------------------------------------*
+//* Add a comment.
+//*
+//* @param pPtData - Comment.
+//* @param pInCcsid - Ccsid of the given data
+//*                   (optional, default @const CCSID_JOB).
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlComment export;
+  dcl-pi *N int(10);
+    pPtData pointer const options(*string);
+    pInCcsid int(10) const options(*nopass);
+  end-pi;
+
+  dcl-s  pPtComm pointer;
+  dcl-ds pDsComm likeds(DsComment_t) based(pPtComm);
+  dcl-s  pInCcsid_ int(10) inz(CCSID_JOB);
+
+  if gPtAtrNode = *Null;
+    return -1;
+  endif;
+
+  if pPtData = *Null and strlen(pPtData) = 0;
+    return 0;
+  endif;
+
+  if %parms() >= %parmnum(pInCcsid);
+    pInCcsid_ = pInCcsid;
+  endif;
+
+  // new comment
+  CeeGetHeap(gInHeap:%size(DsComment_t):pPtComm:*Omit);
+  pDsComm = DsComment_t; // inz(*likeds)
+
+  pDsComm.inData = strlen(pPtData);
+  pDsComm.ptData = XmlQuote(pPtData:pDsComm.inData:pInCcsid_);
+  pDsComm.InCcsid = pInCcsid_;
+
+  gDsAtrNode.inComms += 1;
+  if gDsAtrNode.ptComms = *Null;
+    CeeGetHeap(gInHeap:%size(pPtComm):gDsAtrNode.ptComms:*Omit);
+  else;
+    gDsAtrNode.ptComms = %realloc(gDsAtrNode.ptComms
+                                 :%size(pPtComm) * gDsAtrNode.inComms);
+  endif;
+  memcpy(gDsAtrNode.ptComms
+         + %size(pPtComm) * (gDsAtrNode.inComms-1)
+        :%Addr(pPtComm)
+        :%size(pPtComm));
+
+  return 0;
+
+end-proc XmlComment;
+//---------------------------------------------------------------*
+// XmlToString
+//---------------------------------------------------------------*
+//* Returns the XML document (max 16MB).
+//* <P>
+//*
+//* @param pInLen - Return length of result string
+//* @param pBoTeraspace - Allocate a teraspace pointer > 16MB.
+//*                       You have to deallocate the pointer with C_TS_free()
+//*
+//* @return Pointer with the XML data - You have to deallocate it.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlToString export;
+  dcl-pi *N pointer;
+    pInLen like(size_t) options(*nopass);
+    pBoTeraspace ind options(*nopass);
+  end-pi;
+
+  gBoTeraspace = *off;
+  if %parms() >= %parmnum(pBoTeraspace);
+    gBoTeraspace = pBoTeraspace;
+  endif;
+
+  gInSeriealizedLen = 0;
+  gInSeriealized = 65535;
+
+  if gBoTeraspace;
+    gPtSeriealized = C_TS_malloc(gInSeriealized);
+  else;
+    gPtSeriealized = %alloc(gInSeriealized);
+  endif;
+
+  if gPtSeriealized = *Null;
+    return *Null;
+  endif;
+
+  XmlSerialize(%addr(gDsXmlDoc):%Paddr(XmlWritePointer):-1);
+  memset(gPtSeriealized + gInSeriealizedLen:NULL:1);
+  xmlFreeNodes();
+
+  if %parms() >= %parmnum(pInLen);
+    pInLen = gInSeriealizedLen;
+  endif;
+
+  return gPtSeriealized;
+
+end-proc XmlToString;
+//---------------------------------------------------------------*
+// XmlToStmf
+//---------------------------------------------------------------*
+//* Creates a XML-STMF
+//*
+//* @param pAnFile - Filename
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlToStmf export;
+  dcl-pi *N int(10);
+    pPtFile pointer const options(*string);
+  end-pi;
+
+  dcl-s pInStat int(10);
+  dcl-s pInFile int(10);
+
+  pInFile = IfsOpenFile(pPtFile
+                       :O_WRONLY + O_CREAT + O_TRUNC // + O_EXCL
+                       :S_IRWXU);
+  if pInFile = -1;
+    return -1;
+  endif;
+
+  pInStat = XmlToWriter(%paddr('IfsWriteFile'):pInFile);
+
+  IfsCloseFile(pInFile);
+  IfsSetFileCcsid(pPtFile:gInCcsid);
+
+  return pInStat;
+
+end-proc XmlToStmf;
+//---------------------------------------------------------------*
+// XmlToWriter
+//---------------------------------------------------------------*
+//* Writes the XML data to an user exit function.
+//* <P>
+//* The given funktion has to implement the following interface
+//* ( like the function write() ) :
+//* <P><pre>
+//* dcl-pr UserWriter int(10);
+//*   pInHandle int(10)      value; // for communication
+//*   pPtString pointer      value options(*String); // string to write
+//*   pInLen    like(size_t) value; // length of string
+//* end-pr;
+//* </pre>
+//*
+//* @param pPtWriter - Pointer to user writer funktion
+//*
+//* @return 0 - success, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlToWriter export;
+  dcl-pi *N int(10);
+    pPtWriter pointer(*proc) const;
+    pInHandle int(10) const;
+  end-pi;
+
+  gPtUserWriter  = pPtWriter;
+  gInSeriealized = pInHandle;
+  XmlSerialize(%addr(gDsXmlDoc):%Paddr(XmlUserWriter):-1);
+  xmlFreeNodes();
+
+  return 0;
+
+end-proc XmlToWriter;
+//---------------------------------------------------------------*
+// XmlSerialize
+//---------------------------------------------------------------*
+dcl-proc XmlSerialize;
+  dcl-pi *N int(10);
+    pPtNode pointer value;
+    pPtWriter pointer(*proc) const;
+    pInLevel int(10) value;
+  end-pi;
+
+  dcl-pr XmlWriter int(10) extproc(pPtWriter);
+    pPtString pointer value options(*String);
+    pInLen    like(size_t)  value;
+    pInCcsid  int(10) const options(*nopass);
+  end-pr;
+
+  dcl-ds pDsNode likeds(DsNode_t) based(pPtNode);
+
+  dcl-s pPtNodes pointer;
+  dcl-s pPtNodes1 pointer based(pPtNodes);
+
+  dcl-s pPtAttrs pointer;
+  dcl-s pPtAttr pointer based(pPtAttrs);
+  dcl-ds pDsAttr likeds(DsAttr_t) based(pPtAttr);
+
+  dcl-s pPtComms pointer;
+  dcl-s pPtComm pointer based(pPtComms);
+  dcl-ds pDsComm likeds(DsComment_t) based(pPtComm);
+
+  dcl-s  pPtPi pointer;
+  dcl-ds pDsPi likeds(DsPi_t) based(pPtPi);
+
+  dcl-s i int(10);
+  dcl-s pAnHead varchar(100);
+
+  if pInLevel = -1 and gBoHeader;
+    pAnHead = '<?xml version="1.0" encoding="'
+            + XmlCcsidToIana(gInCcsid)
+            + '" ?>';
+    XmlWriter(pAnHead:%len(pAnHead));
+  endif;
+
+  if pInLevel = -1 and gPtPi <> *Null;
+    for i=0 by 1 to (gInPi - 1);
+      pPtPi = gPtPi + %size(DsPi_t) * i;
+      if gBoPretty And (i > 0 Or gBoHeader);
+        XmlWriter(PRETTY_NL:%size(PRETTY_NL));
+      endif;
+      XmlWriter(PI_STR:%size(PI_STR):CCSID_US);
+      XmlWriter(pDsPi.PtData:pDsPi.InData:pDsPi.InCcsid);
+      XmlWriter(PI_END:%size(PI_END):CCSID_US);
+    endfor;
+  endif;
+
+  // write all comments
+  for i=0 by 1 to pDsNode.inComms-1;
+    pPtComms = pDsNode.ptComms + %size(pPtComms) * i;
+    if gBoPretty And (pInLevel > 0 Or gBoHeader Or gPtPi <> *Null);
+      XmlWriter(PRETTY_NL:%size(PRETTY_NL));
+      for i=1 by 1 to pInLevel;
+        XmlWriter(PRETTY_TAB:%size(PRETTY_TAB));
+      endfor;
+    endif;
+    XmlWriter(COMMENT_STR:%size(COMMENT_STR):CCSID_US);
+    XmlWriter(pDsComm.ptData:pDsComm.inData:pDsComm.inCcsid);
+    XmlWriter(COMMENT_END:%size(COMMENT_END):CCSID_US);
+  endfor;
+
+  // write node name
+  if pDsNode.ptName <> *Null;
+    if gBoPretty;
+      XmlWriter(PRETTY_NL:%size(PRETTY_NL));
+      for i=1 by 1 to pInLevel;
+        XmlWriter(PRETTY_TAB:%size(PRETTY_TAB));
+      endfor;
+    endif;
+    XmlWriter(ELEM_STR:%size(ELEM_STR):CCSID_US);
+    XmlWriter(pDsNode.ptName:pDsNode.inName);
+    // write all attributes
+    for i=0 by 1 to pDsNode.inAttrs-1;
+      pPtAttrs = pDsNode.ptAttrs + %size(pPtAttrs) * i;
+      XmlWriter(' ':1);
+      XmlWriter(pDsAttr.ptName:pDsAttr.inName);
+      XmlWriter(ATTR_STR:%size(ATTR_STR):CCSID_US);
+      XmlWriter(pDsAttr.ptData:pDsAttr.inData:pDsAttr.inCcsid);
+      XmlWriter(ATTR_END:%size(ATTR_END):CCSID_US);
+    endfor;
+    if pDsNode.ptNodes = *Null and pDsNode.ptData = *Null;
+      XmlWriter(ELEM_EMPTY:%size(ELEM_EMPTY):CCSID_US);
+      return 0;
+    endif;
+    XmlWriter(ELEM_END:%size(ELEM_END):CCSID_US);
+  endif;
+
+  // write data
+  if pDsNode.ptData <> *Null;
+    XmlWriter(pDsNode.ptData:pDsNode.inData:pDsNode.inCcsid);
+  endif;
+
+  // write all nodes
+  for i=0 by 1 to pDsNode.inNodes-1;
+    pPtNodes = pDsNode.ptNodes + %size(pPtNodes) * i;
+    XmlSerialize(pPtNodes1:pPtWriter:pInLevel+1);
+  endfor;
+
+  if pDsNode.ptName = *Null;
+    return 0;
+  endif;
+
+  if gBoPretty and pDsNode.ptData = *Null;
+    XmlWriter(PRETTY_NL:%size(PRETTY_NL));
+    for i=1 by 1 to pInLevel;
+      XmlWriter(PRETTY_TAB:%size(PRETTY_TAB));
+    endfor;
+  endif;
+
+  XmlWriter(ELEM_STREND:%size(ELEM_STREND):CCSID_US);
+  XmlWriter(pDsNode.ptName:pDsNode.inName);
+  XmlWriter(ELEM_END:%size(ELEM_END):CCSID_US);
+
+  return 0;
+
+end-proc XmlSerialize;
+//---------------------------------------------------------------*
+// XmlWritePointer
+//---------------------------------------------------------------*
+dcl-proc XmlWritePointer;
+  dcl-pi *N int(10);
+    pPtString pointer value options(*String);
+    pInLen    like(size_t)  value;
+    pInCcsid  int(10) const options(*nopass);
+  end-pi;
+
+  dcl-s pInCcsid_ int(10) inz(CCSID_JOB);
+  dcl-s pPtIConv pointer;
+
+  if %parms() >= %parmnum(pInCcsid);
+    pInCcsid_ = pInCcsid;
+  endif;
+
+  pPtIConv = StrIConv(pPtString:pInCcsid_:gInCcsid:pInLen:pInLen);
+
+  // enough memory available ?
+  if gInSeriealized - gInSeriealizedLen - 1 < pInLen;
+    gInSeriealized += pInLen + 65535;
+    if gBoTeraspace;
+      gPtSeriealized = C_TS_realloc(gPtSeriealized:gInSeriealized);
+    else;
+      gPtSeriealized = %realloc(gPtSeriealized:gInSeriealized);
+    endif;
+    if gPtSeriealized = *Null;
+      return -1;
+    endif;
+  endif;
+
+  memcpy(gPtSeriealized+gInSeriealizedLen:pPtIConv:pInLen);
+  gInSeriealizedLen += pInLen;
+  dealloc pPtIConv;
+
+  return 0;
+
+end-proc XmlWritePointer;
+//---------------------------------------------------------------*
+// XmlUserWriter
+//---------------------------------------------------------------*
+dcl-proc XmlUserWriter;
+  dcl-pi *N int(10);
+    pPtString pointer value options(*String);
+    pInLen    like(size_t)  value;
+    pInCcsid  int(10) const options(*nopass);
+  end-pi;
+
+  dcl-pr UserWriter int(10) extproc(gPtUserWriter);
+    pInHandle int(10) value;
+    pPtString pointer value options(*String);
+    pInLen    like(size_t)  value;
+  end-pr;
+
+  dcl-s pInStat int(10);
+  dcl-s pInCcsid_ int(10) inz(CCSID_JOB);
+  dcl-s pPtIConv pointer;
+
+  if %parms() >= %parmnum(pInCcsid);
+    pInCcsid_ = pInCcsid;
+  endif;
+
+  pPtIConv = StrIConv(pPtString:pInCcsid_:gInCcsid:pInLen:pInLen);
+  pInStat = UserWriter(gInSeriealized:pPtIConv:pInLen);
+  dealloc pPtIConv;
+
+  return pInStat;
+
+end-proc XmlUserWriter;
+//---------------------------------------------------------------*
+// XmlFreeNodes
+//---------------------------------------------------------------*
+dcl-proc XmlFreeNodes;
+
+  if gInHeap <> -1;
+    CeeDiscardHeap(gInHeap:*Omit);
+  endif;
+
+  gInHeap = -1;
+  gDsXmlDoc = DsNode_t; // inz(*likeds)
+
+end-proc XmlFreeNodes;
+//---------------------------------------------------------------*
+// XmlQuote
+//---------------------------------------------------------------*
+dcl-proc XmlQuote;
+  dcl-pi *N pointer;
+    pPtString pointer const;
+    pInLen like(size_t);
+    pInCcsid int(10) const;
+  end-pi;
+
+  dcl-s pPtSearch pointer;
+  dcl-s pAnSearch char(1) based(pPtSearch);
+
+  dcl-s pPtRes pointer;
+  dcl-s pPtDst pointer;
+  dcl-s pAnDst char(6) based(pPtDst);
+  dcl-s pInRes like(size_t);
+  dcl-s pBoAsciiCcsid ind;
+
+  dcl-s s like(size_t);
+  dcl-s d like(size_t);
+  dcl-s i like(size_t);
+
+  if pPtString = *Null or pInLen = 0;
+    return *Null;
+  endif;
+
+  pBoAsciiCcsid = (isAsciiCcsid(pInCcsid) = 1);
+  pInRes = pInLen;
+  CeeGetHeap(gInHeap:pInLen:pPtRes:*Omit);
+
+  d = 0;
+  for s=0 by 1 to pInLen-1;
+    pPtDst = pPtRes + d;
+    pPtSearch = pPtString + s;
+    if pBoAsciiCcsid;
+      i = %lookup(pAnSearch:gArQSearchAs);
+    else;
+      i = %lookup(pAnSearch:gArQSearch);
+    endif;
+    if i > 0;
+      pInRes += gArQRplLen(i) - 1;
+      pPtRes = %realloc(pPtRes:pInRes);
+      pPtDst = pPtRes + d;
+      if pBoAsciiCcsid;
+        %subst(pAnDst:1:gArQRplAsLen(i)) = gArQRplAs(i);
+        d += gArQRplAsLen(i);
+      else;
+        %subst(pAnDst:1:gArQRplLen(i)) = gArQRpl(i);
+        d += gArQRplLen(i);
+      endif;
+    else;
+      %subst(pAnDst:1:1) = pAnSearch;
+      d += 1;
+    endif;
+  endfor;
+
+  pInLen = pInRes;
+  return pPtRes;
+
+end-proc XmlQuote;
+//---------------------------------------------------------------*
+// XmlNodeIsNull
+//---------------------------------------------------------------*
+dcl-proc XmlNodeIsNull;
+  dcl-pi *N ind;
+    pDsNode likeds(DsNode_t) const;
+  end-pi;
+
+  return (pDsNode.boNullONull And
+          pDsNode.inData = 0 And
+          pDsNode.inAttrs = 0 And
+          pDsNode.inNodes = 0);
+
+end-proc XmlNodeIsNull;

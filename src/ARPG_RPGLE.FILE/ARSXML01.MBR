@@ -1,207 +1,204 @@
 **Free
-       ctl-opt nomain;
-      /DEFINE POINT
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCXMLR
-      /COPY ARPG_H,ARCQLGUSR
-      /COPY ARPG_H,ARCFCNTL
-      /COPY ARPG_H,ARCSTRING
+ctl-opt nomain;
+/DEFINE POINT
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCXMLR
+/COPY ARPG_H,ARCQLGUSR
+/COPY ARPG_H,ARCFCNTL
+/COPY ARPG_H,ARCSTRING
 
-      //---------------------------------------------------------------*
-      // global variables
-      //---------------------------------------------------------------*
-
-
-      //---------------------------------------------------------------*
-      //  XmlIanaToCcsid
-      //---------------------------------------------------------------*
-      //* Convert IANA name to CCSID.
-      //*
-      //* @param pAnIana - Name like UTF-8 or ISO-8859-1
-      //*
-      //* @return CCSID. E.g. UTF-8 = 1208
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @see QlgCvtTextDescToDesc() - Convert Text Descriptor API
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlIanaToCcsid export;
-         dcl-pi *N int(10);
-           pAnIana char(30) const;
-         end-pi;
-
-         dcl-s pAnCcsid char(5);
-
-         if QlgCvtTextDescToDesc(11 // IANA
-                                :0  // CCSID
-                                :pAnIana
-                                :%size(pAnIana)
-                                :pAnCcsid
-                                :%size(pAnCcsid)
-                                :CCSID_JOB) < 1;
-           return 0;
-         endif;
-
-         return atoi(pAnCcsid);
-
-       end-proc XmlIanaToCcsid;
-      //---------------------------------------------------------------*
-      //  XmlCcsidToIana
-      //---------------------------------------------------------------*
-      //* Convert CCSID to IANA name
-      //*
-      //* @param pAnIana - Name like UTF-8 or ISO-8859-1
-      //*
-      //* @return CCSID. E.g. UTF-8 = 1208
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @see QlgCvtTextDescToDesc() - Convert Text Descriptor API
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlCcsidToIana export;
-         dcl-pi *N varchar(30);
-           pInCcsid int(10) const;
-         end-pi;
-
-         dcl-s pAnCcsid char(5);
-         dcl-s pAnIana  char(50);
-
-         evalr pAnCcsid = %editc(PInCcsid:'X');
-
-         if QlgCvtTextDescToDesc(0  // CCSID
-                                :11 // IANA
-                                :pAnCcsid
-                                :%size(pAnCcsid)
-                                :pAnIana
-                                :%size(pAnIana)
-                                :CCSID_JOB) < 1;
+//---------------------------------------------------------------*
+// global variables
+//---------------------------------------------------------------*
 
 
-           return '';
-         endif;
+//---------------------------------------------------------------*
+//  XmlIanaToCcsid
+//---------------------------------------------------------------*
+//* Convert IANA name to CCSID.
+//*
+//* @param pAnIana - Name like UTF-8 or ISO-8859-1
+//*
+//* @return CCSID. E.g. UTF-8 = 1208
+//*
+//* @diag messageCode to be defined
+//*
+//* @see QlgCvtTextDescToDesc() - Convert Text Descriptor API
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlIanaToCcsid export;
+  dcl-pi *N int(10);
+    pAnIana char(30) const;
+  end-pi;
 
-         pAnIana = %xlate('_':'-':pAnIana);
-         if %scan(':':pAnIana) > 1;
-           pAnIana = %subst(pAnIana:1:%scan(':':pAnIana)-1) + NULL;
-         endif;
+  dcl-s pAnCcsid char(5);
 
-         return %trim(%str(%addr(pAnIana)));
+  if QlgCvtTextDescToDesc(11 // IANA
+                         :0  // CCSID
+                         :pAnIana
+                         :%size(pAnIana)
+                         :pAnCcsid
+                         :%size(pAnCcsid)
+                         :CCSID_JOB) < 1;
+    return 0;
+  endif;
 
-       end-proc XmlCcsidToIana;
-      //---------------------------------------------------------------*
-      // XmlNumber
-      //---------------------------------------------------------------*
-      //* Convert number to xml conform string.
-      //*
-      //* @param pNuNum - Number.
-      //*
-      //* @return xml confirm number string.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlNumber export;
-         dcl-pi *N varchar(35);
-           pNuNum packed (31:11) const;
-         end-pi;
+  return atoi(pAnCcsid);
 
-         dcl-s pAnNum varchar(35);
+end-proc XmlIanaToCcsid;
+//---------------------------------------------------------------*
+//  XmlCcsidToIana
+//---------------------------------------------------------------*
+//* Convert CCSID to IANA name
+//*
+//* @param pAnIana - Name like UTF-8 or ISO-8859-1
+//*
+//* @return CCSID. E.g. UTF-8 = 1208
+//*
+//* @diag messageCode to be defined
+//*
+//* @see QlgCvtTextDescToDesc() - Convert Text Descriptor API
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlCcsidToIana export;
+  dcl-pi *N varchar(30);
+    pInCcsid int(10) const;
+  end-pi;
 
-         pAnNum = %trim(%char(pNuNum));
-         if %checkr('0':pAnNum) > 1;
-           pAnNum = %subst(pAnNum:1:%checkr('0':pAnNum));
-         endif;
+  dcl-s pAnCcsid char(5);
+  dcl-s pAnIana  char(50);
 
-         if %subst(pAnNum:%len(pAnNum):1) = '.';
-           pAnNum = %subst(pAnNum:1:%len(pAnNum)-1);
-         endif;
+  evalr pAnCcsid = %editc(PInCcsid:'X');
 
-         return pAnNum;
+  if QlgCvtTextDescToDesc(0  // CCSID
+                         :11 // IANA
+                         :pAnCcsid
+                         :%size(pAnCcsid)
+                         :pAnIana
+                         :%size(pAnIana)
+                         :CCSID_JOB) < 1;
+    return '';
+  endif;
 
-       end-proc XmlNumber;
-      //---------------------------------------------------------------*
-      // XmlBoolean
-      //---------------------------------------------------------------*
-      //* Convert Indicator to xml conform string.
-      //*
-      //* @param pBoInd - Indicator.
-      //*
-      //* @return xml confirm boolean string.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlBoolean export;
-         dcl-pi *N varchar(5);
-           pBoInd ind const;
-         end-pi;
+  pAnIana = %xlate('_':'-':pAnIana);
+  if %scan(':':pAnIana) > 1;
+    pAnIana = %subst(pAnIana:1:%scan(':':pAnIana)-1) + NULL;
+  endif;
 
-         if pBoInd;
-           return 'true';
-         endif;
+  return %trim(%str(%addr(pAnIana)));
 
-         return 'false';
+end-proc XmlCcsidToIana;
+//---------------------------------------------------------------*
+// XmlNumber
+//---------------------------------------------------------------*
+//* Convert number to xml conform string.
+//*
+//* @param pNuNum - Number.
+//*
+//* @return xml confirm number string.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlNumber export;
+  dcl-pi *N varchar(35);
+    pNuNum packed (31:11) const;
+  end-pi;
 
-       end-proc XmlBoolean;
-      //---------------------------------------------------------------*
-      // XmlDate
-      //---------------------------------------------------------------*
-      //* Convert date to xml conform string.
-      //*
-      //* @param pDaDate - Date.
-      //*
-      //* @return xml confirm date string.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlDate export;
-         dcl-pi *N varchar(20);
-           pDaDate date const;
-         end-pi;
+  dcl-s pAnNum varchar(35);
 
-         if pDaDate = *loval;
-           return '';
-         endif;
+  pAnNum = %trim(%char(pNuNum));
+  if %checkr('0':pAnNum) > 1;
+    pAnNum = %subst(pAnNum:1:%checkr('0':pAnNum));
+  endif;
 
-         return %char(pDaDate:*iso);
+  if %subst(pAnNum:%len(pAnNum):1) = '.';
+    pAnNum = %subst(pAnNum:1:%len(pAnNum)-1);
+  endif;
 
-       end-proc XmlDate;
-      //---------------------------------------------------------------*
-      // XmlDateTime
-      //---------------------------------------------------------------*
-      //* Convert timestamp to xml conform string.
-      //*
-      //* @param pTsTime - Timestamp.
-      //*
-      //* @return xml confirm timestamp string.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc XmlDateTime export;
-         dcl-pi *N varchar(30);
-           pTsTime timestamp const;
-         end-pi;
+  return pAnNum;
 
-         if pTsTime = *loval;
-           return '';
-         endif;
+end-proc XmlNumber;
+//---------------------------------------------------------------*
+// XmlBoolean
+//---------------------------------------------------------------*
+//* Convert Indicator to xml conform string.
+//*
+//* @param pBoInd - Indicator.
+//*
+//* @return xml confirm boolean string.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlBoolean export;
+  dcl-pi *N varchar(5);
+    pBoInd ind const;
+  end-pi;
 
-         return %char(%date(pTsTime):*iso)
-                + 'T'
-                + %char(%time(pTsTime):*hms);
+  if pBoInd;
+    return 'true';
+  endif;
 
-       end-proc XmlDateTime;
+  return 'false';
 
+end-proc XmlBoolean;
+//---------------------------------------------------------------*
+// XmlDate
+//---------------------------------------------------------------*
+//* Convert date to xml conform string.
+//*
+//* @param pDaDate - Date.
+//*
+//* @return xml confirm date string.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlDate export;
+  dcl-pi *N varchar(20);
+    pDaDate date const;
+  end-pi;
+
+  if pDaDate = *loval;
+    return '';
+  endif;
+
+  return %char(pDaDate:*iso);
+
+end-proc XmlDate;
+//---------------------------------------------------------------*
+// XmlDateTime
+//---------------------------------------------------------------*
+//* Convert timestamp to xml conform string.
+//*
+//* @param pTsTime - Timestamp.
+//*
+//* @return xml confirm timestamp string.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc XmlDateTime export;
+  dcl-pi *N varchar(30);
+    pTsTime timestamp const;
+  end-pi;
+
+  if pTsTime = *loval;
+    return '';
+  endif;
+
+  return %char(%date(pTsTime):*iso)
+         + 'T'
+         + %char(%time(pTsTime):*hms);
+
+end-proc XmlDateTime;

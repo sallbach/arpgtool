@@ -1,246 +1,248 @@
-      /IF NOT DEFINED (AR_XMLR__)
+**free
+/IF NOT DEFINED (AR_XMLR__)
 
-      /DEFINE AR_XMLR__
-      /INCLUDE ARPG_H,ARCTYPES
+/DEFINE AR_XMLR__
+/INCLUDE ARPG_H,ARCTYPES
 
-      //---------------------------------------------------------------*
-      // XmlDocument
-      //---------------------------------------------------------------*
-       dcl-pr XmlDocument int(10) extproc(*dclcase);
-         pInCcsid int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlDocument
+//---------------------------------------------------------------*
+dcl-pr XmlDocument int(10) extproc(*dclcase);
+  pInCcsid int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlPrettyPrint
-      //---------------------------------------------------------------*
-       dcl-pr XmlPrettyPrint extproc(*dclcase);
-         pBoPretty ind const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlPrettyPrint
+//---------------------------------------------------------------*
+dcl-pr XmlPrettyPrint extproc(*dclcase);
+  pBoPretty ind const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlHeader
-      //---------------------------------------------------------------*
-       dcl-pr XmlHeader extproc(*dclcase);
-         pBoHeader ind const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlHeader
+//---------------------------------------------------------------*
+dcl-pr XmlHeader extproc(*dclcase);
+  pBoHeader ind const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlPi
-      //---------------------------------------------------------------*
-       dcl-pr XmlPi int(10) extproc(*dclcase);
-         pPtData pointer const options(*String);
-         pInCcsid int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlPi
+//---------------------------------------------------------------*
+dcl-pr XmlPi int(10) extproc(*dclcase);
+  pPtData pointer const options(*String);
+  pInCcsid int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlComment
-      //---------------------------------------------------------------*
-       dcl-pr XmlComment int(10) extproc(*dclcase);
-         pPtData pointer const options(*String);
-         pInCcsid int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlComment
+//---------------------------------------------------------------*
+dcl-pr XmlComment int(10) extproc(*dclcase);
+  pPtData pointer const options(*String);
+  pInCcsid int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNamespace
-      //---------------------------------------------------------------*
-       dcl-pr XmlNamespace int(10) extproc(*dclcase);
-         pPtName  pointer const options(*string);
-         pPtData pointer const options(*String);
-         pInCcsid int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNamespace
+//---------------------------------------------------------------*
+dcl-pr XmlNamespace int(10) extproc(*dclcase);
+  pPtName  pointer const options(*string);
+  pPtData pointer const options(*String);
+  pInCcsid int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlSetNullOnNull
-      //---------------------------------------------------------------*
-       dcl-pr XmlSetNullOnNull extproc(*dclcase);
-         pBoNullOnNull ind const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlSetNullOnNull
+//---------------------------------------------------------------*
+dcl-pr XmlSetNullOnNull extproc(*dclcase);
+  pBoNullOnNull ind const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNode
-      //---------------------------------------------------------------*
-       dcl-pr XmlNode int(10) extproc(*dclcase);
-         pPtName  pointer const options(*string);
-         pPtData  pointer const options(*string:*nopass);
-         pBoNull  ind const options(*nopass);
-         pInCcsid int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNode
+//---------------------------------------------------------------*
+dcl-pr XmlNode int(10) extproc(*dclcase);
+  pPtName  pointer const options(*string);
+  pPtData  pointer const options(*string:*nopass);
+  pBoNull  ind const options(*nopass);
+  pInCcsid int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNodeNum
-      //---------------------------------------------------------------*
-       dcl-pr XmlNodeNum int(10) extproc(*dclcase);
-         pPtName pointer const options(*string);
-         pNuNum  packed(31:11) const;
-         pBoNull ind const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNodeNum
+//---------------------------------------------------------------*
+dcl-pr XmlNodeNum int(10) extproc(*dclcase);
+  pPtName pointer const options(*string);
+  pNuNum  packed(31:11) const;
+  pBoNull ind const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNodeBool
-      //---------------------------------------------------------------*
-       dcl-pr XmlNodeBool int(10) extproc(*dclcase);
-         pPtName pointer const options(*string);
-         pBoInd  ind const;
-         pBoNull ind const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNodeBool
+//---------------------------------------------------------------*
+dcl-pr XmlNodeBool int(10) extproc(*dclcase);
+  pPtName pointer const options(*string);
+  pBoInd  ind const;
+  pBoNull ind const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNodeDate
-      //---------------------------------------------------------------*
-       dcl-pr XmlNodeDate int(10) extproc(*dclcase);
-         pPtName pointer const options(*string);
-         pDaDate date const;
-         pBoNull ind const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNodeDate
+//---------------------------------------------------------------*
+dcl-pr XmlNodeDate int(10) extproc(*dclcase);
+  pPtName pointer const options(*string);
+  pDaDate date const;
+  pBoNull ind const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNodeDateTime
-      //---------------------------------------------------------------*
-       dcl-pr XmlNodeDateTime int(10) extproc(*dclcase);
-         pPtName pointer const options(*string);
-         pTsTine timestamp const;
-         pBoNull ind const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNodeDateTime
+//---------------------------------------------------------------*
+dcl-pr XmlNodeDateTime int(10) extproc(*dclcase);
+  pPtName pointer const options(*string);
+  pTsTine timestamp const;
+  pBoNull ind const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNodeB64
-      //---------------------------------------------------------------*
-       dcl-pr XmlNodeB64 int(10) extproc(*dclcase);
-         pPtName pointer const options(*string);
-         pPtData pointer const options(*string);
-         pInLen  like(size_t)  const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNodeB64
+//---------------------------------------------------------------*
+dcl-pr XmlNodeB64 int(10) extproc(*dclcase);
+  pPtName pointer const options(*string);
+  pPtData pointer const options(*string);
+  pInLen  like(size_t)  const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNodeB64Reader
-      //---------------------------------------------------------------*
-       dcl-pr XmlNodeB64Reader int(10) extproc(*dclcase);
-         pPtName    pointer const options(*string);
-         pPtReader  pointer(*proc) const;
-         pInHandler int(10) const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNodeB64Reader
+//---------------------------------------------------------------*
+dcl-pr XmlNodeB64Reader int(10) extproc(*dclcase);
+  pPtName    pointer const options(*string);
+  pPtReader  pointer(*proc) const;
+  pInHandler int(10) const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNodeEnd
-      //---------------------------------------------------------------*
-       dcl-pr XmlNodeEnd int(10) extproc(*dclcase);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNodeEnd
+//---------------------------------------------------------------*
+dcl-pr XmlNodeEnd int(10) extproc(*dclcase);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlAttribute
-      //---------------------------------------------------------------*
-       dcl-pr XmlAttribute int(10) extproc(*dclcase);
-         pPtName  pointer const options(*string);
-         pPtData  pointer const options(*string);
-         pBoNull  ind const options(*nopass);
-         pInCcsid int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlAttribute
+//---------------------------------------------------------------*
+dcl-pr XmlAttribute int(10) extproc(*dclcase);
+  pPtName  pointer const options(*string);
+  pPtData  pointer const options(*string);
+  pBoNull  ind const options(*nopass);
+  pInCcsid int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlAttributeNum
-      //---------------------------------------------------------------*
-       dcl-pr XmlAttributeNum int(10) extproc(*dclcase);
-         pPtName pointer const options(*string);
-         pNuNum  packed(31:11) const;
-         pBoNull ind const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlAttributeNum
+//---------------------------------------------------------------*
+dcl-pr XmlAttributeNum int(10) extproc(*dclcase);
+  pPtName pointer const options(*string);
+  pNuNum  packed(31:11) const;
+  pBoNull ind const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlAttributeBool
-      //---------------------------------------------------------------*
-       dcl-pr XmlAttributeBool int(10) extproc(*dclcase);
-         pPtName pointer const options(*string);
-         pBoind  ind const;
-         pBoNull ind const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlAttributeBool
+//---------------------------------------------------------------*
+dcl-pr XmlAttributeBool int(10) extproc(*dclcase);
+  pPtName pointer const options(*string);
+  pBoind  ind const;
+  pBoNull ind const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlAttributeDate
-      //---------------------------------------------------------------*
-       dcl-pr XmlAttributeDate int(10) extproc(*dclcase);
-         pPtName pointer const options(*string);
-         pDaDate date const;
-         pBoNull ind const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlAttributeDate
+//---------------------------------------------------------------*
+dcl-pr XmlAttributeDate int(10) extproc(*dclcase);
+  pPtName pointer const options(*string);
+  pDaDate date const;
+  pBoNull ind const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNodeAttributeTime
-      //---------------------------------------------------------------*
-       dcl-pr XmlAttributeDateTime int(10) extproc(*dclcase);
-         pPtName pointer const options(*string);
-         pTsTine timestamp const;
-         pBoNull ind const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNodeAttributeTime
+//---------------------------------------------------------------*
+dcl-pr XmlAttributeDateTime int(10) extproc(*dclcase);
+  pPtName pointer const options(*string);
+  pTsTine timestamp const;
+  pBoNull ind const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlToString
-      //---------------------------------------------------------------*
-       dcl-pr XmlToString pointer extproc(*dclcase);
-         pInLen like(size_t) options(*nopass);
-         pBoTeraspace ind options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlToString
+//---------------------------------------------------------------*
+dcl-pr XmlToString pointer extproc(*dclcase);
+  pInLen like(size_t) options(*nopass);
+  pBoTeraspace ind options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlToWriter
-      //---------------------------------------------------------------*
-       dcl-pr XmlToWriter int(10) extproc(*dclcase);
-         pPtWriter pointer(*proc) const;
-         pInHandle int(10) const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlToWriter
+//---------------------------------------------------------------*
+dcl-pr XmlToWriter int(10) extproc(*dclcase);
+  pPtWriter pointer(*proc) const;
+  pInHandle int(10) const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlToStmf
-      //---------------------------------------------------------------*
-       dcl-pr XmlToStmf int(10) extproc(*dclcase);
-         pAnFile pointer const options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// XmlToStmf
+//---------------------------------------------------------------*
+dcl-pr XmlToStmf int(10) extproc(*dclcase);
+  pAnFile pointer const options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlToUserExit
-      //---------------------------------------------------------------*
-       dcl-pr XmlToUserExit int(10) extproc(*dclcase);
-         pPtExit pointer(*proc) const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlToUserExit
+//---------------------------------------------------------------*
+dcl-pr XmlToUserExit int(10) extproc(*dclcase);
+  pPtExit pointer(*proc) const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlIanaToCcsid
-      //---------------------------------------------------------------*
-       dcl-pr XmlIanaToCcsid int(10) extproc(*dclcase);
-         pAnIana char(30) const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlIanaToCcsid
+//---------------------------------------------------------------*
+dcl-pr XmlIanaToCcsid int(10) extproc(*dclcase);
+  pAnIana char(30) const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlCcsidToIana
-      //---------------------------------------------------------------*
-       dcl-pr XmlCcsidToIana varchar(30) extproc(*dclcase);
-         pInCcsid int(10) const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlCcsidToIana
+//---------------------------------------------------------------*
+dcl-pr XmlCcsidToIana varchar(30) extproc(*dclcase);
+  pInCcsid int(10) const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlNumber
-      //---------------------------------------------------------------*
-       dcl-pr XmlNumber varchar(35) extproc(*dclcase);
-         pNuNum packed(31:11) const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlNumber
+//---------------------------------------------------------------*
+dcl-pr XmlNumber varchar(35) extproc(*dclcase);
+  pNuNum packed(31:11) const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlBoolean
-      //---------------------------------------------------------------*
-       dcl-pr XmlBoolean varchar(5) extproc(*dclcase);
-         pBoInd ind const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlBoolean
+//---------------------------------------------------------------*
+dcl-pr XmlBoolean varchar(5) extproc(*dclcase);
+  pBoInd ind const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlDate
-      //---------------------------------------------------------------*
-       dcl-pr XmlDate varchar(20) extproc(*dclcase);
-         pDaDate date const;
-       end-pr;
+//---------------------------------------------------------------*
+// XmlDate
+//---------------------------------------------------------------*
+dcl-pr XmlDate varchar(20) extproc(*dclcase);
+  pDaDate date const;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // XmlDateTime
-      //---------------------------------------------------------------*
-       dcl-pr XmlDateTime varchar(30) extproc(*dclcase);
-         pTsTime timestamp const;
-       end-pr;
-      /ENDIF
+//---------------------------------------------------------------*
+// XmlDateTime
+//---------------------------------------------------------------*
+dcl-pr XmlDateTime varchar(30) extproc(*dclcase);
+  pTsTime timestamp const;
+end-pr;
+
+/ENDIF
