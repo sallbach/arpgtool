@@ -31,7 +31,7 @@ end-ds;
 //---------------------------------------------------------------*
 // constants
 //---------------------------------------------------------------*
-dcl-c SQL_NUM 1; 
+//dcl-c SQL_NUM 1; 
 
 //---------------------------------------------------------------*
 // global
@@ -59,9 +59,7 @@ end-ds;
 //---------------------------------------------------------------*
 //  SqlRsNew - protected
 //---------------------------------------------------------------*
-//*   
-//*  
-//* 
+//* Create a new result set.  
 //*
 //* @param pInPrepStm -
 //* @param pPtDescribeDa -
@@ -145,7 +143,7 @@ dcl-proc SqlRsNew export;
   pDsResultSet.SqPrcEd.function = SQL_FUNCTION_OPEN;
   pDsResultSet.SqPrcEd.cursorname = 'ARSCUR_' + %char(pInResultSet);
   
-  SqPrcEd(SqlCa:pDsOpenDa:'SQLP0400':pDsResultSet.SqPrcEd:QUSecExcp);
+  Q_SqPrcEd(SqlCa:pDsOpenDa:'SQLP0400':pDsResultSet.SqPrcEd:QUSecExcp);
   
   if SqlCode <> 0;
     // todo message
@@ -159,9 +157,9 @@ end-proc SqlRsNew;
 //---------------------------------------------------------------*
 //  SqlRsNext
 //---------------------------------------------------------------*
-//* 
+//* Move the cursor one row forward.
 //*
-//* @param pInResultSet - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
 //*
 //* @return ccc
 //*
@@ -192,7 +190,7 @@ dcl-proc SqlRsNext export;
   pDsResultSet.SqPrcEd.position = SQL_FETCH_NEXT;
   pDsResultSet.SqPrcEd.cursorname = 'ARSCUR_' + %char(pInResultSet);
   
-  SqPrcEd(SqlCa:pDsResultDa:'SQLP0400':pDsResultSet.SqPrcEd:QUSecExcp);
+  Q_SqPrcEd(SqlCa:pDsResultDa:'SQLP0400':pDsResultSet.SqPrcEd:QUSecExcp);
 
   if SqlCode <> 0; 
     // todo message
@@ -208,7 +206,7 @@ end-proc SqlRsNext;
 //---------------------------------------------------------------*
 //* 
 //*
-//* @param pInResultSet - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
 //*
 //* @return ccc
 //*
@@ -238,7 +236,7 @@ dcl-proc SqlRsClose export;
   pDsResultSet.SqPrcEd.function = SQL_FUNCTION_CLOSE;
   pDsResultSet.SqPrcEd.cursorname = 'ARSCUR_' + %char(pInResultSet);
   
-  SqPrcEd(SqlCa:SqlDa:'SQLP0400':pDsResultSet.SqPrcEd:QUSecExcp);
+  Q_SqPrcEd(SqlCa:SqlDa:'SQLP0400':pDsResultSet.SqPrcEd:QUSecExcp);
 
   dealloc(ne) pDsResultSet.ptResultDa;
   dealloc(ne) pDsResultSet.ptSqlVars;
@@ -253,11 +251,11 @@ end-proc SqlRsClose;
 //---------------------------------------------------------------*
 //  SqlRsGetString
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the value of the designated column in the current row.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
+//* @param pBoNullId - returns *on if column is NULL (optional)
 //*
 //* @return String
 //*
@@ -317,13 +315,13 @@ end-proc SqlRsGetString;
 //---------------------------------------------------------------*
 //  SqlRsGetStringUcs
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the value of the designated column in the current row.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
+//* @param pBoNullId - returns *on if column is NULL (optional)
 //*
-//* @return String
+//* @return Ucs String
 //*
 //* @diag messageCode to be defined
 //*
@@ -384,11 +382,11 @@ end-proc SqlRsGetStringUcs;
 //---------------------------------------------------------------*
 //  SqlRsGetDecimal
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the value of the designated column in the current row.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
+//* @param pBoNullId - returns *on if column is NULL (optional)
 //*
 //* @return Decimal
 //*
@@ -425,17 +423,17 @@ dcl-proc SqlRsGetDecimal export;
   endif;
 
   if gDsSqlVar.SqlType = SQL_TYPE_PACKED;
-    memcpy(%addr(pNuPacked)
-          :gDsSqlVar.SqlData + %size(pNuPacked) - gDsSqlVar.SqlBytes 
+    memcpy(%addr(pNuPacked) + %size(pNuPacked) - gDsSqlVar.SqlBytes
+          :gDsSqlVar.SqlData  
           :gDsSqlVar.SqlBytes);
     return pNuPacked / 10 ** gDsSqlVar.SqlScale;
   endif;
     
   if gDsSqlVar.SqlType = SQL_TYPE_ZONED;
-    memcpy(%addr(pNuZoned)
-          :gDsSqlVar.SqlData + %size(pNuZoned) - gDsSqlVar.SqlBytes 
+    memcpy(%addr(pNuZoned) + %size(pNuZoned) - gDsSqlVar.SqlBytes
+          :gDsSqlVar.SqlData  
           :gDsSqlVar.SqlBytes);
-    return pNuPacked / 10 ** gDsSqlVar.SqlScale;
+    return pNuZoned / 10 ** gDsSqlVar.SqlScale;
   endif;       
 
   if gDsSqlVar.SqlType = SQL_TYPE_FLOAT;
@@ -454,11 +452,11 @@ end-proc SqlRsGetDecimal;
 //---------------------------------------------------------------*
 //  SqlRsGetDouble
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the value of the designated column in the current row.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
+//* @param pBoNullId - returns *on if column is NULL (optional)
 //*
 //* @return Double
 //*
@@ -519,11 +517,11 @@ end-proc SqlRsGetDouble;
 //---------------------------------------------------------------*
 //  SqlRsGetDate
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the value of the designated column in the current row.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
+//* @param pBoNullId - returns *on if column is NULL (optional)
 //*
 //* @return Date
 //*
@@ -572,11 +570,11 @@ end-proc SqlRsGetDate;
 //---------------------------------------------------------------*
 //  SqlRsGetTime
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the value of the designated column in the current row.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
+//* @param pBoNullId - returns *on if column is NULL (optional)
 //*
 //* @return Time
 //*
@@ -592,6 +590,7 @@ dcl-proc SqlRsGetTime export;
   end-pi;
        
   dcl-s pTiTime time based(gDsSqlVar.SqlData);    
+  dcl-s pAnTime char(8) based(gDsSqlVar.SqlData);    
 
   if %parms() >= %parmnum(pBoNullId) Or 
        %parms() = -1 And %addr(pBoNullId) <> *Null;
@@ -612,6 +611,8 @@ dcl-proc SqlRsGetTime export;
   endif;
 
   if gDsSqlVar.SqlType = SQL_TYPE_TIME;
+    %subst(pAnTime:3:1) = '.'; 
+    %subst(pAnTime:6:1) = '.'; 
     return pTiTime; 
   endif;
   
@@ -625,11 +626,11 @@ end-proc SqlRsGetTime;
 //---------------------------------------------------------------*
 //  SqlRsGetTimeStamp
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the value of the designated column in the current row.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
+//* @param pBoNullId - returns *on if column is NULL (optional)
 //*
 //* @return Timestamp
 //*
@@ -679,11 +680,11 @@ end-proc SqlRsGetTimeStamp;
 //---------------------------------------------------------------*
 //  SqlRsGetLong
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the value of the designated column in the current row.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
+//* @param pBoNullId - returns *on if column is NULL (optional)
 //*
 //* @return Timestamp
 //*
@@ -747,11 +748,11 @@ end-proc SqlRsGetLong;
 //---------------------------------------------------------------*
 //  SqlRsGetHex
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the value of the designated column in the current row.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
+//* @param pBoNullId - returns *on if column is NULL (optional)
 //*
 //* @return Timestamp
 //*
@@ -790,13 +791,12 @@ end-proc SqlRsGetHex;
 //---------------------------------------------------------------*
 //  SqlRsIsNull
 //---------------------------------------------------------------*
-//* 
+//* Whether the column is NULL.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
 //*
-//* @return Timestamp
+//* @return *on - is NULL else *off
 //*
 //* @diag messageCode to be defined
 //*
@@ -818,13 +818,12 @@ end-proc SqlRsIsNull;
 //---------------------------------------------------------------*
 //  SqlRsHasError
 //---------------------------------------------------------------*
-//* 
+//* Whether the column has errors.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
 //*
-//* @return Timestamp
+//* @return *on - has errors else *off
 //*
 //* @diag messageCode to be defined
 //*
@@ -846,13 +845,12 @@ end-proc SqlRsHasError;
 //---------------------------------------------------------------*
 //  SqlRsFindColumn
 //---------------------------------------------------------------*
-//* 
+//* Maps the given column label to its column index. 
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
-//* @param pBoNullId - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pAnColName - Column label.
 //*
-//* @return Timestamp
+//* @return column index of given column name.
 //*
 //* @diag messageCode to be defined
 //*
@@ -884,12 +882,11 @@ end-proc SqlRsFindColumn;
 //---------------------------------------------------------------*
 //  SqlRsGetColumnCount
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the number of columns.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
 //*
-//* @return Timestamp
+//* @return Number of columns
 //*
 //* @diag messageCode to be defined
 //*
@@ -919,12 +916,12 @@ end-proc SqlRsGetColumnCount;
 //---------------------------------------------------------------*
 //  SqlRsGetColumnName
 //---------------------------------------------------------------*
-//* 
+//* Retrieve the name of a column.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
 //*
-//* @return Timestamp
+//* @return Column name.
 //*
 //* @diag messageCode to be defined
 //*
@@ -950,12 +947,12 @@ end-proc SqlRsGetColumnName;
 //---------------------------------------------------------------*
 //  SqlRsGetSysColumnName
 //---------------------------------------------------------------*
-//* 
+//* Retrieve system name of column.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
 //*
-//* @return Timestamp
+//* @return Column name
 //*
 //* @diag messageCode to be defined
 //*
@@ -977,12 +974,12 @@ end-proc SqlRsGetSysColumnName;
 //---------------------------------------------------------------*
 //  SqlRsGetLongColumnName
 //---------------------------------------------------------------*
-//* 
+//* Retrieve long name of column.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
 //*
-//* @return Timestamp
+//* @return Column name
 //*
 //* @diag messageCode to be defined
 //*
@@ -1004,12 +1001,12 @@ end-proc SqlRsGetLongColumnName;
 //---------------------------------------------------------------*
 //  SqlRsGetColumnPrefix
 //---------------------------------------------------------------*
-//* 
+//* ...                           
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
 //*
-//* @return Timestamp
+//* @return ...             
 //*
 //* @diag messageCode to be defined
 //*
@@ -1028,12 +1025,12 @@ end-proc SqlRsGetColumnPrefix;
 //---------------------------------------------------------------*
 //  SqlRsGetColumnType
 //---------------------------------------------------------------*
-//* 
+//* Retrieve SQL type of column.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
 //*
-//* @return Timestamp
+//* @return Sql type SQL_TYPE_* (@const SQL_TYPE_BINARY).
 //*
 //* @diag messageCode to be defined
 //*
@@ -1055,12 +1052,12 @@ end-proc SqlRsGetColumnType;
 //---------------------------------------------------------------*
 //  SqlRsGetPrecision
 //---------------------------------------------------------------*
-//* 
+//* Retrieve precision of column.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
 //*
-//* @return Timestamp
+//* @return Precision
 //*
 //* @diag messageCode to be defined
 //*
@@ -1082,12 +1079,12 @@ end-proc SqlRsGetPrecision;
 //---------------------------------------------------------------*
 //  SqlRsGetScale
 //---------------------------------------------------------------*
-//* 
+//* Retrieve scale of column.
 //*
-//* @param pInResultSet - 
-//* @param pInColIndex - 
+//* @param pInResultSet - Result set @link ARSSQLR.ARSSQL02.SqlPreparedStatementExecuteQuery
+//* @param pInColIndex - Index of column starting with 1
 //*
-//* @return Timestamp
+//* @return Scale
 //*
 //* @diag messageCode to be defined
 //*

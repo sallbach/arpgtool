@@ -1,4 +1,4 @@
-Create table LogStashVarTable for system name ARFLSTV
+Create or Replace table LogStashVarTable for system name ARFLSTV
 (
   LStv_jobname     for LVJOB  Char(10) not null,
   LStv_jobuser     for LVUSER Char(10) not null,

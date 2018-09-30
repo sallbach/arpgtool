@@ -1,33 +1,202 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCOBJR
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCOBJR
+/COPY ARPG_H,ARCMICOMMO
+/COPY ARPG_H,ARCQUSEC
+/COPY ARPG_H,ARCQLEAWI
+/COPY ARPG_H,ARCQOBJD
 
-      //---------------------------------------------------------------*
-      //  ObjCheck
-      //---------------------------------------------------------------*
-      //* Fill string with variables.
-      //*
-      //* @param pPtStr - String with place holders &1 - &20
-      //* @param pPtP1 - pPtP20 - Values for place holders.
-      //*
-      //* @return Returns new string.
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc ObjCheck export;
-         dcl-pi *N int(10);
-           objekt char(10) value;
-           type char(10) value;
-           description char(50) options(*nopass:*omit);
-           library char(10) options(*nopass);
-         end-pi;
+//---------------------------------------------------------------*
+//  ObjCheck
+//---------------------------------------------------------------*
+//* Check existence and description of an object.
+//*
+//* @param pAnObject - object name
+//* @param pAnType - object type (*FILE, *PGM, *SRVPGM ...)
+//* @param pAnDesc - output object description (optional, omit)
+//* @param pAnLib - input/output object library 
+//*                  (Name,*LIBL,*CURLIB,*USRLIBL,*ALLUSR,*ALL)  
+//*                  (Default - @const API_LIBL)
+//*
+//* @return 0 - Object found.
+//* @return 1 - Object not found.
+//* @return 2 - not authorised for Object.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc ObjCheck export;
+  dcl-pi *N int(10);
+    pAnObject char(10) value;
+    pAnType char(10) value;
+    pAnDesc char(50) options(*nopass:*omit);
+    pAnLib char(10) options(*nopass);
+  end-pi;
 
+  dcl-s pAnLib_ char(10) inz(API_LIBL);
+  
+/COPY QSYSINC/QRPGLESRC,QUSROBJD
+ 
+  if %parms() >= %parmnum(pAnLib) And pAnLib <> *Blanks;
+    PAnLib_ = PAnLib;
+  endif;
+ 
+  clear QUSecF.Excp;
+  Q_UsRObjD(QUsd0200
+           :%size(QUsd0200)
+           :'OBJD0200'
+           :pAnObject + PAnLib_
+           :PAnType
+           :QUsecF);
+ 
+  if QUSecF.Excp = 'CPF9802';
+    pAnDesc = '*** not authorized ***';
+    return 2;
+  endif;
 
-         return 0;
+  if QUSecF.Excp <> *Blanks;
+    pAnDesc = '*** ? ***';
+    return 1;
+  endif;
 
-       end-proc ObjCheck;
+  if %parms() >= %parmnum(pAnDesc) And %addr(pAnDesc) <> *Null;
+    pAnDesc = QUStd12;
+  endif;
+  
+  if %parms() >= %parmnum(pAnLib);
+    PAnLib = QUSRL02;
+  endif;
+ 
+  return 0;
 
+end-proc ObjCheck;
+//---------------------------------------------------------------*
+//  ObjGetObjPointer
+//---------------------------------------------------------------*
+//* Fill string with variables.
+//*
+//* @param pPtStr - String with place holders &1 - &20
+//* @param pPtP1 - pPtP20 - Values for place holders.
+//*
+//* @return Returns new string.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc ObjGetObjPointer export;
+  dcl-pi *N;
+    pPtObject pointer;
+    pAnObject char(10) value;
+    pAnType char(10) value;
+    pAnLib char(10) value options(*nopass);
+  end-pi;
+
+  dcl-s pAnLib_ char(10) inz(API_LIBL);
+  dcl-s pPtLib pointer;
+  dcl-ds pDsRslVsp likeds(rslvsp_tmpl_t) inz(*Likeds);
+  dcl-s pAnHexLib char(2) inz static;
+
+  if %parms() >= %parmnum(pAnLib) And pAnLib <> *Blanks;
+    pAnLib_ = pAnLib;
+  endif;
+
+  monitor;
+    if pAnHexLib = *Blanks;
+      Q_LicVttp(API_SYMTOHEX:'*LIB':pAnHexLib:QUsecExcp);
+    endif;
+    pDsRslVsp.obj_type = pAnHexLib;
+    pDsRslVsp.obj_Name = PAnLib_;
+    rslvsp2(pPtLib:pDsRslVsp);
+
+    Q_LicVttp(API_SYMTOHEX:pAnType:pDsRslVsp.obj_type:QUsecExcp);
+    pDsRslVsp.obj_Name = pAnObject;
+    rslvsp4(pPtObject:pDsRslVsp:pPtLib);
+  on-error;
+    // todo msg
+    return;
+  endmon;
+
+  return;
+
+end-proc ObjGetObjPointer;
+//---------------------------------------------------------------*
+//  ObjGetProcedurePointer
+//---------------------------------------------------------------*
+//* 
+//*
+//* @param pAnSrvPgm char(10) value;
+//* @param pAnProc varchar(128) value;
+//* @param pAnLib char(10) options(*nopass);
+//*
+//* @return 
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc ObjGetProcedurePointer export;
+  dcl-pi *N pointer(*proc);
+    pAnSrvPgm char(10) value;
+    pAnProc varchar(128) value;
+    pAnLib char(10) value options(*nopass);
+  end-pi;
+
+  dcl-s pAnHexObj char(2) inz static;
+
+  dcl-s pAnLib_ char(10) inz(API_LIBL);
+
+  dcl-s pPtSrvPgm pointer(*proc);
+  dcl-s pInActRes int(10);
+  dcl-s pInActMrk int(10);
+
+  dcl-s pPtProc pointer(*proc);
+  dcl-s pInExpType int(10);
+
+  dcl-ds pDsActInfo likeds(Qle_ActBndPgmInfo_t);
+
+  //-----
+  // convert object type
+  if pAnHexObj = *Blanks;
+    Q_LicVttp(API_SYMTOHEX:API_SRVPGM:pAnHexObj:QUsecExcp);
+  endif;
+
+  pAnProc = %trim(pAnProc);
+  if %parms() > %parmnum(pAnLib) And pAnLib <> *Blanks;
+    pAnLib_ = pAnLib;
+  endif;
+
+  monitor;
+    pPtSrvPgm = rslvsp(pAnHexObj
+                      :%trim(PAnSrvPgm)
+                      :%trim(PAnLib_)
+                      :MI_AUTH_NONE);
+    if pPtSrvPgm = *Null;
+      // todo message
+      return *Null;
+    endif;
+
+    pInActRes = QLeActBndPgm(pPtSrvPgm
+                            :pInActMrk
+                            :pDsActInfo
+                            :%size(pDsActInfo)
+                            :QUsecF);
+    QLeGetExp(pInActMrk
+             :0
+             :%len(PAnProc)
+             :pAnProc
+             :pPtProc
+             :pInExpType
+             :QUsecF);
+
+    if pInExpType <> QLE_EX_PROC;
+      // todo message
+      return *Null;
+    endif;
+    
+  on-error;
+    // todo message
+  endmon;  
+
+  return PPtProc;
+
+end-proc ObjGetProcedurePointer;

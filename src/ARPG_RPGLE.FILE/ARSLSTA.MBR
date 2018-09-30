@@ -1,276 +1,281 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // files
-      //---------------------------------------------------------------*
-       dcl-f ARFLSTA01 disk
-                       usage(*update:*delete:*output)
-                       keyed;
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// files
+//---------------------------------------------------------------*
+dcl-f ARFLSTA01 disk
+                usage(*update:*delete:*output)
+                keyed;
 
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCLSTA
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCSTRR
+/COPY ARPG_H,ARCCMDE
+/COPY ARPG_H,ARCOBJR
+/COPY ARPG_H,ARCQMH
 
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCLSTA
-      /COPY ARPG_H,ARCSYSR
-      /COPY ARPG_H,ARCSTRR
-      /COPY ARPG_H,ARCCMDE
-      /COPY ARPG_H,ARCOBJR
-      /COPY ARPG_H,ARCQMH
+//---------------------------------------------------------------*
+// global variables
+//---------------------------------------------------------------*
+dcl-s gTsStarted timestamp inz(*loval);
 
-      //---------------------------------------------------------------*
-      // global variables
-      //---------------------------------------------------------------*
-       dcl-s gTsStarted timestamp inz(*loval);
+//---------------------------------------------------------------*
+// global data structures
+//---------------------------------------------------------------*
+dcl-ds gDsSettings likeds(LogStash_t) inz(*likeds);
 
-      //---------------------------------------------------------------*
-      // global data structures
-      //---------------------------------------------------------------*
-       dcl-ds gDsSettings likeds(LogStash_t) inz(*likeds);
+//---------------------------------------------------------------*
+//  LogStashStart
+//---------------------------------------------------------------*
+//* Transfer the job log to a file for logstash.
+//* <p>
+//* For every job, there will be a new member Ljjjjjjnnn, where
+//* j is the job number and n a sequence number.
+//* <p>
+//* <DL>
+//*  <DT>Settings :</DT>
+//*  <DD>pDsSettings.logfile1 - name of logfile 1</DD>
+//*  <DD>pDsSettings.logfile2 - name of logfile 2</DD>
+//*  <DD>pDsSettings.loglib - library of logfile 1 & 2</DD>
+//*  <DD>pDsSettings.immed - *on - logging starts immediately with @link #LogStashStart() <br>
+//*                          *off - logging starts with @link #LogStashStartTask()</DD>
+//*  <DD>pDsSettings.wrap - Create a new log member after x minutes.</DD>
+//* </DL>
+//*
+//* @param pDsSettings - Setting for logging - likeds(LogStash_t) (optional)
+//*
+//* @return 0 - Joblog changed successfully.
+//*
+//* @see Control Job Log Output (QMHCTLJL) API
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashStart export;
+  dcl-pi *N int(10);
+    pDsSettings likeds(LogStash_t) value options(*nopass);
+  end-pi;
 
-      //---------------------------------------------------------------*
-      //  LogStashStart
-      //---------------------------------------------------------------*
-      //* Transfer the job log to a file for logstash.
-      //* <p>
-      //* For every job, there will be a new member Ljjjjjjnnn, where
-      //* j is the job number and n a sequence number.
-      //* <p>
-      //* <DL>
-      //*  <DT>Settings :</DT>
-      //*  <DD>pDsSettings.logfile1 - name of logfile 1</DD>
-      //*  <DD>pDsSettings.logfile2 - name of logfile 2</DD>
-      //*  <DD>pDsSettings.loglib - library of logfile 1 & 2</DD>
-      //*  <DD>pDsSettings.immed - *on - logging starts immediately with @link #LogStashStart() <br>
-      //*                          *off - logging starts with @link #LogStashStartTask()</DD>
-      //*  <DD>pDsSettings.wrap - Create a new log member after x minutes.</DD>
-      //* </DL>
-      //*
-      //* @param pDsSettings - Setting for logging - likeds(LogStash_t) (optional)
-      //*
-      //* @return 0 - Joblog changed successfully.
-      //*
-      //* @see Control Job Log Output (QMHCTLJL) API
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc LogStashStart export;
-         dcl-pi *N int(10);
-           pDsSettings likeds(LogStash_t) value options(*nopass);
-         end-pi;
+/COPY QSYSINC/QRPGLESRC,QMHCTLJL
 
-      /COPY QSYSINC/QRPGLESRC,QMHCTLJL
+  dcl-ds pDsMember qualified;
+    prefix char(1) inz('L');
+    jobN char(6);
+    seq zoned(3) inz(0);
+  end-ds;
 
-         dcl-ds pDsMember qualified;
-           prefix char(1) inz('L');
-           jobN char(6);
-           seq zoned(3) inz(0);
-         end-ds;
+  if %parms() >= %parmnum(pDsSettings);
+    gDsSettings = pDsSettings;
+  endif;
+     
+  LsFile = gDsSettings.logfile;
+  LsLib  = gDsSettings.loglib;
 
-         if %parms() >= %parmnum(pDsSettings);
-           gDsSettings = pDsSettings;
-         endif;
+  // LogStash off if file doesn't exist
+  if ObjCheck(LsFile:API_FILE:*omit:LsLib) <> 0;
+    if gDsSettings.immed;
+      LogStashStartTask();
+    endif;
+    return 0;
+  endif;
 
-         LsJob  = S#Job;
-         LsUser = S#User;
-         LsJNum = %editc(S#JobN:'X');
-         LsLOn  = OFF;
-         LsFile = gDsSettings.logfile;
-         LsLib  = gDsSettings.loglib;
-         pDsMember.jobN = LsJNum;
-         LsMbr  = pDsMember;
-         LsTime = %timestamp();
+  LsJob  = S#Job;
+  LsUser = S#User;
+  LsJNum = %editc(S#JobN:'X');
+  LsLOn  = OFF;
+  LsFile = gDsSettings.logfile;
+  LsLib  = gDsSettings.loglib;
+  pDsMember.jobN = LsJNum;
+  LsMbr  = pDsMember;
+  LsTime = %timestamp();
 
-         setgt (LsJob:LsUser:LsJNum:*hival) ArfLStar;
-         readpe (LsJob:LsUser:LsJNum) ArfLStar;
-         if not %eof;
-           LsStat = LSTASH_STAT_INACTIVE;
-           LsTime = %timestamp();
-           update ArfLStar;
-           pDsMember = LsMbr;
-           pDsMember.seq += 1;
-           LsMbr = pDsMember;
-         endif;
+  setgt (LsJob:LsUser:LsJNum:*hival) ArfLStar;
+  readpe (LsJob:LsUser:LsJNum) ArfLStar;
+  if not %eof;
+    LsStat = LSTASH_STAT_INACTIVE;
+    LsTime = %timestamp();
+    update ArfLStar;
+    pDsMember = LsMbr;
+    pDsMember.seq += 1;
+    LsMbr = pDsMember;
+  endif;
 
-         // Joblog to file - QMHJ0100
-         QMHSL = %size(QMHJ0100);
-         QMHPO = gDsSettings.logfile + gDsSettings.loglib;
-         QMHPM = LsMbr;
-         QMHSO00 = API_NONE;
-         QMHSM = API_FIRST;
-         QMHMR = '0'; // Do not clear
+  gTsStarted = %timestamp();
+  LsStat = LSTASH_STAT_ACTIVE;
+  write ArfLStar;
 
-         QMHRSV1 = *allx'00';
-         QMHMS10 = 99;
-         QMHMT10 = API_ANY;
-         QMHMI08 = API_ANY;
-         QMHRSV204 = *allx'00';
+  // Joblog to file - QMHJ0100
+  QMHSL = %size(QMHJ0100);
+  QMHPO = gDsSettings.logfile + gDsSettings.loglib;
+  QMHPM = LsMbr;
+  QMHSO00 = API_NONE;
+  QMHSM = API_FIRST;
+  QMHMR = '0'; // Do not clear
 
-         MhCtlJL(QMHJ0100
-                :'CTLJ0100'
-                :QMHMFILE
-                :0 // no filter
-                :'*SYSOPR'
-                :QUSecExcp);
+  QMHRSV1 = *allx'00';
+  QMHMS10 = 99;
+  QMHMT10 = API_ANY;
+  QMHMI08 = API_ANY;
+  QMHRSV204 = *allx'00';
 
-         gTsStarted = %timestamp();
+  Q_MhCtlJL(QMHJ0100
+           :'CTLJ0100'
+           :QMHMFILE
+           :0 // no filter
+           :'*SYSOPR'
+           :QUSecExcp);
 
-         if %subst(LsLib:1:1) = '*';
-           ObjCheck(LsFile:API_FILE:*Omit:LsLib);
-         endif;
+  CmdExec(
+       StrFillValues('CHGPFM FILE(&2/&1) MBR(&3) TEXT(''&6/&5/&4'')'
+                    :%trim(LsFile)
+                    :%trim(LsLib)
+                    :%trim(LsMbr)
+                    :%trim(LsJob)
+                    :%trim(LsUser)
+                    :%trim(LsJNum)));
 
-         LsStat = LSTASH_STAT_ACTIVE;
-         write ArfLStar;
+  if gDsSettings.immed;
+    LogStashStartTask();
+  endif;
 
-         CmdExec(
-           StrFillValues('CHGPFM FILE(&2/&1) MBR(&3) TEXT(''&6/&5/&4'')'
-                        :%trim(LsFile)
-                        :%trim(LsLib)
-                        :%trim(LsMbr)
-                        :%trim(LsJob)
-                        :%trim(LsUser)
-                        :%trim(LsJNum)));
+  return 0;
 
-         if gDsSettings.immed;
-           LogStashStartTask();
-         endif;
+end-proc LogStashStart;
+//---------------------------------------------------------------*
+//  LogStashStartTask
+//---------------------------------------------------------------*
+//* Save the given object in memory and returns a unique identifier.
+//*
+//* @param pAnRef - Program reference. You should use the field
+//*
+//* @return &gt;0 - a valid reference, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashStartTask export;
+  dcl-pi *N int(10);
+  end-pi;
 
-         return 0;
+  if gTsStarted = *loval;
+    return -1;
+  endif;
 
-       end-proc LogStashStart;
-      //---------------------------------------------------------------*
-      //  LogStashStartTask
-      //---------------------------------------------------------------*
-      //* Save the given object in memory and returns a unique identifier.
-      //*
-      //* @param pAnRef - Program reference. You should use the field
-      //*
-      //* @return &gt;0 - a valid reference, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc LogStashStartTask export;
-         dcl-pi *N int(10);
-         end-pi;
+  if gDsSettings.wrap > 0 And
+       %timestamp() > gTsStarted + %minutes(gDsSettings.wrap);
+     LogStashStart();
+  endif;
 
-         if gTsStarted = *loval;
-           return -1;
-         endif;
+  // Send LogStashStart message to Joblog
+  Q_MhSndPM(LSTASH_MSGID:LSTASH_MSGF
+           :LSTASH_START:%size(LSTASH_START)
+           :MSG_DIAG
+           :'*':1
+           :Msg_Key
+           :QUSecF);
 
-         if gDsSettings.wrap > 0 And
-              %timestamp() > gTsStarted + %minutes(gDsSettings.wrap);
-           LogStashStart();
-         endif;
+  return 0;
 
-         // Send LogStashStart message to Joblog
-         MhSndPM(LSTASH_MSGID:LSTASH_MSGF
-                :LSTASH_START:%size(LSTASH_START)
-                :MSG_DIAG
-                :'*':1
-                :Msg_Key
-                :QUSecF);
+end-proc LogStashStartTask;
+//---------------------------------------------------------------*
+//  LogStashEndTask
+//---------------------------------------------------------------*
+//* Save the given object in memory and returns a unique identifier.
+//*
+//* @param pAnRef - Program reference. You should use the field
+//*
+//* @return &gt;0 - a valid reference, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashEndTask export;
+  dcl-pi *N int(10);
+  end-pi;
 
-         return 0;
+  if gTsStarted = *loval;
+    return -1;
+  endif;
 
-       end-proc LogStashStartTask;
-      //---------------------------------------------------------------*
-      //  LogStashEndTask
-      //---------------------------------------------------------------*
-      //* Save the given object in memory and returns a unique identifier.
-      //*
-      //* @param pAnRef - Program reference. You should use the field
-      //*
-      //* @return &gt;0 - a valid reference, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc LogStashEndTask export;
-         dcl-pi *N int(10);
-         end-pi;
+  // Send LogStashEnd message to Joblog
+  Q_MhSndPM(LSTASH_MSGID:LSTASH_MSGF
+           :LSTASH_END:%size(LSTASH_END)
+           :MSG_DIAG
+           :'*':1
+           :Msg_Key
+           :QUSecF);
 
-         if gTsStarted = *loval;
-           return -1;
-         endif;
+   return 0;
 
-         // Send LogStashEnd message to Joblog
-         MhSndPM(LSTASH_MSGID:LSTASH_MSGF
-                :LSTASH_END:%size(LSTASH_END)
-                :MSG_DIAG
-                :'*':1
-                :Msg_Key
-                :QUSecF);
+end-proc LogStashEndTask;
+//---------------------------------------------------------------*
+//  LogStashSetVar
+//---------------------------------------------------------------*
+//* Set a variable for all following logstash messages.
+//*
+//* @param pAnName - Variable name to set.
+//* @param pAnValue - Value of variable.
+//*
+//* @return 0 - successful.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashSetVar export;
+  dcl-pi *N int(10);
+    pAnName char(50) value;
+    pAnValue varchar(1024) value;
+  end-pi;
 
-         return 0;
+  dcl-ds pDsLogStashVar likeds(LogStashVar_t) inz(*likeds);
 
-       end-proc LogStashEndTask;
-      //---------------------------------------------------------------*
-      //  LogStashSetVar
-      //---------------------------------------------------------------*
-      //* Set a variable for all following logstash messages.
-      //*
-      //* @param pAnName - Variable name to set.
-      //* @param pAnValue - Value of variable.
-      //*
-      //* @return 0 - successful.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc LogStashSetVar export;
-         dcl-pi *N int(10);
-           pAnName char(50) value;
-           pAnValue varchar(1024) value;
-         end-pi;
+  if gTsStarted = *loval;
+    return -1;
+  endif;
 
-         dcl-ds pDsLogStashVar likeds(LogStashVar_t) inz(*likeds);
+  // Send LogStashVar message to Joblog
+  pDsLogStashVar.Type = LSTASH_VAR;
+  pDsLogStashVar.Var  = pAnName;
+  pDsLogStashVar.Data = pAnValue;
 
-         if gTsStarted = *loval;
-           return -1;
-         endif;
+  Q_MhSndPM(LSTASH_MSGID:LSTASH_MSGF
+           :pDsLogStashVar
+           :%size(pDsLogStashVar)
+               - %size(pDsLogStashVar.Data) + %len(pAnValue)
+           :MSG_DIAG
+           :'*':1
+           :Msg_Key
+           :QUSecF);
 
-         // Send LogStashVar message to Joblog
-         pDsLogStashVar.Type = LSTASH_VAR;
-         pDsLogStashVar.Var  = pAnName;
-         pDsLogStashVar.Data = pAnValue;
+  return 0;
 
-         MhSndPM(LSTASH_MSGID:LSTASH_MSGF
-                :pDsLogStashVar
-                :%size(pDsLogStashVar)
-                    - %size(pDsLogStashVar.Data) + %len(pAnValue)
-                :MSG_DIAG
-                :'*':1
-                :Msg_Key
-                :QUSecF);
+end-proc LogStashSetVar;
+//---------------------------------------------------------------*
+//  LogStashRmvVar
+//---------------------------------------------------------------*
+//* Remove a variable for all following logstash messages.
+//*
+//* @param pAnName - Variable name to set.
+//*
+//* @return 0 - successful.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashRmvVar export;
+  dcl-pi *N int(10);
+    pAnName char(50) value;
+  end-pi;
 
-         return 0;
+  return LogStashSetVar(pAnName:LSTASH_VAR_REMOVE);
 
-       end-proc LogStashSetVar;
-      //---------------------------------------------------------------*
-      //  LogStashRmvVar
-      //---------------------------------------------------------------*
-      //* Remove a variable for all following logstash messages.
-      //*
-      //* @param pAnName - Variable name to set.
-      //*
-      //* @return 0 - successful.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc LogStashRmvVar export;
-         dcl-pi *N int(10);
-           pAnName char(50) value;
-         end-pi;
-
-         return LogStashSetVar(pAnName:LSTASH_VAR_REMOVE);
-
-       end-proc LogStashRmvVar;
+end-proc LogStashRmvVar;

@@ -6,4 +6,4 @@ Create index ARFLSTV01 on ARFLSTV
   LStv_sequence
 );
 
-Label on Index ARFLSTV01 is 'status/job/user/jobnum/sequence';
+Label on Index ARFLSTV01 is 'job/user/jobnum/sequence';

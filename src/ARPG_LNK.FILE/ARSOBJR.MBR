@@ -4,5 +4,7 @@
      /* ARSOBJR - Object functions                                            */
      /*-----------------------------------------------------------------------*/
              EXPORT     SYMBOL('ObjCheck')
+             EXPORT     SYMBOL('ObjGetObjPointer')
+             EXPORT     SYMBOL('ObjGetProcedurePointer')
 
              ENDPGMEXP

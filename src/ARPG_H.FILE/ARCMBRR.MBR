@@ -1,16 +1,17 @@
-      /IF NOT DEFINED (AR_MBRR__)
+**free
+/IF NOT DEFINED (AR_MBRR__)
 
-      /DEFINE AR_MBRR__
-      /INCLUDE ARPG_H,ARCTYPES
+/DEFINE AR_MBRR__
+/INCLUDE ARPG_H,ARCTYPES
 
-      //---------------------------------------------------------------*
-      // MbrCheck
-      //---------------------------------------------------------------*
-       dcl-pr MbrCheck int(10) extproc(*dclcase);
-         file char(10) value;
-         member char(10);
-         description char(50) options(*nopass:*omit);
-         library char(10) options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// MbrCheck
+//---------------------------------------------------------------*
+dcl-pr MbrCheck int(10) extproc(*dclcase);
+  file char(10) value;
+  member char(10);
+  description char(50) options(*nopass:*omit);
+  library char(10) options(*nopass);
+end-pr;
 
-      /ENDIF
+/ENDIF

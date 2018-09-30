@@ -1,0 +1,187 @@
+**free
+/IF NOT DEFINED (AR_NETDB__)
+
+/DEFINE AR_NETDB__
+/INCLUDE ARPG_H,ARCTYPES
+
+//---------------------------------------------------------------
+// File Scoped Constants  - Note these constants are used only
+// in structures hostent_data, netent_data, protoent_data and
+// servent_data. These sturctures are considered opaque and all
+// data should be retrieved thru hostent, netent, protoent,
+// and servent respectively, looking for Null termination of
+// strings and arrays. For AIX compatibility no reference should
+// be mode to these constants.
+//---------------------------------------------------------------
+dcl-c NETDB_MAX_HOST_NAME_LENGTH 255;
+     
+dcl-c NETDB_MAX_ARRAY_SIZE 64;
+
+dcl-c NETDB_MAX_HOST_ADDR_ARRAY_SIZE 100;
+     
+dcl-c NETDB_MAX_NET_NAME_LENGTH 255;
+     
+dcl-c NETDB_MAX_ALIASES 4;
+     
+dcl-c NETDB_MAX_PROTO_NAME_LENGTH 32;
+     
+dcl-c NETDB_MAX_SERV_NAME_LENGTH 32;
+
+
+//--------------------------------------------------------------
+// Macros to denote returned h_errno values.
+//---------------------------------------------------------------
+//* host not found
+dcl-c HOST_NOT_FOUND 5;
+     
+//* no data of requested type
+dcl-c NO_DATA 10;
+
+//* name valid, but no address
+dcl-c NO_ADDRESS 10;
+
+//* unrecoverable error
+dcl-c NO_RECOVERY 15;
+     
+//* try again
+dcl-c TRY_AGAIN 20;
+
+//---------------------------------------------------------------
+// Macros to denote return codes from getaddrinfo and getnameinfo
+//---------------------------------------------------------------
+//* name not resolved at this time
+dcl-c EAI_AGAIN 1;
+     
+//* invalid value for ai_flags
+dcl-c EAI_BADFLAGS 2;
+     
+//* non-recoverable failure on resolve
+dcl-c EAI_FAIL 3;
+     
+//* ai_family not supported
+dcl-c EAI_FAMILY 4;
+     
+      //* memory allocation failure
+dcl-c EAI_MEMORY 5;
+     
+//* name does not resolve
+dcl-c EAI_NONAME 6;
+     
+//* service not supported for socktype
+dcl-c EAI_SERVICE 7;
+     
+//* ai_socktype not supported
+dcl-c EAI_SOCKTYPE 8;
+     
+//* system error returned in errno
+dcl-c EAI_SYSTEM 9;
+     
+//* maximum defined addrinfo ecode
+dcl-c EAI_MAX 9;
+
+//---------------------------------------------------------------
+// Macros to denote ai_flags values for getaddrinfo()
+//---------------------------------------------------------------
+//* get address to use bind()
+dcl-c AI_PASSIVE      x'00000001';
+     
+//* fill ai_canonname
+dcl-c AI_CANONNAME    x'00000002';
+     
+//* prevent name resolution
+dcl-c AI_NUMERICHOST  x'00000004';
+     
+      //* prevent name resolution
+dcl-c AI_NUMERICSERV  x'00000008';
+     
+//* accept IPv4-mapped IPv6 addr
+dcl-c AI_V4MAPPED     x'00000010';
+     
+//* IPv6 and IPv4-mapped
+dcl-c AI_ALL          x'00000020';
+     
+//* only if IPv6 address assigned
+dcl-c AI_ADDRCONFIG   x'00000040';
+     
+      //* Valid ai_flags mask
+dcl-c AI_MASK         x'0000007F';
+
+//---------------------------------------------------------------
+// Macros to denote flags values for getnameinfo()
+//---------------------------------------------------------------
+//* only nodename returned
+dcl-c NI_NOFQDN       x'00000001';
+     
+//* numeric form returned
+dcl-c NI_NUMERICHOST  x'00000002';
+     
+//* return error if name not found
+dcl-c NI_NAMEREQD     x'00000004';
+     
+//* numeric form returned
+dcl-c NI_NUMERICSERV  x'00000008';
+
+//* numeric form of scope returned
+dcl-c NI_NUMERICSCOPE x'00000010';
+
+//* datagram service (SOCK_DGRAM)
+dcl-c NI_DGRAM        x'00000020';
+
+//* Valid flags mask
+dcl-c NI_MASK         x'0000003F';
+
+//---------------------------------------------------------------
+// Structures
+//---------------------------------------------------------------
+dcl-ds netdb_control_block qualified align template;
+  open_flag int(10); // Stay open flag
+  f0 pointer; // Qword alignment
+  filep0 char(260); // File control block
+  reserved0 char(150); // reserved space
+  f1 pointer; //Qword alignment
+  filep1 char(260); // File control block
+  reserved1 char(150); // reserved space
+  f2 pointer; //Qword alignment
+  filep2 char(260); // File control block
+  reserved2 char(150); // reserved space
+end-ds;                                     
+
+dcl-ds hostent qualified align template;
+  h_name pointer; // host name
+  h_aliases pointer; // host aliases
+  h_addrtype int(10); // address family of ad
+  h_length int(10); // length of each address
+  h_addr_list pointer; // host addresses
+end-ds;                                     
+
+dcl-ds servent qualified align template;
+  s_name pointer; //service name
+  s_aliases pointer; // service aliases
+  s_port int(10); // port to use for
+  s_proto pointer; // protocol name to use
+end-ds;                                     
+
+dcl-ds servent_data qualified align template;
+  s_name char(33); // service name
+  s_proto char(33); // protocal name length
+  s_aliases_arrayp pointer dim(5); // s_aliases_array elem
+  s_aliases_array char(33) dim(4); // service alias array
+  serve_control_blk likeds(netdb_control_block);
+end-ds;                                     
+
+//---------------------------------------------------------------
+// getservbyname()--Get Port Number for Service Name
+//---------------------------------------------------------------
+dcl-pr getservbyname pointer extproc(*dclcase);
+  service_name pointer value options(*string);
+  protocol_name pointer value options(*string);
+end-pr;
+
+//---------------------------------------------------------------
+// gethostbyname()--Get Host Information for Host Name
+//---------------------------------------------------------------
+dcl-pr gethostbyname pointer extproc(*dclcase);
+  host_name pointer value options(*string);
+end-pr;
+
+/ENDIF

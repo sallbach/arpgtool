@@ -1,0 +1,8 @@
+             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSCALR__')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSCALR - Get caller                                                  */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('CalGetCaller')
+
+             ENDPGMEXP

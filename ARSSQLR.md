@@ -1,11 +1,11 @@
 # ARSSQLR - SQL-Tools
 
-xxxxx
+Example reading a table.
 
 	dcl-s pInResultSet int(10) const;
 	dcl-s pAnA varchar(20);
 	dcl-s pBoIndA ind;
-	dcl-s pNuB packed(10, 5);
+	dcl-s pNuB packed(10:5);
 	dcl-s pBoIndB ind;
 	dcl-s pBoErrB ind;
 	
@@ -20,21 +20,19 @@ xxxxx
 	enddo;
 	SqlRsClose(pinResultSet);
 	
-xxxxx
+Example reading a table twice.
 
 	dcl-s pInPreparedSt int(10) const;
 	dcl-s pInResultSet int(10) const;
 	dcl-s pInAIdx int(10);
 	dcl-s pAnA varchar(20);
 	dcl-s pInBIdx int(10);
-	dcl-s pNuB packed(10, 5);
+	dcl-s pNuB packed(10:5);
 	
-	pInPreparedSt = SqlPreparedStatement('Select b, a from xyz');
-	
-	pInAIdx = SqlRsFindColumn(pInPreparedSt,'a');
-	pInBIdx = SqlRsFindColumn(pInPreparedSt,'b');
-	
+	pInPreparedSt = SqlPreparedStatement('Select b, a from table1');
+		
 	inResultSet = SqlPreparedStatementExecuteQuery(pInPreparedSt);
+	pInAIdx = SqlRsFindColumn(inResultSet:'a');
 	dow SqlRsNext(pInResultSet);
 		pAnA = SqlRsGetString(inResultSet:pInAIdx);
 	enddo;
@@ -42,6 +40,7 @@ xxxxx
 
     // execute again
 	inResultSet = SqlPreparedStatementExecuteQuery(pInPreparedSt);
+	pInBIdx = SqlRsFindColumn(inResultSet:'b');
 	dow SqlRsNext(pInResultSet);
 		pNuB = SqlRsGetDecimal(inResultSet:pInBIdx); 
 	enddo;
@@ -50,4 +49,4 @@ xxxxx
 	// close and free all resources 
 	SqlPreparedStatementClose(pInPreparedSt);
 	
-Please check the unit test module ARPG_TEST/T_ARSSQLR too.
+Please check the unit test module ARPG_TEST/T_ARSSQLR too. 

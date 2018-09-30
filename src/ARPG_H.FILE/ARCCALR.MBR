@@ -1,0 +1,17 @@
+**free
+/IF NOT DEFINED (AR_CALR__)
+
+/DEFINE AR_CALR__
+/INCLUDE ARPG_H,ARCTYPES
+
+//---------------------------------------------------------------*
+// CalGetCaller
+//---------------------------------------------------------------*
+dcl-pr CalGetCaller char(10) extproc(*dclcase);
+  position int(10) value options(*nopass);
+  modul char(10) options(*nopass);
+  procedure char(256) options(*nopass);
+  statment char(10) options(*nopass);
+end-pr;
+
+/ENDIF

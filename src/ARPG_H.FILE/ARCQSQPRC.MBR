@@ -98,8 +98,8 @@ dcl-ds DsSqPrcEd_t qualified template; // SQLP0400
   commitctl char(1) inz(SQL_COMMIT_CONTROL_NONE);       
   datfmt char(3) inz(SQL_DATE_FORMAT_ISO);       
   datsep char(1) inz('-');        
-  timfmt char(3) inz(SQL_TIME_FORMAT_HMS);       
-  timsep char(1) inz(':');       
+  timfmt char(3) inz(SQL_TIME_FORMAT_ISO);       
+  timsep char(1) inz('.');       
   naming char(3) inz(SQL_NAMING_SYS);       
   decpoint char(1) inz('.');     
   blocking int(5) inz(1);      
@@ -254,7 +254,7 @@ dcl-c SQL_MAX_PRECISION_63 '2';
 //---------------------------------------------------------------*
 //  Process Extended Dynamic SQL (QSQPRCED) API
 //---------------------------------------------------------------*
-dcl-pr SqPrcEd extpgm('QSQPRCED');
+dcl-pr Q_SqPrcEd extpgm('QSQPRCED');
   SqlCa likeds(QSQS);
   SqlDa char(65535) options(*varsize) const;
   FuncTemplateFmt char(8) const;

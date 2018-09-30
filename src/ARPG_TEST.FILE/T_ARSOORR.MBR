@@ -1,48 +1,51 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCSYSR
-      /COPY ARPG_H,ARCOORR
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCOORR
 
-      /COPY RPGUNIT1,TESTCASE
+/COPY RPGUNIT1,TESTCASE
 
-      //---------------------------------------------------------------*
-      // test
-      //---------------------------------------------------------------*
-       dcl-proc test_Oor export;
+//---------------------------------------------------------------*
+// test
+//---------------------------------------------------------------*
+dcl-proc test_Oor export;
 
-         dcl-s i int(10);
-         dcl-s pInObj int(10) dim(5000);
-         dcl-s pPtObj pointer;
-         dcl-ds pDsObj qualified based(pPtObj);
-           data char(25);
-         end-ds;
+  dcl-s i int(10);
+  dcl-s pInObj int(10) dim(10000);
+  dcl-s pPtObj pointer;
+  dcl-ds pDsObj qualified based(pPtObj);
+    data char(25);
+  end-ds;
+  
+  for i=1 by 1 to %elem(pInObj);
+    pInObj(i) = OoRObjectNew(s#prog:pPtObj:%size(pDsObj));
+    assert(pInObj(i) > 0:'Error creating new object');
+    pDsObj.data = 'test ' + %editc(i:'X');
+  endfor;
 
-         for i=1 by 1 to %elem(pInObj);
-           pPtObj = %alloc(%size(pDsObj));
-           pInObj(i) = OoRObjectNew(s#prog:pPtObj);
-           assert(pInObj(i) > 0:'Error creating new object');
-           pDsObj.data = 'test ' + %editc(i:'X');
-         endfor;
+  for i=6 by 5 to %elem(pInObj);
+    pPtObj = OoRObjectGet(s#prog:pInObj(i));
+    aEqual('test ' + %editc(i:'X'):pDsObj.data);
+    iEqual(0:OoRObjectFree(s#prog:pInObj(i)));
+    pInObj(i) = 0;
+  endfor;
 
-         for i=6 by 5 to %elem(pInObj);
-           pPtObj = OoRObjectGet(s#prog:pInObj(i));
-           aEqual('test ' + %editc(i:'X'):pDsObj.data);
-           dealloc pPtObj;
-           iEqual(0:OoRObjectFree(s#prog:pInObj(i)));
-           pInObj(i) = 0;
-         endfor;
+  for i=6 by 5 to %elem(pInObj);
+    pInObj(i) = OoRObjectNew(s#prog:pPtObj:%size(pDsObj));
+    assert(pInObj(i) > 0:'Error creating new object');
+    pDsObj.data = 'test ' + %editc(i:'X');
+  endfor;
 
-         for i=1 by 1 to %elem(pInObj);
-           if pInObj(i) <> 0;
-             pPtObj = OoRObjectGet(s#prog:pInObj(i));
-             aEqual('test ' + %editc(i:'X'):pDsObj.data);
-             dealloc pPtObj;
-             iEqual(0:OoRObjectFree(s#prog:pInObj(i)));
-           endif;
-         endfor;
-
-       end-proc test_Oor;
+  for i=1 by 1 to %elem(pInObj);
+    if pInObj(i) <> 0;
+      pPtObj = OoRObjectGet(s#prog:pInObj(i));
+      aEqual('test ' + %editc(i:'X'):pDsObj.data);
+      iEqual(0:OoRObjectFree(s#prog:pInObj(i)));
+    endif;
+  endfor;
+ 
+end-proc test_Oor;

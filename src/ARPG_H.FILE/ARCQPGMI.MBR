@@ -1,50 +1,52 @@
-      /IF NOT DEFINED (AR_QPGMI__)
+**free
+/IF NOT DEFINED (AR_QPGMI__)
 
-      /DEFINE AR_QPGMI__
-      /INCLUDE ARPG_H,ARCQUSEC
+/DEFINE AR_QPGMI__
+/INCLUDE ARPG_H,ARCQUSEC
 
-      //---------------------------------------------------------------*
-      //  constants
-      //---------------------------------------------------------------*
+//---------------------------------------------------------------*
+//  constants
+//---------------------------------------------------------------*
 
-      //---------------------------------------------------------------*
-      //  List ILE Program Information (QBNLPGMI) API
-      //---------------------------------------------------------------*
-       dcl-pr BnLPgmI extpgm('QBNLPGMI');
-        UsrSpc char(20) const;
-        Form char(8) const;
-        SPgm char(20) const;
-        USec char(65535) options(*varsize) noopt;
-       end-pr;
+//---------------------------------------------------------------*
+//  List ILE Program Information (QBNLPGMI) API
+//---------------------------------------------------------------*
+dcl-pr Q_BnLPgmI extpgm('QBNLPGMI');
+  UsrSpc char(20) const;
+  Form char(8) const;
+  SPgm char(20) const;
+  USec char(65535) options(*varsize) noopt;
+end-pr;
 
-      //---------------------------------------------------------------*
-      //  List Service Program Information (QBNLSPGM) API
-      //---------------------------------------------------------------*
-       dcl-pr BnLSPgm extpgm('QBNLSPGM');
-        UsrSpc char(20) const;
-        Form char(8) const;
-        SPgm char(20) const;
-        USec char(65535) options(*varsize) noopt;
-       end-pr;
+//---------------------------------------------------------------*
+//  List Service Program Information (QBNLSPGM) API
+//---------------------------------------------------------------*
+dcl-pr Q_BnLSPgm extpgm('QBNLSPGM');
+  UsrSpc char(20) const;
+  Form char(8) const;
+  SPgm char(20) const;
+  USec char(65535) options(*varsize) noopt;
+end-pr;
 
-      //---------------------------------------------------------------*
-      //  List Module Information (QBNLMODI) API
-      //---------------------------------------------------------------*
-       dcl-pr BnLModI extpgm('QBNLMODI');
-        UsrSpc char(20) const;
-        Form char(8) const;
-        SMod char(20) const;
-        USec char(65535) options(*varsize) noopt;
-       end-pr;
+//---------------------------------------------------------------*
+//  List Module Information (QBNLMODI) API
+//---------------------------------------------------------------*
+dcl-pr Q_BnLModI extpgm('QBNLMODI');
+  UsrSpc char(20) const;
+  Form char(8) const;
+  SMod char(20) const;
+  USec char(65535) options(*varsize) noopt;
+end-pr;
 
-      //---------------------------------------------------------------*
-      //  Retrieve Module Information (QBNRMODI) API
-      //---------------------------------------------------------------*
-       dcl-pr BnRModI extpgm('QBNRMODI');
-        PDsRcv char(65535) options(*varsize);
-        PInLen int(10) const;
-        Form char(8) const;
-        SMod char(20) const;
-        USec char(65535) options(*varsize) noopt;
-       end-pr;
-      /ENDIF
+//---------------------------------------------------------------*
+//  Retrieve Module Information (QBNRMODI) API
+//---------------------------------------------------------------*
+dcl-pr Q_BnRModI extpgm('QBNRMODI');
+  PDsRcv char(65535) options(*varsize);
+  PInLen int(10) const;
+  Form char(8) const;
+  SMod char(20) const;
+  USec char(65535) options(*varsize) noopt;
+end-pr;
+
+/ENDIF

@@ -1,137 +1,135 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCXMLR
-      /COPY ARPG_H,ARCSTRR
-      /COPY ARPG_H,ARCSTRING
-      /COPY ARPG_H,ARCFCNTL
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCXMLR
+/COPY ARPG_H,ARCSTRR
+/COPY ARPG_H,ARCSTRING
+/COPY ARPG_H,ARCFCNTL
 
-      /COPY RPGUNIT1,TESTCASE
+/COPY RPGUNIT1,TESTCASE
+//---------------------------------------------------------------*
+// test_iconv_utf8
+//---------------------------------------------------------------*
+dcl-proc test_iconv_utf8 export;
 
-      //---------------------------------------------------------------*
-      // test_iconv_utf8
-      //---------------------------------------------------------------*
-       dcl-proc test_iconv_utf8 export;
+  dcl-s pUiRes like(size_t);
+  dcl-s pPtRes pointer;
 
-         dcl-s pUiRes like(size_t);
-         dcl-s pPtRes pointer;
+  dcl-s pAnIn  char(7) inz('abcäöüß');
+  dcl-s pAnOut char(11) inz(x'616263c3a4c3b6c3bcc39f');
 
-         dcl-s pAnIn  char(7) inz('abcäöüß');
-         dcl-s pAnOut char(11) inz(x'616263c3a4c3b6c3bcc39f');
+  pPtRes = StrIConv(pAnIn:CCSID_US:CCSID_UTF8:pUiRes);
+  aEqual(pAnOut:%str(pPtRes:pUiRes));
 
-         pPtRes = StrIConv(pAnIn:CCSID_JOB:CCSID_UTF8:pUiRes);
-         aEqual(pAnOut:%str(pPtRes:pUiRes));
+end-proc test_iconv_utf8;
+//---------------------------------------------------------------*
+// test_iconv_latin1
+//---------------------------------------------------------------*
+dcl-proc test_iconv_latin1 export;
 
-       end-proc test_iconv_utf8;
-      //---------------------------------------------------------------*
-      // test_iconv_latin1
-      //---------------------------------------------------------------*
-       dcl-proc test_iconv_latin1 export;
+  dcl-s pUiRes like(size_t);
+  dcl-s pPtRes pointer;
 
-         dcl-s pUiRes like(size_t);
-         dcl-s pPtRes pointer;
+  dcl-s pAnIn  char(7) inz('abcäöüß'); 
+  dcl-s pAnOut char(11) inz(x'616263e4f6fcdf');
 
-         dcl-s pAnIn  char(7) inz('abcäöüß');
-         dcl-s pAnOut char(11) inz(x'616263e4f6fcdf');
+  pPtRes = StrIConv(pAnIn:CCSID_US:CCSID_ASCII:pUiRes);
+  aEqual(pAnOut:%str(pPtRes:pUiRes));
 
-         pPtRes = StrIConv(pAnIn:CCSID_JOB:CCSID_ASCII:pUiRes);
-         aEqual(pAnOut:%str(pPtRes:pUiRes));
+end-proc test_iconv_latin1;
+//---------------------------------------------------------------*
+// test_fillvalues
+//---------------------------------------------------------------*
+dcl-proc test_fillvalues export;
 
-       end-proc test_iconv_latin1;
-      //---------------------------------------------------------------*
-      // test_fillvalues
-      //---------------------------------------------------------------*
-       dcl-proc test_fillvalues export;
+  aEqual('Test valA, valB, valC, valD, valE, valF, valJ, valA5, valB0'
+        :StrFillValues('Test &1, &2, &3, &4, &5, &6, &10, &15, &20'
+                      :'valA'
+                      :'valB'
+                      :'valC'
+                      :'valD'
+                      :'valE'
+                      :'valF'
+                      :'valG'
+                      :'valH'
+                      :'valI'
+                      :'valJ'));
 
-         aEqual('Test valA, valB, valC, valD, valE, valF, valJ, valA5, valB0'
-               :StrFillValues('Test &1, &2, &3, &4, &5, &6, &10, &15, &20'
-                             :'valA'
-                             :'valB'
-                             :'valC'
-                             :'valD'
-                             :'valE'
-                             :'valF'
-                             :'valG'
-                             :'valH'
-                             :'valI'
-                             :'valJ'));
+  aEqual('Test valA, &2'
+        :StrFillValues('Test &1, &2'
+                      :'valA'));
 
-         aEqual('Test valA, &2'
-               :StrFillValues('Test &1, &2'
-                             :'valA'));
+  aEqual('Test (valA)'
+        :StrFillValues('Test &2'
+                      :'valA'
+                      :'(&1)'));
 
-         aEqual('Test (valA)'
-               :StrFillValues('Test &2'
-                             :'valA'
-                             :'(&1)'));
+end-proc test_fillvalues;
+//---------------------------------------------------------------*
+// test_HexStrToBytes
+//---------------------------------------------------------------*
+dcl-proc test_HexStrToBytes export;
 
-       end-proc test_fillvalues;
-      //---------------------------------------------------------------*
-      // test_HexStrToBytes
-      //---------------------------------------------------------------*
-       dcl-proc test_HexStrToBytes export;
+  dcl-s pAnBytes char(5);
 
-         dcl-s pAnBytes char(5);
+  iEqual(%size(pAnBytes)
+        :StrHexStrToBytes('0102a5f7d9':%addr(pAnBytes):%len(pAnBytes)));
 
-         iEqual(%size(pAnBytes)
-               :StrHexStrToBytes('0102a5f7d9':%addr(pAnBytes):%len(pAnBytes)));
+  aEqual(x'0102a5f7d9':pAnBytes);
 
-         aEqual(x'0102a5f7d9':pAnBytes);
+  iEqual(%size(pAnBytes)
+        :StrHexStrToBytes('0102B5F7A9':%addr(pAnBytes):%len(pAnBytes)));
 
-         iEqual(%size(pAnBytes)
-               :StrHexStrToBytes('0102B5F7A9':%addr(pAnBytes):%len(pAnBytes)));
+  aEqual(x'0102b5f7a9':pAnBytes);
 
-         aEqual(x'0102b5f7a9':pAnBytes);
+end-proc test_HexStrToBytes;
+//---------------------------------------------------------------*
+// test_BytesToHexStr
+//---------------------------------------------------------------*
+dcl-proc test_BytesToHexStr export;
 
-       end-proc test_HexStrToBytes;
-      //---------------------------------------------------------------*
-      // test_BytesToHexStr
-      //---------------------------------------------------------------*
-       dcl-proc test_BytesToHexStr export;
+  dcl-s pAnBytes char(5) inz(x'0102a5f7d9');
+  
+  aEqual('0102A5F7D9'
+        :StrBytesToHexStr(x'0102a5f7d9'));
 
-         dcl-s pAnBytes char(5)
-                       inz(x'0102a5f7d9');
+  aEqual('0102a5f7d9'
+        :StrBytesToHexStr(x'0102a5f7d9':*Omit:STR_LOWER));
 
-         aEqual('0102A5F7D9'
-               :StrBytesToHexStr(x'0102a5f7d9'));
-
-         aEqual('0102a5f7d9'
-               :StrBytesToHexStr(x'0102a5f7d9':*Omit:STR_LOWER));
-
-         aEqual('0102A5F7D9'
-               :StrBytesToHexStr(pAnBytes:%size(pAnBytes)));
+  aEqual('0102A5F7D9'
+        :StrBytesToHexStr(pAnBytes:%size(pAnBytes)));
 
 
-       end-proc test_BytesToHexStr;
-      //---------------------------------------------------------------*
-      // test_uppr
-      //---------------------------------------------------------------*
-       dcl-proc test_uppr export;
+end-proc test_BytesToHexStr;
+//---------------------------------------------------------------*
+// test_uppr
+//---------------------------------------------------------------*
+dcl-proc test_uppr export;
 
-         dcl-s pAnLowr varchar(41)
-                       inz('a j12m sip dls abcdefghijklmnopqrstuvwxyz');
+  dcl-s pAnLowr varchar(41)
+                inz('a j12m sip dls abcdefghijklmnopqrstuvwxyz');
 
-         iEqual(%len(pAnLowr)
-               :StrUppr(%addr(pAnLowr:*data):%len(pAnLowr)));
+  iEqual(%len(pAnLowr)
+        :StrUppr(%addr(pAnLowr:*data):%len(pAnLowr)));
 
-         aEqual('A J12M SIP DLS ABCDEFGHIJKLMNOPQRSTUVWXYZ':pAnLowr);
+  aEqual('A J12M SIP DLS ABCDEFGHIJKLMNOPQRSTUVWXYZ':pAnLowr);
 
-       end-proc test_uppr;
-      //---------------------------------------------------------------*
-      // test_lowr
-      //---------------------------------------------------------------*
-       dcl-proc test_lowr export;
+end-proc test_uppr;
+//---------------------------------------------------------------*
+// test_lowr
+//---------------------------------------------------------------*
+dcl-proc test_lowr export;
 
-         dcl-s pAnUppr varchar(41)
-                       inz('A J12M SIP DLS ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  dcl-s pAnUppr varchar(41)
+                inz('A J12M SIP DLS ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 
-         iEqual(%len(pAnUppr)
-               :StrLowr(%addr(pAnUppr:*data):%len(pAnUppr)));
+  iEqual(%len(pAnUppr)
+        :StrLowr(%addr(pAnUppr:*data):%len(pAnUppr)));
 
-         aEqual('a j12m sip dls abcdefghijklmnopqrstuvwxyz':pAnUppr);
+  aEqual('a j12m sip dls abcdefghijklmnopqrstuvwxyz':pAnUppr);
 
-       end-proc test_lowr;
+end-proc test_lowr;
 

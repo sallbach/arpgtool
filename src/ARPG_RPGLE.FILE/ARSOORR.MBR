@@ -1,278 +1,284 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCOORR
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCOORR
+/COPY ARPG_H,ARCSTRING
 
-      //---------------------------------------------------------------*
-      // global variables
-      //---------------------------------------------------------------*
-       dcl-s gPtStart pointer;
+//---------------------------------------------------------------*
+// global variables
+//---------------------------------------------------------------*
+dcl-c BUCKETS_INIT 16;
+dcl-s gInBuckets int(10) inz;
+dcl-s gInFreed int(10) inz;
+dcl-s gPtBuckets pointer inz(*Null);
 
-      //---------------------------------------------------------------*
-      // global data structures
-      //---------------------------------------------------------------*
-       dcl-c BUCKET_SIZE 1024;
-       dcl-ds DsObj_t qualified align template;
-         inPos  int(10)  inz(0);
-         inFree int(10)  inz(BUCKET_SIZE);
-         anRef  char(11) inz        dim(BUCKET_SIZE);
-         ptData pointer  inz(*Null) dim(BUCKET_SIZE);
-         ptNext pointer  inz(*Null);
-       end-ds;
+//---------------------------------------------------------------*
+// global data structures
+//---------------------------------------------------------------*
+dcl-c BUCKET_SIZE 512;
+dcl-ds DsBucket_t qualified align template;
+  inFree    int(10) inz(BUCKET_SIZE); // remaining free elements in this bucket
+  inNxtFree int(10) inz(1); // potentially next free element
+  anObjRef  char(11) inz        dim(BUCKET_SIZE); // object reference
+  ptObj     pointer  inz(*Null) dim(BUCKET_SIZE); // object data
+end-ds;
 
-      //---------------------------------------------------------------*
-      //  OoRObjectNew
-      //---------------------------------------------------------------*
-      //* Save the given object in memory and returns a unique identifier.
-      //*
-      //* @param pAnRef - Program reference. You should use the field
-      //*                 "program name" of the system data structure (SDS).
-      //* @param pPtRef - Pointer <> *Null of the referenced data or
-      //*                 *Null with pInSize to allocate storage.
-      //* @param pInSize - option size to allocate pPtRef
-      //*
-      //* @return &gt;0 - a valid reference, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc OoRObjectNew export;
-         dcl-pi *N int(10);
-           pAnRef  char(11) value;
-           pPtRef  pointer;
-           pInSize like(size_t) value options(*nopass);
-         end-pi;
+//---------------------------------------------------------------*
+//  OoRObjectNew
+//---------------------------------------------------------------*
+//* Save the given object in memory and returns a unique identifier.
+//*
+//* @param pAnRef - Program reference. You should use the field
+//*                 "program name" of the system data structure (SDS).
+//* @param pPtRef - Pointer <> *Null of the referenced data or
+//*                 if pInSize is given, new storage will be allocated.
+//* @param pInSize - optional size to allocate a new pPtRef
+//*
+//* @return &gt;0 - a valid reference, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc OoRObjectNew export;
+  dcl-pi *N int(10);
+    pAnRef  char(11) value;
+    pPtRef  pointer;
+    pInSize like(size_t) value options(*nopass);
+  end-pi;
 
-         dcl-s pPtCurrent     pointer static;
-         dcl-s pInLstPosInCur int(10) static;
-         dcl-s i              int(10) static;
+  dcl-s i int(10) static;
 
-         dcl-ds pDsObj likeds(DsObj_t) based(pPtCurrent);
+  dcl-s pInBucketPos int(10) static inz(0);
+  dcl-s pPtBucketPos pointer static inz(*null);
+  dcl-s pPtBucket pointer based(pPtBucketPos);
+  dcl-ds pDsBucket likeds(DsBucket_t) based(pPtBucket);
 
-         if pAnRef = *Blanks Or
-              (pPtRef = *Null and
-                (%parms() < %parmnum(pInSize) or pInSize = 0));
-           // Error
-           return -1;
-         endif;
+  // check parameters
+  if pAnRef = *Blanks Or
+       (%parms() >= %parmnum(pInSize) And pInSize = 0) Or
+       (pPtRef = *Null and %parms() < %parmnum(pInSize));
+    // Error
+    return -1;
+  endif;
 
-         if pPtRef = *Null and %parms() >= %parmnum(pInSize);
-           pPtRef = %alloc(pInSize);
-         endif;
+  // alloc storage for caller ?
+  if %parms() >= %parmnum(pInSize);
+    pPtRef = %alloc(pInSize);
+  endif;
 
-         //-----
-         // Init first start (currently not multithreading capable)
-         if gPtStart = *Null;
-           gPtStart       = %alloc(%size(pDsObj));
-           pPtCurrent     = gPtStart;
-           pInLstPosInCur = 0;
-           pDsObj.inPos   = 0;
-           pDsObj.inFree  = BUCKET_SIZE;
-           pDsObj.AnRef   = *Blanks;
-           pDsObj.ptData  = *Null;
-           pDsObj.ptNext  = *Null;
-         endif;
+  //-----
+  // Init first start 
+  if gPtBuckets = *Null;
+    gPtBuckets = %alloc(%size(pPtBucket) * BUCKETS_INIT);
+    memset(gPtBuckets:NULL:%size(pPtBucket) * BUCKETS_INIT);
+    pPtBucketPos = gPtBuckets;
+    gInBuckets = BUCKETS_INIT;
+    OoRInitNewBucket(pPtBucket);
+  endif;
 
-         //-----
-         // Search a free position in current data structure
-         if pDsObj.inFree > 0;
-           for i=pInLstPosInCur+1 by 1 to %elem(pDsObj.ptData);
-             if pDsObj.PtData(i) = *Null;
-               pDsObj.anRef(i)  = pAnRef;
-               pDsObj.ptData(i) = pPtRef;
-               pDsObj.inFree   -= 1;
-               pInLstPosInCur   = i;
-               return (pDsObj.inPos * %elem(pDsObj.ptData)) + i;
-             endif;
-           endfor;
-         endif;
+  // search next free position
+  dow 1=1;
 
-         //-----
-         // No free position found, start at the first data structure
-         pPtCurrent = gPtStart;
-         dow 1=1;
+    if pDsBucket.inFree > 0;
+      for i=pDsBucket.inNxtFree by 1 to BUCKET_SIZE;
+        if pDsBucket.PtObj(i) = *Null;
+          pDsBucket.anObjRef(i) = pAnRef;
+          pDsBucket.ptObj(i) = pPtRef;
+          pDsBucket.inFree -= 1;
+          pDsBucket.inNxtFree = i+1; // maybe the next free element
+          if pDsBucket.inNxtFree > BUCKET_SIZE;
+            pDsBucket.inNxtFree = 1;
+          endif;
+          return (pInBucketPos * BUCKET_SIZE) + i;
+        endif;
+      endfor;
+      pDsBucket.inNxtFree = 1;
+    endif;
 
-           if pDsObj.inFree > 0;
-             for i=1 by 1 to %elem(pDsObj.ptData);
-               if pDsObj.PtData(i) = *Null;
-                 pDsObj.anRef(i)  = pAnRef;
-                 pDsObj.ptData(i) = pPtRef;
-                 pDsObj.inFree   -= 1;
-                 pInLstPosInCur   = i;
-                 return (pDsObj.inPos * %elem(pDsObj.ptData)) + i;
-               endif;
-             endfor;
-           endif;
+    // switch to next bucket
+    pInBucketPos += 1;
+    
+    // Create new buckets ?
+    if pInBucketPos >= gInBuckets;
+      gInBuckets += BUCKETS_INIT;
+      gPtBuckets = %realloc(gPtBuckets:%size(pPtBucket) * gInBuckets);
+      memset(gPtBuckets + %size(pPtBucket) * (gInBuckets - BUCKETS_INIT)
+             :NULL
+             :%size(pPtBucket) * BUCKETS_INIT);
+    endif;  
 
-           // switch to next
-           if pDsObj.ptNext <> *Null;
-             pPtCurrent = pDsObj.ptNext;
-             iter;
-           endif;
+    pPtBucketPos = gPtBuckets + %size(pPtBucket) * pInBucketPos;
+    OoRInitNewBucket(pPtBucket);
 
-           // attach an additional data structure
-           pDsObj.PtNext = %alloc(%size(pDsObj));
-           i             = pDsObj.inPos;
-           PPtCurrent    = pDsObj.ptNext;
-           pDsObj.inPos  = i + 1;
-           pDsObj.inFree = BUCKET_SIZE;
-           pDsObj.anRef  = *Blanks;
-           pDsObj.ptData = *Null;
-           pDsObj.ptNext = *Null;
+    // restart searching in first bucket if a lot of freed object exists
+    if gInFreed > BUCKET_SIZE;
+      pInBucketPos = 0;
+      gInFreed = 0;
+    endif;
 
-         enddo;
+    pPtBucketPos = gPtBuckets + %size(pPtBucket) * pInBucketPos;
 
-         return -1;
+  enddo;
 
-       end-proc OoRObjectNew;
-      //---------------------------------------------------------------*
-      //  OoRObjectGet
-      //---------------------------------------------------------------*
-      //* Returns the pointer to the object/data structure of the given reference.
-      //*
-      //* @param pAnRef - Program reference. You should use the field
-      //*                 "program name" of the system data structure (SDS).
-      //* @param PInObj - Reference number of the object - @link #OoRObjectNew
-      //*
-      //* @return Returns the stored pointer, else *Null.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc OoRObjectGet export;
-         dcl-pi *N pointer;
-           pAnRef char(11) value;
-           pInObj int(10)  value;
-         end-pi;
+  return -1;
 
-         dcl-s pPtCurrent     pointer static;
-         dcl-s pInPosInDs     int(10) static;
-         dcl-s pInPosInCur    int(10) static;
-         dcl-s i              int(10) static;
+end-proc OoRObjectNew;
+//---------------------------------------------------------------*
+//  OoRInitNewBucket
+//---------------------------------------------------------------*
+dcl-proc OoRInitNewBucket;
+  dcl-pi *N;
+    pPtBucket pointer;
+  end-pi;  
+  
+  dcl-ds pDsBucket likeds(DsBucket_t) based(pPtBucket);
 
-         dcl-ds pDsObj likeds(DsObj_t) based(pPtCurrent);
+  if pPtBucket <> *Null;
+    return;
+  endif;  
 
-         if PInObj < 1;
-           // Error
-           return *Null;
-         endif;
+  pPtBucket = %alloc(%size(DsBucket_t));
 
-         pInPosInDs  = %div(pInObj-1:%elem(pDsObj.ptData));
-         pInPosInCur = %rem(pInObj-1:%elem(pDsObj.ptData)) + 1;
+  pDsBucket.inNxtFree = 1;
+  pDsBucket.inFree = BUCKET_SIZE;
+  pDsBucket.anObjRef = *Blanks;
+  pDsBucket.ptObj = *Null;
+  
+  return;    
+    
+end-proc OoRInitNewBucket;
+//---------------------------------------------------------------*
+//  OoRObjectGet
+//---------------------------------------------------------------*
+//* Returns the pointer to the object/data structure of the given reference.
+//*
+//* @param pAnRef - Program reference. You should use the field
+//*                 "program name" of the system data structure (SDS).
+//* @param PInObj - Reference number of the object - @link #OoRObjectNew
+//*
+//* @return Returns the stored pointer, else *Null.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc OoRObjectGet export;
+  dcl-pi *N pointer;
+    pAnRef char(11) value;
+    pInObj int(10)  value;
+  end-pi;
 
-         pPtCurrent = gPtStart;
-         for i=1 by 1 to pInPosInDs;
+  dcl-s pInBucketPos int(10) static;
+  dcl-s pInObjectPos int(10) static;
+  
+  dcl-s pPtBucketPos pointer static inz(*null);
+  dcl-s pPtBucket pointer based(pPtBucketPos);
+  dcl-ds pDsBucket likeds(DsBucket_t) based(pPtBucket);
 
-           if pDsObj.ptNext = *Null;
-             // Error
-             return *Null;
-           endif;
+  // Check parameters
+  if PInObj < 1 Or 
+       gPtBuckets = *Null Or
+       pInObj > gInBuckets * BUCKET_SIZE; 
+    // Error
+    return *Null;
+  endif;
 
-           pPtCurrent = pDsObj.ptNext;
-         endfor;
+  pInBucketPos = %div(pInObj-1:BUCKET_SIZE);
+  pInObjectPos = %rem(pInObj-1:BUCKET_SIZE) + 1;
 
-         monitor;
-           if pPtCurrent = *Null Or
-                pDsObj.ptData(pInPosInCur) = *Null Or
-                pDsObj.anRef(pInPosInCur) <> pAnRef;
-             // Error
-             return *Null;
-           endif;
-         on-error;
-           // Error
-           return *Null;
-         endmon;
+  pPtBucketPos = gPtBuckets + %size(pPtBucket) * pInBucketPos; 
+  
+  if pDsBucket.anObjRef(pInObjectPos) <> pAnRef;
+    // Error
+    return *Null;
+  endif;
 
-         return pDsObj.ptData(pInPosInCur);
+  return pDsBucket.ptObj(pInObjectPos);
 
-       end-proc OoRObjectGet;
-      //---------------------------------------------------------------*
-      // OoRObjectIsValid
-      //---------------------------------------------------------------*
-      //* Checks, if the given object is still valid.
-      //*
-      //* @param pAnRef - Program reference. You should use the field
-      //*                 "program name" of the system data structure (SDS).
-      //* @param PInObj - Reference number of the object - @link #OoRObjectNew
-      //*
-      //* @return *On - Object is valid, else *Off.
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc OoRObjectIsValid export;
-         dcl-pi *N ind;
-           pAnRef char(11) value;
-           pInObj int(10)  value;
-         end-pi;
+end-proc OoRObjectGet;
+//---------------------------------------------------------------*
+// OoRObjectIsValid
+//---------------------------------------------------------------*
+//* Checks, if the given object is still valid.
+//*
+//* @param pAnRef - Program reference. You should use the field
+//*                 "program name" of the system data structure (SDS).
+//* @param PInObj - Reference number of the object - @link #OoRObjectNew
+//*
+//* @return *On - Object is valid, else *Off.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc OoRObjectIsValid export;
+  dcl-pi *N ind;
+    pAnRef char(11) value;
+    pInObj int(10)  value;
+  end-pi;
 
-         return (OoRObjectGet(pAnRef:pInObj) <> *Null);
+  return (OoRObjectGet(pAnRef:pInObj) <> *Null);
 
-       end-proc OoRObjectIsValid;
-      //---------------------------------------------------------------*
-      //  OoRObjectFree
-      //---------------------------------------------------------------*
-      //* Frees the storage of the given object.
-      //*
-      //* @param pAnRef - Program reference. You should use the field
-      //*                 "program name" of the system data structure (SDS).
-      //* @param PInObj - Reference number of the object - @link #OoRObjectNew
-      //*
-      //* @return 0 - Successful, else -1.
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc OoRObjectFree export;
-         dcl-pi *N int(10);
-           pAnRef char(11) value;
-           pInObj int(10)  value;
-         end-pi;
+end-proc OoRObjectIsValid;
+//---------------------------------------------------------------*
+//  OoRObjectFree
+//---------------------------------------------------------------*
+//* Frees the storage of the given object.
+//*
+//* @param pAnRef - Program reference. You should use the field
+//*                 "program name" of the system data structure (SDS).
+//* @param PInObj - Reference number of the object - @link #OoRObjectNew
+//*
+//* @return 0 - Successful, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc OoRObjectFree export;
+  dcl-pi *N int(10);
+    pAnRef char(11) value;
+    pInObj int(10)  value;
+  end-pi;
 
-         dcl-s pPtCurrent     pointer static;
-         dcl-s pInPosInDs     int(10) static;
-         dcl-s pInPosInCur    int(10) static;
-         dcl-s i              int(10) static;
-         dcl-s pPtPtr         pointer static;
+  dcl-s pInBucketPos int(10) static;
+  dcl-s pInObjectPos int(10) static;
+  dcl-s pPtPtr pointer;
+  
+  dcl-s pPtBucketPos pointer static inz(*null);
+  dcl-s pPtBucket pointer based(pPtBucketPos);
+  dcl-ds pDsBucket likeds(DsBucket_t) based(pPtBucket);
 
-         dcl-ds pDsObj likeds(DsObj_t) based(pPtCurrent);
+  // Check parameters
+  if PInObj < 1 Or 
+       gPtBuckets = *Null Or
+       pInObj > gInBuckets * BUCKET_SIZE; 
+    // Error
+    return -1;
+  endif;
 
-         if pInObj < 1;
-          // Error
-           return -1;
-         endif;
+  pInBucketPos = %div(pInObj-1:BUCKET_SIZE);
+  pInObjectPos = %rem(pInObj-1:BUCKET_SIZE) + 1;
 
-         pInPosInDs  = %div(pInObj-1:%elem(pDsObj.ptData));
-         pInPosInCur = %rem(pInObj-1:%elem(pDsObj.ptData)) + 1;
+  pPtBucketPos = gPtBuckets + %size(pPtBucket) * pInBucketPos; 
+  
+  if pDsBucket.anObjRef(pInObjectPos) <> pAnRef;
+    // Error
+    return -1;
+  endif;
 
-         pPtCurrent = gPtStart;
-         for i=1 by 1 to pInPosInDs;
+  pDsBucket.anObjRef(pInObjectPos) = *Blanks;
+  pPtPtr = pDsBucket.ptObj(pInObjectPos);
+  dealloc(ne) pPtPtr;
+  pDsBucket.ptObj(pInObjectPos) = *Null;
+  pDsBucket.inFree += 1;
+  if pInObjectPos < pDsBucket.inNxtFree;
+    pDsBucket.inNxtFree = pInObjectPos;
+  endif;  
+  gInFreed += 1;
+  
+  return 0;
 
-           if pDsObj.ptNext = *Null;
-             // Error
-             return -1;
-           endif;
-
-           pPtCurrent = pDsObj.ptNext;
-         endfor;
-
-         if pDsObj.ptData(pInPosInCur) = *Null Or
-             pDsObj.anRef(pInPosInCur) <> pAnRef;
-           // error
-           return -1;
-         endif;
-
-         pDsObj.anRef(pInPosInCur)  = *Blanks;
-         pPtPtr = pDsObj.ptData(pInPosInCur);
-         dealloc(ne) pPtPtr;
-         pDsObj.ptData(pInPosInCur) = *Null;
-         pDsObj.inFree += 1;
-
-         return 0;
-
-       end-proc OoRObjectFree;
+end-proc OoRObjectFree;

@@ -1,249 +1,251 @@
-      /IF NOT DEFINED (AR_QMH__)
+**free
+/IF NOT DEFINED (AR_QMH__)
 
-      /DEFINE AR_QMH__
-      /INCLUDE ARPG_H,ARCQUSEC
+/DEFINE AR_QMH__
+/INCLUDE ARPG_H,ARCQUSEC
 
-      //---------------------------------------------------------------*
-      // Constants
-      //---------------------------------------------------------------*
-       dcl-c MSGMOVALL '*COMP     *DIAG     *ESCAPE   *INFO     ';
-       dcl-c MSGMOVALLN 4;
+//---------------------------------------------------------------*
+// Constants
+//---------------------------------------------------------------*
+dcl-c MSGMOVALL '*COMP     *DIAG     *ESCAPE   *INFO     ';
+dcl-c MSGMOVALLN 4;
+dcl-c QCPFMSG 'QCPFMSG   *LIBL     ';
 
-       dcl-c MSG_CMD    '*CMD';
-       dcl-c MSG_COMP   '*COMP';
-       dcl-c MSG_DIAG   '*DIAG';
-       dcl-c MSG_ESCAPE '*ESCAPE';
-       dcl-c MSG_INFO   '*INFO';
-       dcl-c MSG_INQ    '*INQ';
-       dcl-c MSG_NOTIFY '*NOTIFY';
-       dcl-c MSG_RQS    '*RQS';
-       dcl-c MSG_STATUS '*STATUS';
+dcl-c MSG_CMD    '*CMD';
+dcl-c MSG_COMP   '*COMP';
+dcl-c MSG_DIAG   '*DIAG';
+dcl-c MSG_ESCAPE '*ESCAPE';
+dcl-c MSG_INFO   '*INFO';
+dcl-c MSG_INQ    '*INQ';
+dcl-c MSG_NOTIFY '*NOTIFY';
+dcl-c MSG_RQS    '*RQS';
+dcl-c MSG_STATUS '*STATUS';
 
-       dcl-s Msg_Key char(4);
+dcl-s Msg_Key char(4);
 
-      //---------------------------------------------------------------*
-      // Control Job Log Output (QMHCTLJL)
-      //---------------------------------------------------------------*
-       dcl-pr MhCtlJL extpgm('QMHCTLJL');
-         outfiles char(65) const;
-         format char(8) const;
-         msgDilter char(65535) const;
-         numFilters int(10) const;
-         errMsgQ char(20) const;
-         uSec char(65535) options(*varsize) noopt;
-       end-pr;
+//---------------------------------------------------------------*
+// Control Job Log Output (QMHCTLJL)
+//---------------------------------------------------------------*
+dcl-pr Q_MhCtlJL extpgm('QMHCTLJL');
+  outfiles char(65) const;
+  format char(8) const;
+  msgDilter char(65535) const;
+  numFilters int(10) const;
+  errMsgQ char(20) const;
+  uSec char(65535) options(*varsize) noopt;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Send Program Message (QMHSNDPM)
-      //---------------------------------------------------------------*
-       dcl-pr MhSndPM extpgm('QMHSNDPM');
-         PAnMsgId   char(7) const;
-         PAnMsgF    char(20) const;
-         PAnMsgDta  char(65535) const options(*varsize);
-         PInMsgLen  int(10) const;
-         PAnMTyp    char(10) const;
-         PAnCSTackE char(65535) const options(*varsize);
-         PInCSTackC int(10) const;
-         PAnMKey    char(4);
-         uSec       char(65535) options(*varsize) noopt;
-         PInCStackL int(10) const options(*nopass);
-         PAnCStackQ char(20) const options(*nopass);
-         PInDspWt   int(10) const options(*nopass);
-         PAnCStackD char(10) const options(*nopass);
-         PInCCSID   int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Send Program Message (QMHSNDPM)
+//---------------------------------------------------------------*
+dcl-pr Q_MhSndPM extpgm('QMHSNDPM');
+  PAnMsgId   char(7) const;
+  PAnMsgF    char(20) const;
+  PAnMsgDta  char(65535) const options(*varsize);
+  PInMsgLen  int(10) const;
+  PAnMTyp    char(10) const;
+  PAnCSTackE char(65535) const options(*varsize);
+  PInCSTackC int(10) const;
+  PAnMKey    char(4);
+  uSec       char(65535) options(*varsize) noopt;
+  PInCStackL int(10) const options(*nopass);
+  PAnCStackQ char(20) const options(*nopass);
+  PInDspWt   int(10) const options(*nopass);
+  PAnCStackD char(10) const options(*nopass);
+  PInCCSID   int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Move Program Messages (QMHMOVPM)
-      //---------------------------------------------------------------*
-       dcl-pr MhMovPM extpgm('QMHMOVPM');
-         MKey     char(4) const;
-         MTyp     char(65535) const options(*varsize);
-         MTypN    int(10) const;
-         ToCsE    char(65535) const options(*varsize);
-         ToCsC    int(10) const;
-         uSec     char(65535) options(*varsize) noopt;
-         CStackL  int(10) const options(*nopass);
-         CStackQ  char(20) const options(*nopass);
-         CStackD  char(10) const options(*nopass);
-         FrCSE    char(16) const options(*nopass);
-         FrCsC    int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Move Program Messages (QMHMOVPM)
+//---------------------------------------------------------------*
+dcl-pr Q_MhMovPM extpgm('QMHMOVPM');
+  MKey     char(4) const;
+  MTyp     char(65535) const options(*varsize);
+  MTypN    int(10) const;
+  ToCsE    char(65535) const options(*varsize);
+  ToCsC    int(10) const;
+  uSec     char(65535) options(*varsize) noopt;
+  CStackL  int(10) const options(*nopass);
+  CStackQ  char(20) const options(*nopass);
+  CStackD  char(10) const options(*nopass);
+  FrCSE    char(16) const options(*nopass);
+  FrCsC    int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Receive Nonprogram Message (QMHRCVM)
-      //---------------------------------------------------------------*
-       dcl-pr MhRcvM extpgm('QMHRCVM');
-         Message char(65535) options(*varsize);
-         MLen    int(10) const;
-         Form    char(8) const;
-         MsgQ    char(20) const;
-         MTyp    char(10) const;
-         MKey    char(4) const;
-         Wait    int(10) const;
-         MAct    char(10) const;
-         uSec    char(65535) options(*varsize) noopt;
-         CcsId   int(10) const options(*nopass);
-         RpyRj   char(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Receive Nonprogram Message (QMHRCVM)
+//---------------------------------------------------------------*
+dcl-pr Q_MhRcvM extpgm('QMHRCVM');
+   Message char(65535) options(*varsize);
+   MLen    int(10) const;
+   Form    char(8) const;
+   MsgQ    char(20) const;
+   MTyp    char(10) const;
+   MKey    char(4) const;
+   Wait    int(10) const;
+   MAct    char(10) const;
+   uSec    char(65535) options(*varsize) noopt;
+   CcsId   int(10) const options(*nopass);
+   RpyRj   char(10) const options(*nopass);
+ end-pr;
 
-      //---------------------------------------------------------------*
-      // Send Nonprogram Message (QMHSNDM)
-      //---------------------------------------------------------------*
-       dcl-pr MhSndM extpgm('QMHSNDM');
-         MsgId   char(7) const;
-         MsgF    char(20) const;
-         MsgDta  char(65535) const options(*varsize);
-         MsgLen  int(10) const;
-         MTyp    char(10) const;
-         MsgQ    char(65535) const options(*varsize);
-         MNum    int(10) const;
-         RplQ    char(20) const;
-         MKey    char(4);
-         uSec    char(65535) options(*varsize) noopt;
-         CcsId   int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Send Nonprogram Message (QMHSNDM)
+//---------------------------------------------------------------*
+ dcl-pr Q_MhSndM extpgm('QMHSNDM');
+  MsgId   char(7) const;
+  MsgF    char(20) const;
+  MsgDta  char(65535) const options(*varsize);
+  MsgLen  int(10) const;
+  MTyp    char(10) const;
+  MsgQ    char(65535) const options(*varsize);
+  MNum    int(10) const;
+  RplQ    char(20) const;
+  MKey    char(4);
+  uSec    char(65535) options(*varsize) noopt;
+  CcsId   int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Receive Program Message (QMHRCVPM)
-      //---------------------------------------------------------------*
-       dcl-pr MhRcvPM extpgm('QMHRCVPM');
-         Message char(65535) options(*varsize);
-         MLen    int(10) const;
-         Form    char(8) const;
-         CSTackE char(65535) const options(*varsize);
-         CSTackC int(10) const;
-         MTyp    char(10) const;
-         MKey    char(4) const;
-         Wait    int(10) const;
-         MAct    char(10) const;
-         uSec    char(65535) options(*varsize) noopt;
-         LCSE    int(10) const options(*nopass);
-         CSQual  char(20) const options(*nopass);
-         CSDTyp  char(10) const options(*nopass);
-         CcsId   int(10) const options(*nopass);
-         RpyRj   char(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Receive Program Message (QMHRCVPM)
+//---------------------------------------------------------------*
+dcl-pr Q_MhRcvPM extpgm('QMHRCVPM');
+  Message char(65535) options(*varsize);
+  MLen    int(10) const;
+  Form    char(8) const;
+  CSTackE char(65535) const options(*varsize);
+  CSTackC int(10) const;
+  MTyp    char(10) const;
+  MKey    char(4) const;
+  Wait    int(10) const;
+  MAct    char(10) const;
+  uSec    char(65535) options(*varsize) noopt;
+  LCSE    int(10) const options(*nopass);
+  CSQual  char(20) const options(*nopass);
+  CSDTyp  char(10) const options(*nopass);
+  CcsId   int(10) const options(*nopass);
+  RpyRj   char(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Remove Program Messages (QMHRMVPM)
-      //---------------------------------------------------------------*
-       dcl-pr MhRmvPM extpgm('QMHRMVPM');
-         CSTackE   char(65535) const options(*varsize);
-         CSTackC   int(10) const;
-         MKey      char(4) const;
-         MToRmv    char(10) const;
-         uSec      char(65535) options(*varsize) noopt;
-         CStackL   int(10) const options(*nopass);
-         CStackQ   char(20) const options(*nopass);
-         RmvUHdl   char(10) const options(*nopass);
-         CStackD   char(10) const options(*nopass);
-         AlwDftR   char(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Remove Program Messages (QMHRMVPM)
+//---------------------------------------------------------------*
+dcl-pr Q_MhRmvPM extpgm('QMHRMVPM');
+  CSTackE   char(65535) const options(*varsize);
+  CSTackC   int(10) const;
+  MKey      char(4) const;
+  MToRmv    char(10) const;
+  uSec      char(65535) options(*varsize) noopt;
+  CStackL   int(10) const options(*nopass);
+  CStackQ   char(20) const options(*nopass);
+  RmvUHdl   char(10) const options(*nopass);
+  CStackD   char(10) const options(*nopass);
+  AlwDftR   char(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Resend Escape Message (QMHRSNEM)
-      //---------------------------------------------------------------*
-       dcl-pr MhRsnEM extpgm('QMHRSNEM');
-         MKey   char(4) const;
-         uSec   char(65535) options(*varsize) noopt;
-         ToCSE  char(65535) const options(*nopass:*varsize);
-         ToCsL  int(10) const options(*nopass);
-         Fmt    char(8) const options(*nopass);
-         FrCSE  char(16) const options(*nopass);
-         FrCsC  int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Resend Escape Message (QMHRSNEM)
+//---------------------------------------------------------------*
+dcl-pr Q_MhRsnEM extpgm('QMHRSNEM');
+  MKey   char(4) const;
+  uSec   char(65535) options(*varsize) noopt;
+  ToCSE  char(65535) const options(*nopass:*varsize);
+  ToCsL  int(10) const options(*nopass);
+  Fmt    char(8) const options(*nopass);
+  FrCSE  char(16) const options(*nopass);
+  FrCsC  int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Send Break Message (QMHSNDBM)
-      //---------------------------------------------------------------*
-       dcl-pr MhSndBM extpgm('QMHSNDBM');
-         MsgText   char(65535) const options(*varsize);
-         MsgLen    int(10) const;
-         MTyp      char(10) const;
-         MQueues   char(20) const dim(50) options(*varsize);
-         NumQueues int(10) const;
-         RplQueue  char(20) const;
-         uSec      char(65535) options(*varsize) noopt;
-         CCSID     int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Send Break Message (QMHSNDBM)
+//---------------------------------------------------------------*
+dcl-pr Q_MhSndBM extpgm('QMHSNDBM');
+  MsgText   char(65535) const options(*varsize);
+  MsgLen    int(10) const;
+  MTyp      char(10) const;
+  MQueues   char(20) const dim(50) options(*varsize);
+  NumQueues int(10) const;
+  RplQueue  char(20) const;
+  uSec      char(65535) options(*varsize) noopt;
+  CCSID     int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Retrieve Message (QMHRTVM)
-      //---------------------------------------------------------------*
-       dcl-pr MhRtvM extpgm('QMHRTVM');
-         Message   char(65535) options(*varsize);
-         MLen      int(10) const;
-         Form      char(8) const;
-         MsgID     char(7) const;
-         MsgF      char(20) const;
-         RplDta    char(65535) const options(*varsize);
-         RplLen    int(10) const;
-         RplSubVal char(10) const;
-         RtnFmtCtl char(10) const;
-         uSec      char(65535) options(*varsize) noopt;
-         RtvOpt    char(10) const options(*nopass);
-         CCSIDto   int(10) const options(*nopass);
-         CCSIDrpl  int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Retrieve Message (QMHRTVM)
+//---------------------------------------------------------------*
+dcl-pr Q_MhRtvM extpgm('QMHRTVM');
+  Message   char(65535) options(*varsize);
+  MLen      int(10) const;
+  Form      char(8) const;
+  MsgID     char(7) const;
+  MsgF      char(20) const;
+  RplDta    char(65535) const options(*varsize);
+  RplLen    int(10) const;
+  RplSubVal char(10) const;
+  RtnFmtCtl char(10) const;
+  uSec      char(65535) options(*varsize) noopt;
+  RtvOpt    char(10) const options(*nopass);
+  CCSIDto   int(10) const options(*nopass);
+  CCSIDrpl  int(10) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Retrieve Request Message (QMHRTVRQ)
-      //---------------------------------------------------------------*
-       dcl-pr MhRtvRq extpgm('QMHRTVRQ');
-         Message char(65535) options(*varsize);
-         MLen    int(10) const;
-         Form    char(8) const;
-         MTyp    char(10) const;
-         MKey    char(4) const;
-         uSec    char(65535) options(*varsize) noopt;
-       end-pr;
+//---------------------------------------------------------------*
+// Retrieve Request Message (QMHRTVRQ)
+//---------------------------------------------------------------*
+dcl-pr Q_MhRtvRq extpgm('QMHRTVRQ');
+  Message char(65535) options(*varsize);
+  MLen    int(10) const;
+  Form    char(8) const;
+  MTyp    char(10) const;
+  MKey    char(4) const;
+  uSec    char(65535) options(*varsize) noopt;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Open List of Job Log Messages (QGYOLJBL)
-      //---------------------------------------------------------------*
-       dcl-pr GyOlJbL extpgm('QGYOLJBL');
-         Message   char(65535) options(*varsize);
-         MLen      int(10) const;
-         LstInf    char(65535) options(*varsize);
-         NumRecRt  int(10) const;
-         MsgSelInf char(65535) const options(*varsize);
-         SizOfSelI int(10) const;
-         uSec      char(65535) options(*varsize) noopt;
-       end-pr;
+//---------------------------------------------------------------*
+// Open List of Job Log Messages (QGYOLJBL)
+//---------------------------------------------------------------*
+dcl-pr Q_GyOlJbL extpgm('QGYOLJBL');
+  Message   char(65535) options(*varsize);
+  MLen      int(10) const;
+  LstInf    char(65535) options(*varsize);
+  NumRecRt  int(10) const;
+  MsgSelInf char(65535) const options(*varsize);
+  SizOfSelI int(10) const;
+  uSec      char(65535) options(*varsize) noopt;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Close List (QGYCLST)
-      //---------------------------------------------------------------*
-       dcl-pr GyCLst extpgm('QGYCLST');
-         Hdl char(4) const;
-         uSec   char(65535) options(*varsize) noopt;
-       end-pr;
+//---------------------------------------------------------------*
+// Close List (QGYCLST)
+//---------------------------------------------------------------*
+dcl-pr Q_GyCLst extpgm('QGYCLST');
+  Hdl char(4) const;
+  uSec   char(65535) options(*varsize) noopt;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // List Job Log Messages (QMHLJOBL)
-      //---------------------------------------------------------------*
-       dcl-pr MhLJobL extpgm('QMHLJOBL');
-         UsrSpc     char(20) const;
-         Format     char(8) const;
-         MsgSelInf  char(65535) const options(*varsize);
-         SizOfSelI  int(10) const;
-         MsgSelFmt  char(8) const;
-         uSec       char(65535) options(*varsize) noopt;
-       end-pr;
+//---------------------------------------------------------------*
+// List Job Log Messages (QMHLJOBL)
+//---------------------------------------------------------------*
+dcl-pr Q_MhLJobL extpgm('QMHLJOBL');
+  UsrSpc     char(20) const;
+  Format     char(8) const;
+  MsgSelInf  char(65535) const options(*varsize);
+  SizOfSelI  int(10) const;
+  MsgSelFmt  char(8) const;
+  uSec       char(65535) options(*varsize) noopt;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Send Reply Message (QMHSNDRM)
-      //---------------------------------------------------------------*
-       dcl-pr MhSndRM extpgm('QMHSNDRM');
-         MKey    char(4) const;
-         MsgQ    char(20) const;
-         RpyTxt  char(65535) const options(*varsize);
-         LenRpyT int(10) const;
-         RmvMsg  char(10) const;
-         uSec    char(65535) options(*varsize) noopt;
-         CcsId   int(10) const options(*nopass);
-         RpyRj   char(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Send Reply Message (QMHSNDRM)
+//---------------------------------------------------------------*
+dcl-pr Q_MhSndRM extpgm('QMHSNDRM');
+  MKey    char(4) const;
+  MsgQ    char(20) const;
+  RpyTxt  char(65535) const options(*varsize);
+  LenRpyT int(10) const;
+  RmvMsg  char(10) const;
+  uSec    char(65535) options(*varsize) noopt;
+  CcsId   int(10) const options(*nopass);
+  RpyRj   char(10) const options(*nopass);
+end-pr;
 
-      /ENDIF
+/ENDIF

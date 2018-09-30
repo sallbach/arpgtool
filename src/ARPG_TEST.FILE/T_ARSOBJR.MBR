@@ -1,18 +1,57 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCOBJR
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCOBJR
 
-      /COPY RPGUNIT1,TESTCASE
+/COPY RPGUNIT1,TESTCASE
 
-      //---------------------------------------------------------------*
-      // test_check_obj
-      //---------------------------------------------------------------*
-       dcl-proc test_check_obj export;
+//---------------------------------------------------------------*
+// test_check_obj
+//---------------------------------------------------------------*
+dcl-proc test_check_obj export;
 
+  dcl-s pAnDesc Char(50);
+  dcl-s pAnLib Char(10) inz('QSYSINC');
 
-       end-proc test_check_obj;
+  iEqual(0:ObjCheck('QRPGLESRC':API_FILE:pAnDesc:pAnLib));
+  aEqual('DATA BASE FILE FOR ILE RPG INCLUDES':pAnDesc);
+ 
+end-proc test_check_obj;
+//---------------------------------------------------------------*
+// test_check_obj
+//---------------------------------------------------------------*
+dcl-proc test_check_objptr export;
+
+  dcl-s pPtObj pointer;
+
+  ObjGetObjPointer(pPtObj:'QRPGLESRC':API_FILE:'QSYSINC');
+  // - will fail !? assert(pPtObj <> *Null:'Error loading object');
+ 
+end-proc test_check_objptr;
+//---------------------------------------------------------------*
+// test_check_obj
+//---------------------------------------------------------------*
+dcl-proc test_check_prcptr export;
+
+  dcl-s pAnDesc Char(50);
+  dcl-s pAnLib Char(10) inz('QSYSINC');
+  dcl-s pPtObj pointer(*proc);
+
+  dcl-pr ObjCheck_ int(10) extproc(pPtObj);
+    object char(10) value;
+    type char(10) value;
+    description char(50) options(*nopass:*omit);
+    library char(10) options(*nopass);
+  end-pr;
+
+  pPtObj = ObjGetProcedurePointer('ARSOBJR':'ObjCheck');
+  assert(pPtObj <> *Null:'Error loading function');
+
+  iEqual(0:ObjCheck_('QRPGLESRC':API_FILE:pAnDesc:pAnLib));
+  aEqual('DATA BASE FILE FOR ILE RPG INCLUDES':pAnDesc);
+ 
+end-proc test_check_prcptr;
 

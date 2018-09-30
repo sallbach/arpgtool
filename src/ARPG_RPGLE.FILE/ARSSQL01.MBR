@@ -26,7 +26,7 @@ end-ds;
 //---------------------------------------------------------------*
 // constants
 //---------------------------------------------------------------*
-dcl-c SQL_NUM 1; 
+//dcl-c SQL_NUM 1; 
 
 //---------------------------------------------------------------*
 //  SqlPreparedStatement
@@ -39,7 +39,7 @@ dcl-c SQL_NUM 1;
 //* @param pAnSqlStm - A SQL statement.
 //* @param pInCcsid - CCSID of SQL statement.
 //*
-//* @return 
+//* @return A new prepared statement object
 //*
 //* @diag messageCode to be defined
 //*
@@ -94,7 +94,7 @@ dcl-proc SqlPreparedStatement export;
   pDsSqPrcEd.mainpgm = '*ENDACTGRP'; // Main program name.
   pDsSqPrcEd.function = SQL_FUNCTION_BUILD_PACKAGE;
   
-  SqPrcEd(SqlCa:SqlDa:'SQLP0400':pDsSqPrcEd:QUSecExcp);
+  Q_SqPrcEd(SqlCa:SqlDa:'SQLP0400':pDsSqPrcEd:QUSecExcp);
 
   if SqlCode <> 0 And SqlCode <> SQL_CODE_ALREADY_EXISTS;
     // todo message
@@ -105,7 +105,7 @@ dcl-proc SqlPreparedStatement export;
   // PREPARE & DESCRIBE to retrieve number of fields
   pDsPrepStm.SqPrcEd.function = SQL_FUNCTION_PREPARE_DESCRIBE;
   
-  SqPrcEd(SqlCa:pDsDescribeDa:'SQLP0400':pDsPrepStm.SqPrcEd:QUSecExcp);
+  Q_SqPrcEd(SqlCa:pDsDescribeDa:'SQLP0400':pDsPrepStm.SqPrcEd:QUSecExcp);
   
   if SqlCode < 0;
     // todo message
@@ -130,7 +130,7 @@ dcl-proc SqlPreparedStatement export;
   pDsPrepStm.ptDescribeDa = %realloc(pDsPrepStm.ptDescribeDa:pDsDescribeDa.SQLDABC); 
   pPtDescribeDa = pDsPrepStm.ptDescribeDa;
     
-  SqPrcEd(SqlCa:pDsDescribeDa:'SQLP0400':pDsPrepStm.SqPrcEd:QUSecExcp);
+  Q_SqPrcEd(SqlCa:pDsDescribeDa:'SQLP0400':pDsPrepStm.SqPrcEd:QUSecExcp);
 
   if SqlCode <> 0;
     // todo message
@@ -148,7 +148,7 @@ end-proc SqlPreparedStatement;
 //*
 //* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return A new result set object.
 //*
 //* @diag messageCode to be defined
 //*
@@ -189,7 +189,8 @@ end-proc SqlPreparedStatementExecuteQuery;
 //*
 //* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return -1 - Statement not valid
+//* @return SqlCode
 //*
 //* @diag messageCode to be defined
 //*
@@ -221,7 +222,7 @@ dcl-proc SqlPreparedStatementExecuteUpdate export;
                                      :SQL_OPEN_UPDATE
                                      :SQL_OPEN_DELETE); // Open Options
 
-  SqPrcEd(SqlCa:pDsOpenDa:'SQLP0400':pDsPrepStm.SqPrcEd:QUSecExcp);
+  Q_SqPrcEd(SqlCa:pDsOpenDa:'SQLP0400':pDsPrepStm.SqPrcEd:QUSecExcp);
 
   return SqlCode; 
 
@@ -229,11 +230,11 @@ end-proc SqlPreparedStatementExecuteUpdate;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementClearParameters
 //---------------------------------------------------------------*
-//* 
+//* Clears the current parameter values immediately.
 //*
-//* @param pInPrepStm - 
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
@@ -265,8 +266,8 @@ dcl-proc SqlPreparedStatementClearParameters export;
     pDsPrepStm.ptOpenDa = %alloc(%size(SqlDa));
     pPtOpenDa = pDsPrepStm.ptOpenDa;
     clear pDsOpenDa;
-    //---pDsOpenDa.SQLDAID = 'SQLDA'; 
-    //---pDsOpenDa.SQLDABC = %size(SqlDa);  
+    pDsOpenDa.SQLDAID = 'SQLDA'; 
+    pDsOpenDa.SQLDABC = %size(SqlDa);  
     pDsPrepStm.inOpenDaSize = pDsOpenDa.SQLDABC;
     pDsOpenDa.SQLN = 0;
     pDsOpenDa.SQLD = 0;
@@ -292,16 +293,6 @@ dcl-proc SqlPreparedStatementClearParameters export;
 end-proc SqlPreparedStatementClearParameters;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementSetParameter
-//---------------------------------------------------------------*
-//* 
-//*
-//* @param pInPrepStm - 
-//*
-//* @return ccc
-//*
-//* @diag messageCode to be defined
-//*
-//* @Author S.Allbach
 //---------------------------------------------------------------*
 dcl-proc SqlPreparedStatementSetParameter;
   dcl-pi *N int(10);
@@ -352,11 +343,11 @@ end-proc SqlPreparedStatementSetParameter;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementSetString
 //---------------------------------------------------------------*
-//* 
+//* Set string parameter.
 //*
-//* @param pInPrepStm - 
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
@@ -380,11 +371,11 @@ end-proc SqlPreparedStatementSetString;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementSetStringUcs
 //---------------------------------------------------------------*
-//* 
+//* Set Ucs string parameter.
 //*
-//* @param pInPrepStm - 
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
@@ -411,11 +402,11 @@ end-proc SqlPreparedStatementSetStringUcs;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementSetDecimal
 //---------------------------------------------------------------*
-//* 
+//* Set decimal parameter.
 //*
-//* @param pInPrepStm - 
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
@@ -439,11 +430,11 @@ end-proc SqlPreparedStatementSetDecimal;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementSetDouble
 //---------------------------------------------------------------*
-//* 
+//* Set float parameter.
 //*
-//* @param pInPrepStm - 
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
@@ -467,11 +458,11 @@ end-proc SqlPreparedStatementSetDouble;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementSetDate
 //---------------------------------------------------------------*
-//* 
+//* Set date parameter. 
 //*
-//* @param pInPrepStm - 
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
@@ -495,11 +486,11 @@ end-proc SqlPreparedStatementSetDate;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementSetTime
 //---------------------------------------------------------------*
-//* 
+//* Set time parameter.
 //*
-//* @param pInPrepStm - 
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
@@ -523,11 +514,11 @@ end-proc SqlPreparedStatementSetTime;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementSetTimeStamp
 //---------------------------------------------------------------*
-//* 
+//* Set timestamp parameter
 //*
-//* @param pInPrepStm - 
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
@@ -551,11 +542,11 @@ end-proc SqlPreparedStatementSetTimeStamp;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementSetLong
 //---------------------------------------------------------------*
-//* 
+//* Set long integer parameter. 
 //*
-//* @param pInPrepStm - 
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
@@ -579,11 +570,11 @@ end-proc SqlPreparedStatementSetLong;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementFree
 //---------------------------------------------------------------*
-//* 
+//* Free prepared statement. 
 //*
-//* @param pInPrepStm - 
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
 //*
-//* @return ccc
+//* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*

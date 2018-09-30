@@ -1,0 +1,290 @@
+**free
+/IF NOT DEFINED (AR_QFILE__)
+
+/DEFINE AR_QFILE__
+
+/INCLUDE ARPG_H,ARCQUSEC
+
+//---------------------------------------------------------------*
+//  InfDs - File Feedback
+//---------------------------------------------------------------*
+dcl-ds Infds_File_t qualified template;
+  FILE       char(8);      // File name
+  OPEN_IND   ind;          // File open?
+  EOF_IND    ind;          // File at eof?
+  STATUS     zoned(5:0);   // Status code
+  OPCODE     char(6);      // Last opcode
+  ROUTINE    char(8);      // RPG Routine
+  LIST_NUM   char(8);      // Listing line
+  SPCL_STAT  zoned(5:0);   // SPECIAL status
+  RECORD     char(8);      // Record name
+  MSGID      char(7);      // Error MSGID
+  UNUSED     char(14);     // Unused
+  SCREEN     zoned(4:0);   // Screen size
+  NLS_IN     zoned(2:0);   // NLS Input?
+  NLS_OUT    zoned(2:0);   // NLS Output?
+  NLS_MODE   zoned(2:0);   // NLS Mode?
+  SRCID      char(2);      // Source Id
+end-ds;
+
+  //---------------------------------------------------------------*
+  //  InfDs - Open Feedback
+  //---------------------------------------------------------------*
+dcl-ds Infds_Open_t qualified template;
+  ODP_TYPE         char(2)  pos( 81); // ODP Type
+  FILE_NAME        char(10) pos( 83); // File name
+  LIBRARY          char(10) pos( 93); // Library name
+  SPOOL_FILE       char(10) pos(103); // Spool file name
+  SPOOL_LIB        char(10) pos(113); // Spool file lib
+  SPOOL_NUM_OLD    int(5)   pos(123); // Spool file num
+  RCD_LEN          int(5)   pos(125); // Max record len
+  KEY_LEN          int(5)   pos(127); // Max key len
+  MEMBER           char(10) pos(129); // Member name
+  TYPE             int(5)   pos(147); // File type
+  ROWS             int(5)   pos(152); // Num PRT/DSP rows
+  COLUMNS          int(5)   pos(154); // Num PRT/DSP cols
+  NUM_RCDS         int(10)  pos(156); // Num of records
+  SPOOL_NUM        int(10)  pos(160); // 6 digit Spool Nbr
+  VOL_OFF          int(5)   pos(184); // Vol label offset
+  BLK_RCDS         int(5)   pos(186); // Max rcds in blk
+  OVERFLOW         int(5)   pos(188); // Overflow line
+  BLK_INCR         int(5)   pos(190); // Blk increment
+  FLAGS1           char(1)  pos(196); // Misc flags
+  REQUESTER        char(10) pos(197); // Requester name
+  OPEN_COUNT       int(5)   pos(207); // Open count
+  BASED_MBRS       int(5)   pos(211); // Num based mbrs
+  FLAGS2           char(1)  pos(213); // Misc flags
+  OPEN_ID          char(2)  pos(214); // Open identifier
+  RCDFMT_LEN       int(5)   pos(216); // Max rcd fmt len
+  CCSID            int(5)   pos(218); // Database CCSID
+  FLAGS3           char(1)  pos(220); // Misc flags
+  NUM_DEVS         int(5)   pos(227); // Num devs defined
+end-ds;
+
+//---------------------------------------------------------------*
+//  InfDs - Input/Output Feedback
+//---------------------------------------------------------------*
+dcl-ds Infds_IO_t qualified template;
+                                      // 241-242 not used
+  WRITE_CNT        int(10)  pos(243); // Write count
+  READ_CNT         int(10)  pos(247); // Read count
+  WRTRD_CNT        int(10)  pos(251); // Write/read count
+  OTHER_CNT        int(10)  pos(255); // Other I/O count
+  OPERATION        char(1)  pos(260); // Cuurent operation
+  IO_RCD_FMT       char(10) pos(261); // Rcd format name
+  DEV_CLASS        char(2)  pos(271); // Device class
+  IO_PGM_DEV       char(10) pos(273); // Pgm device name
+  IO_RCD_LEN       int(10)  pos(283); // Rcd len of I/O
+end-ds;
+
+//---------------------------------------------------------------*
+//  InfDs - Printer Specific Feedback
+//---------------------------------------------------------------*
+dcl-ds Infds__Prt_t qualified template;
+  CUR_LINE         int(5)   pos(367); // Current line num
+  CUR_PAGE         int(10)  pos(369); // Current page cnt
+  // If the first bit of PRT_FLAGS is on, the spooled file has been
+  // deleted.  Use TESTB X'80' or TESTB '0' to test this bit.
+  PRT_FLAGS        char(1)  pos(373); 
+  PRT_MAJOR        char(2)  pos(401); // Major ret code
+  PRT_MINOR        char(2)  pos(403); // Minor ret code
+end-ds;
+  
+//---------------------------------------------------------------*
+//  InfDs - Database Specific Feedback
+//---------------------------------------------------------------*
+dcl-ds Infds_Dbf_t qualified template;
+  FDBK_SIZE        int(10)  pos(367);   // Size of DB fdbk
+  JOIN_BITS        int(10)  pos(371);   // JFILE bits
+  LOCK_RCDS        int(5)   pos(377);   // Nbr locked rcds
+  POS_BITS         char(1)  pos(385);   // File pos bits
+  DLT_BITS         char(1)  pos(384);   // Rcd deleted bits
+  NUM_KEYS         int(5)   pos(387);   // Num keys (bin)
+  KEY_LEN          int(5)   pos(393);   // Key length
+  MBR_NUM          int(5)   pos(395);   // Member number
+  DB_RRN           int(10)  pos(397);   // Relative-rcd-num
+  KEY              char(2000) pos(401); // Key value (max size 2000)
+end-ds;
+                                                               
+//---------------------------------------------------------------*
+//  InfDs - ICF Specific Feedback
+//---------------------------------------------------------------*
+dcl-ds Infds_Icf_t qualified template;
+  ICF_AID          char(1)  pos(369); // AID byte
+  ICF_LEN          int(10)  pos(372); // Actual data len
+  ICF_MAJOR        char(2)  pos(401); // Major ret code
+  ICF_MINOR        char(2)  pos(403); // Minor ret code
+  SNA_SENSE        char(8)  pos(405); // SNA sense rc
+  SAFE_IND         char(1)  pos(413); // Safe indicator
+  RQSWRT           char(1)  pos(415); // Request write
+  RMT_FMT          char(10) pos(416); // Remote rcd fmt
+  ICF_MODE         char(8)  pos(430); // Mode name
+end-ds;
+
+//---------------------------------------------------------------*
+//  InfDs - Display Specific Feedback
+//---------------------------------------------------------------*
+dcl-ds Infds_Dsp_t qualified template;
+  DSP_FLAG1        char(2)  pos(367); // Display flags
+  DSP_AID          char(1)  pos(369); // AID byte
+  CURSOR           char(2)  pos(370); // Cursor location
+  DATA_LEN         int(10)  pos(372); // Actual data len
+  SF_RRN           int(5)   pos(376); // Subfile rrn
+  MIN_RRN          int(5)   pos(378); // Subfile min rrn
+  NUM_RCDS         int(5)   pos(380); // Subfile num rcds
+  ACT_CURS         char(2)  pos(382); // Active window cursor location
+  DSP_MAJOR        char(2)  pos(401); // Major ret code
+  DSP_MINOR        char(3)  pos(403); // Minor ret code
+end-ds;
+
+  //---------------------------------------------------------------*
+  //  InfDs - Get Display File Attributes Feedback
+  //---------------------------------------------------------------*
+dcl-ds Infds_Dsp_Atr_t qualified template;
+  PGM_DEV          char(10) pos(241); // Program device
+  DEV_DSC          char(10) pos(251); // Dev description
+  USER_ID          char(10) pos(261); // User ID
+  DEV_CLASS        char(1)  pos(271); // Device class
+  DEV_TYPE         char(6)  pos(272); // Device type
+  REQ_DEV          char(1)  pos(278); // Requester?
+  ACQ_STAT         char(1)  pos(279); // Acquire status
+  INV_STAT         char(1)  pos(280); // Invite status
+  DATA_AVAIL       char(1)  pos(281); // Data available
+  NUM_ROWS         int(5)   pos(282); // Number of rows
+  NUM_COLS         int(5)   pos(284); // Number of cols
+  BLINK            char(1)  pos(286); // Allow blink?
+  LINE_STAT        char(1)  pos(287); // Online/offline?
+  DSP_LOC          char(1)  pos(288); // Display location
+  DSP_TYPE         char(1)  pos(289); // Display type
+  KBD_TYPE         char(1)  pos(290); // Keyboard type
+  CTL_INFO         char(1)  pos(342); // Controller info
+  COLOR_DSP        char(1)  pos(343); // Color capable?
+  GRID_DSP         char(1)  pos(344); // Grid line dsp?
+  // The following fields apply to ISDN.
+  ISDN_LEN         int(5)   pos(385); // Rmt number len
+  ISDN_TYPE        char(2)  pos(387); // Rmt number type
+  ISDN_PLAN        char(2)  pos(389); // Rmt number plan
+  ISDN_NUM         char(40) pos(391); // Rmt number
+  ISDN_SLEN        int(5)   pos(435); // Rmt sub-address length
+  ISDN_STYPE       char(2)  pos(437); // Rmt sub-address type
+  ISDN_SNUM        char(50) pos(439); // Rmt sub-address
+  ISDN_CON         char(1)  pos(480); // Connection
+  ISDN_RLEN        int(5)   pos(481); // Rmt address len
+  ISDN_RNUM        char(32) pos(483); // Rmt address
+  ISDN_ELEN        char(2)  pos(519); // Extension len
+  ISDN_ETYPE       char(1)  pos(521); // Extension type
+  ISDN_ENUM        char(40) pos(522); // Extension num
+  ISDN_XTYPE       char(1)  pos(566); // X.25 call type
+end-ds;
+
+  //---------------------------------------------------------------*
+  //  InfDs - Get ICF Attributes Feedback
+  //---------------------------------------------------------------*
+dcl-ds Infds_Icf_Atr_t qualified template;
+  PGM_DEV          char(10)  pos(241); // Program device
+  DEV_DSC          char(10)  pos(251); // Dev description
+  USER_ID          char(10)  pos(261); // User ID
+  DEV_CLASS        char(1)   pos(271); // Device class
+  DEV_TYPE         char(1)   pos(272); // Device type
+  REQ_DEV          char(1)   pos(278); // Requester?
+  ACQ_STAT         char(1)   pos(279); // Acquire status
+  INV_STAT         char(1)   pos(280); // Invite status
+  DATA_AVAIL       char(1)   pos(281); // Data available
+  SES_STAT         char(1)   pos(291); // Session status
+  SYNC_LVL         char(1)   pos(292); // Synch level
+  CONV_TYPE        char(1)   pos(293); // Conversation typ
+  RMT_LOC          char(8)   pos(294); // Remote location
+  LCL_LU           char(8)   pos(302); // Local LU name
+  LCL_NETID        char(8)   pos(310); // Local net ID
+  RMT_LU           char(8)   pos(318); // Remote LU
+  RMT_NETID        char(8)   pos(326); // Remote net ID
+  APPC_MODE        char(8)   pos(334); // APPC Mode
+  LU6_STATE        char(1)   pos(345); // LU6 conv state
+  LU6_COR          char(8)   pos(346); // LU6 conv correlator
+  // The following fields apply to ISDN.
+  ISDN_LEN         int(5)    pos(385); // Rmt number len
+  ISDN_TYPE        char(2)   pos(387); // Rmt number type
+  ISDN_PLAN        char(2)   pos(389); // Rmt number plan
+  ISDN_NUM         char(40)  pos(391); // Rmt number
+  ISDN_SLEN        int(5)    pos(435); // sub-addr len
+  ISDN_STYPE       char(2)   pos(437); // sub-addr type
+  ISDN_SNUM        char(40)  pos(439); // Rmt sub-address
+  ISDN_CON         char(1)   pos(480); // Connection
+  ISDN_RLEN        int(5)    pos(481); // Rmt address len
+  ISDN_RNUM        char(32)  pos(483); // Rmt address
+  ISDN_ELEN        char(2)   pos(519); // Extension len
+  ISDN_ETYPE       char(1)   pos(521); // Extension type
+  ISDN_ENUM        char(40)  pos(522); // Extension num
+  ISDN_XTYPE       char(1)   pos(566); // X.25 call type
+  // The following information is available only when program was started
+  // as result of a received program start request. (P_ stands for protected)
+  TRAN_PGM         char(64)  pos(567); // Trans pgm name
+  P_LUWIDLN        char(1)   pos(631); // LUWID fld len
+  P_LUNAMELN       char(1)   pos(632); // LU-NAME len
+  P_LUNAME         char(17)  pos(633); // LU-NAME
+  P_LUWIDIN        char(6)   pos(650); // LUWID instance
+  P_LUWIDSEQ       int(5)    pos(656); // LUWID seq num
+  // The following information is available only when a protected conversation
+  // is started on a remote system.  (U_ stands for unprotected)
+  U_LUWIDLN        char(1)   pos(658); // LUWID fld len
+  U_LUNAMELN       char(1)   pos(659); // LU-NAME len
+  U_LUNAME         char(17)  pos(660); // LU-NAME
+  U_LUWIDIN        char(6)   pos(677); // LUWID instance
+  U_LUWIDSEQ       int(5)    pos(683); // LUWID seq num
+end-ds;
+
+//---------------------------------------------------------------*
+//  Retrieve Database File Description
+//---------------------------------------------------------------*
+dcl-pr Q_DbRtvFD extpgm('QDBRTVFD');
+  result char(65535) options(*varsize);
+  length int(10) const;
+  rtfnam char(20);
+  form char(8) const;
+  filename char(20) const;
+  recfmt char(10) const;
+  ovr char(1) const;
+  system char(10) const;
+  fmttyp char(10) const;
+  usec char(65535) options(*varsize:*nopass) noopt;
+end-pr;
+
+//---------------------------------------------------------------*
+//  Retrieve Member Description
+//---------------------------------------------------------------*
+dcl-pr Q_UsrMbrD extpgm('QUSRMBRD');
+  result char(65535) options(*varsize);
+  length int(10) const;
+  form char(8) const;
+  filename char(20) const;
+  member char(10) const;
+  ovr char(1) const;
+  usec char(65535) options(*varsize:*nopass) noopt;
+  mbrprc char(1) const options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+//  List Database Relations
+//---------------------------------------------------------------*
+dcl-pr Q_DbLDbr extpgm('QDBLDBR');
+  usrspc char(20) const;
+  form char(8) const;
+  filename char(20) const;
+  member char(10) const;
+  recfmt char(10) const;
+  usec char(65535) options(*varsize:*nopass) noopt;
+end-pr;
+
+//---------------------------------------------------------------*
+//  List Fields
+//---------------------------------------------------------------*
+dcl-pr Q_UsLFld extpgm('QUSLFLD');
+  usrspc char(20) const;
+  form char(8) const;
+  filename char(20) const;
+  recfmt char(10) const;
+  ovr char(1) const;
+  usec char(65535) options(*varsize:*nopass) noopt;
+end-pr;
+
+/ENDIF

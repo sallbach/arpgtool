@@ -1,165 +1,191 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // files
-      //---------------------------------------------------------------*
-       dcl-f ARFLSTV disk keyed;
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// files
+//---------------------------------------------------------------*
+dcl-f ARFLSTV disk keyed;
 
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCLSTA
-      /COPY ARPG_H,ARCIFSR
-      /COPY ARPG_H,ARCDATE
-      /COPY ARPG_H,ARCYAJL
-      /COPY ARPG_H,ARCQMH
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCLSTA
+/COPY ARPG_H,ARCIFSR
+/COPY ARPG_H,ARCDATE
+/COPY ARPG_H,ARCYAJL
+/COPY ARPG_H,ARCQMH
+/COPY ARPG_H,ARCNETDB
+/COPY ARPG_H,ARCNETINET
+/COPY ARPG_H,ARCSOCKET
 
-      //---------------------------------------------------------------*
-      // global variables
-      //---------------------------------------------------------------*
+//---------------------------------------------------------------*
+// global variables
+//---------------------------------------------------------------*
 
-      //---------------------------------------------------------------*
-      // global data structures
-      //---------------------------------------------------------------*
+//---------------------------------------------------------------*
+// global data structures
+//---------------------------------------------------------------*
 
-      //---------------------------------------------------------------*
-      // LogStashWriteJsonMessage
-      //---------------------------------------------------------------*
-      //* Format and write a json message.
-      //*
-      //* @param pInDest - Socket or file to write().
-      //* @param pDsMsd - Message likeds(LogStash01_t)
-      //*
-      //* @return 0 - successful else -1.
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc LogStashWriteJsonMessage export;
-         dcl-pi *N int(10);
-           pInDest int(10) value;
-           pDsMsd likeds(LogStash01_t) value;
-           pDsSettings likeds(LogStash_t) value;
-         end-pi;
+//---------------------------------------------------------------*
+// LogStashWriteJsonMessage
+//---------------------------------------------------------------*
+//* Format and write a json message.
+//*
+//* @param pInDest - Socket or file to write().
+//* @param pDsMsd - Message likeds(LogStash01_t)
+//*
+//* @return 0 - successful else -1.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashWriteJsonMessage export;
+  dcl-pi *N int(10);
+    pInDest int(10) value;
+    pDsMsd likeds(LogStash01_t) value;
+    pDsSettings likeds(LogStash_t) value;
+  end-pi;
 
-         dcl-s pPtJson pointer;
-         dcl-s pInLen like(size_t);
-         dcl-s pTsTime timestamp;
-         dcl-s pAnTime varchar(40);
-         dcl-s pAnOffc varchar(6) inz('');
-         dcl-s pAnLvl1 varchar(65535);
-         dcl-s pAnLvl2 varchar(65535);
+  dcl-s pPtJson pointer;
+  dcl-s pInLen like(size_t);
+  dcl-s pTsTime timestamp;
+  dcl-s pAnTime varchar(40);
+  dcl-s pAnOffc varchar(6) inz('');
+  dcl-s pAnLvl1 varchar(65535);
+  dcl-s pAnLvl2 varchar(65535);
+  dcl-s pAnIp varchar(50) inz('') static;
 
-         dcl-ds pDsJob likeds(job_t);
+  dcl-s pPtHostEnt pointer;
+  dcl-ds pDsHostEnt likeds(hostent) based(pPtHostEnt);
 
-         if pDsMsd.QMHSEV < pDsSettings.minserv;
-           return 0;
-         endif;
+  dcl-s pPtInetAddr pointer;
+  dcl-s pPtIn_addr pointer based(pPtInetAddr);
+  dcl-ds pDsIn_addr likeds(in_addr) based(pPtIn_addr);
 
-         pDsJob = pDsMsd.QMHJOB;
+  dcl-ds pDsJob likeds(job_t);
 
-         // format timestamp
-         pTsTime = pDsMsd.QMHDAT + pDsMsd.QMHTIM + %mseconds(pDsMsd.QMHMSC); // Local
-         if pDsSettings.useutc; // UTC time
-           pTsTime = DatAdjTs(pTsTime);
-           if pDsSettings.utcoffset; // Offset
-             pAnOffc = '+00:00';
-           endif;
-         elseif pDsSettings.utcoffset; // Offset
-           pAnOffc = DatGetUtcOffset(pTsTime);
-         endif;
+  if pDsMsd.QMHSEV < pDsSettings.minserv;
+    return 0;
+  endif;
 
-         pAnTime = %char(%date(pTsTime):*iso)
-                   + 'T'
-                   + %char(%time(pTsTime):*hms)
-                   + '.'
-                   + %editc(pDsMsd.QMHMSC:'X')
-                   + pAnOffc;
+  if pAnIp = *Blanks;
+    PPtHostEnt = getHostByName(%trimr(pDsMsd.QMHSYS));
+    if PPtHostEnt <> *Null;
+      PPtInetAddr = PDsHostEnt.h_addr_list;
+      if PPtInetAddr <> *Null;
+        pAnIp = %str(inet_ntoa(PDsIn_addr));
+      endif;
+    endif;
+  endif;
 
-         // Start json generation
-         yajl_genOpen(pDsSettings.pretty);
-         yajl_beginObj();
+  pDsJob = pDsMsd.QMHJOB;
 
-           yajl_addChar('@timestamp':PAnTime);
-           yajl_addNum('@version':'1');
-           yajl_addChar('id':%trimr(pDsMsd.QMHMID));
-           LogStashGetMsgText(pDsMsd:pDsSettings.linesep:pDsSettings.ccsid:pAnLvl1:pAnLvl2);
-           pAnLvl1 = %trim(pAnLvl1);
-           pAnLvl2 = %trim(pAnLvl2);
-           if %bitand(pDsSettings.seclvl:LSTASH_SECLVL_CONCAT) <> FALSE;
-             yajl_addChar('message':pAnLvl1 + pDsSettings.linesep + pAnLvl2);
-           else;
-             yajl_addChar('message':pAnLvl1);
-           endif;
+  // format timestamp
+  pTsTime = pDsMsd.QMHDAT + pDsMsd.QMHTIM + %mseconds(pDsMsd.QMHMSC); // Local
+  if pDsSettings.useutc; // UTC time
+    pTsTime = DatAdjTs(pTsTime);
+    if pDsSettings.utcoffset; // Offset
+      pAnOffc = '+00:00';
+    endif;
+  elseif pDsSettings.utcoffset; // Offset
+    pAnOffc = DatGetUtcOffset(pTsTime);
+  endif;
 
-           if %bitand(pDsSettings.seclvl:LSTASH_SECLVL_SEP) <> FALSE And
-                 %len(pAnLvl2) > 0;
-             if %len(pAnLvl2) > %len(pDsSettings.linesep) And
-                   %subst(pAnLvl2:1:%len(pDsSettings.linesep)) = pDsSettings.linesep;
-               pAnLvl2 = %triml(%subst(pAnLvl2:%len(pDsSettings.linesep) + 1));
-             endif;
-             yajl_addChar('seclvl':pAnLvl2);
-           endif;
+  pAnTime = %char(%date(pTsTime):*iso)
+            + 'T'
+            + %char(%time(pTsTime):*hms)
+            + '.'
+            + %editc(pDsMsd.QMHMSC:'X')
+            + pAnOffc;
 
-           yajl_addNum('level':%char(pDsMsd.QMHSEV));
-           yajl_addChar('type':%trimr(%subst(pDsMsd.QMHTYP:2)));
-           yajl_addChar('HOSTNAME':%trimr(pDsMsd.QMHSYS));
-           yajl_addChar('host':%trimr(pDsMsd.QMHSYS)); // todo host by name
-           yajl_addChar('job':%trimr(pDsJob.jobnumber)
-                              + '/'
-                              + %trimr(pDsJob.jobuser)
-                              + '/'
-                              + %trimr(pDsJob.jobname));
-           yajl_addChar('thread':StrBytesToHexStr(pDsMsd.QMHTID
-                                                 :%size(pDsMsd.QMHTID)
-                                                 :pDsSettings.hexcase));
-           yajl_addChar('user':%trimr(pDsMsd.QMHFUS));
+  // Start json generation
+  yajl_genOpen(pDsSettings.pretty);
+  yajl_beginObj();
 
-           if pDsMsd.QMHSTY = '0' Or pDsMsd.QMHSTY = '3';
-             yajl_addChar('sender_pgm':%trimr(pDsMsd.QMHLSP));
+  yajl_addChar('@timestamp':PAnTime);
+  yajl_addNum('@version':'1');
+  yajl_addChar('id':%trimr(pDsMsd.QMHMID));
+  yajl_addChar('level':%trimr(%subst(pDsMsd.QMHTYP:2)));
+  LogStashGetMsgText(pDsMsd:pDsSettings.linesep:pDsSettings.ccsid:pAnLvl1:pAnLvl2);
+  pAnLvl1 = %trim(pAnLvl1);
+  pAnLvl2 = %trim(pAnLvl2);
+  if %bitand(pDsSettings.seclvl:LSTASH_SECLVL_CONCAT) <> FALSE;
+    yajl_addChar('message':pAnLvl1 + pDsSettings.linesep + pAnLvl2);
+  else;
+    yajl_addChar('message':pAnLvl1);
+  endif;
 
-           else; //if pDsMsd.QMHSTY = '1' Or pDsMsd.QMHSTY = '2';
-             yajl_addChar('sender_pgm':%trimr(pDsMsd.QMHSPG));
-             yajl_addChar('sender_module':%trimr(pDsMsd.QMHSMD));
-             yajl_addChar('sender_procedure':%trimr(pDsMsd.QMHCSP));
+  if %bitand(pDsSettings.seclvl:LSTASH_SECLVL_SEP) <> FALSE And
+        %len(pAnLvl2) > 0;
+    if %len(pAnLvl2) > %len(pDsSettings.linesep) And
+          %subst(pAnLvl2:1:%len(pDsSettings.linesep)) = pDsSettings.linesep;
+      pAnLvl2 = %triml(%subst(pAnLvl2:%len(pDsSettings.linesep) + 1));
+    endif;
+    yajl_addChar('seclvl':pAnLvl2);
+  endif;
 
-           endif;
+  yajl_addNum('level_value':%char(pDsMsd.QMHSEV));
+  yajl_addChar('type':%trimr(%subst(pDsMsd.QMHTYP:2)));
+  yajl_addChar('HOSTNAME':%trimr(pDsMsd.QMHSYS));
+  if pAnIp <> *Blanks;
+    yajl_addChar('host':pAnIp);
+  endif;
+  yajl_addChar('job':%trimr(pDsJob.jobnumber)
+                     + '/'
+                     + %trimr(pDsJob.jobuser)
+                     + '/'
+                     + %trimr(pDsJob.jobname));
+  yajl_addChar('thread':StrBytesToHexStr(pDsMsd.QMHTID
+                                        :%size(pDsMsd.QMHTID)
+                                        :pDsSettings.hexcase));
+  yajl_addChar('user':%trimr(pDsMsd.QMHFUS));
 
-           yajl_addChar('sender_stmt':%trimr(pDsMsd.QMHSTM));
+  if pDsMsd.QMHSTY = '0' Or pDsMsd.QMHSTY = '3';
+    yajl_addChar('sender_pgm':%trimr(pDsMsd.QMHLSP));
+  else; //if pDsMsd.QMHSTY = '1' Or pDsMsd.QMHSTY = '2';
+    yajl_addChar('sender_pgm':%trimr(pDsMsd.QMHSPG));
+    yajl_addChar('sender_module':%trimr(pDsMsd.QMHSMD));
+    yajl_addChar('sender_procedure':%trimr(pDsMsd.QMHCSP));
+  endif;
 
-           if pDsMsd.QMHRTY = '0';
-             yajl_addChar('receiver_pgm':%trimr(pDsMsd.QMHRPG));
+  yajl_addChar('sender_stmt':%trimr(pDsMsd.QMHSTM));
 
-           else; //if pDsMsd.QMHRTY = '1' Or pDsMsd.QMHRTY = '2';
-             yajl_addChar('receiver_pgm':%trimr(pDsMsd.QMHRPG));
-             yajl_addChar('receiver_module':%trimr(pDsMsd.QMHRMD));
-             yajl_addChar('receiver_procedure':%trimr(pDsMsd.QMHCRP));
+  if pDsMsd.QMHRTY = '0';
+    yajl_addChar('receiver_pgm':%trimr(pDsMsd.QMHRPG));
+  else; //if pDsMsd.QMHRTY = '1' Or pDsMsd.QMHRTY = '2';
+    yajl_addChar('receiver_pgm':%trimr(pDsMsd.QMHRPG));
+    yajl_addChar('receiver_module':%trimr(pDsMsd.QMHRMD));
+    yajl_addChar('receiver_procedure':%trimr(pDsMsd.QMHCRP));
+  endif;
 
-           endif;
+  yajl_addChar('receiver_stmt':%trimr(pDsMsd.QMHRTM));
 
-           yajl_addChar('receiver_stmt':%trimr(pDsMsd.QMHRTM));
+  // add user vars
+  setll (pDsJob.jobname:pDsJob.jobuser:pDsJob.jobnumber:*loval) ArfLstvr;
+  reade (pDsJob.jobname:pDsJob.jobuser:pDsJob.jobnumber) ArfLstvr;
+  dow not %eof;
+    yajl_addChar(LvVar:LvVal);
+    reade (pDsJob.jobname:pDsJob.jobuser:pDsJob.jobnumber) ArfLstvr;
+  enddo;
 
-           // add user vars
-           setll (pDsJob.jobname:pDsJob.jobuser:pDsJob.jobnumber:*loval) ArfLstvr;
-           reade (pDsJob.jobname:pDsJob.jobuser:pDsJob.jobnumber) ArfLstvr;
-           dow not %eof;
-             yajl_addChar(LvVar:LvVal);
-             reade (pDsJob.jobname:pDsJob.jobuser:pDsJob.jobnumber) ArfLstvr;
-           enddo;
+  yajl_endObj();
 
-         yajl_endObj();
+  if yajl_getBuf(pPtJson:pInLen) <> 0;
+    // error message ...
+    return -1;
+  endif;
 
-         if yajl_getBuf(pPtJson:pInLen) <> 0;
+  if IfsWriteFile(pInDest:pPtJson:pInLen) <> pInLen;
+    // error message ...
+    return -1;
+  endif;
 
-         endif;
+  if IfsWriteFile(pInDest:x'0A') < 1;
+    // error message ...
+    return -1;
+  endif;
 
-         if IfsWriteFile(pInDest:pPtJson:pInLen) <> pInLen;
-           // error message ...
-           return -1;
-         endif;
+  yajl_genClose();
 
-         yajl_genClose();
+  return 0;
 
-         return 0;
-
-       end-proc LogStashWriteJsonMessage;
+end-proc LogStashWriteJsonMessage;

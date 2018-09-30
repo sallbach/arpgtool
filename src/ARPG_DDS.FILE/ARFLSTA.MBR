@@ -1,4 +1,4 @@
-Create table LogStashJobTable for system name ARFLSTA
+Create or Replace table LogStashJobTable for system name ARFLSTA
 (
   LSta_jobname     for LSJOB  Char(10) not null,
   LSta_jobuser     for LSUSER Char(10) not null,

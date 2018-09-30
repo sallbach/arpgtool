@@ -1,45 +1,45 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCCMDE
-      /COPY ARPG_H,ARCQCMD
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCCMDE
+/COPY ARPG_H,ARCQCMD
 
-      //---------------------------------------------------------------*
-      // global variables
-      //---------------------------------------------------------------*
+//---------------------------------------------------------------*
+// global variables
+//---------------------------------------------------------------*
 
-      //---------------------------------------------------------------*
-      // global data structures
-      //---------------------------------------------------------------*
+//---------------------------------------------------------------*
+// global data structures
+//---------------------------------------------------------------*
 
-      //---------------------------------------------------------------*
-      // CmdExec
-      //---------------------------------------------------------------*
-      //* Execute a command.
-      //*
-      //* @param pAnCmd - Command string
-      //* @param pInOptions - Options )optional)
-      //*
-      //* @return 0 - successful else -1
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc CmdExec export;
-         dcl-pi *N int(10);
-           pAnCmd varchar(32702) value;
-           pInOptions int(10) value options(*nopass);
-         end-pi;
+//---------------------------------------------------------------*
+// CmdExec
+//---------------------------------------------------------------*
+//* Execute a command.
+//*
+//* @param pAnCmd - Command string
+//* @param pInOptions - Options )optional)
+//*
+//* @return 0 - successful else -1
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc CmdExec export;
+  dcl-pi *N int(10);
+    pAnCmd varchar(32702) value;
+    pInOptions int(10) value options(*nopass);
+  end-pi;
 
-         pAnCmd = %trimr(pAnCmd);
-         callp(e) CmdExc(pAnCmd:%len(pAnCmd));
+  pAnCmd = %trimr(pAnCmd);
+  callp(e) Q_CmdExc(pAnCmd:%len(pAnCmd));
 
-         if %error;
-           return -1;
-         endif;
+  if %error;
+    return -1;
+  endif;
 
-         return 0;
+  return 0;
 
-       end-proc CmdExec;
+ end-proc CmdExec;

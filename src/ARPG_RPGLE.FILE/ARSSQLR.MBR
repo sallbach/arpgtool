@@ -9,6 +9,7 @@ ctl-opt ccsid(*ucs2:13488);
 /COPY ARPG_H,ARCSQLR
 /COPY ARPG_H,ARCOORR
 /COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCCALR
 /COPY ARPG_H,ARCFCNTL
 /COPY ARPG_H,ARCSTRING
 
@@ -60,8 +61,8 @@ dcl-proc SqlConnection export;
   endif;
   pDsConnection = pDsConnectionInz;
 
-  pDsConnection.SqPrcEd.mainpgm = 'T_ARSSQLR'; // CalGetCaller();
-  pDsConnection.SqPrcEd.packagename = 'TEST'; // IfsGetTmpName();
+  pDsConnection.SqPrcEd.mainpgm = CalGetCaller(); 
+  pDsConnection.SqPrcEd.packagename = pDsConnection.SqPrcEd.mainpgm;
   
   return pInConnection;
 

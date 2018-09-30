@@ -1,18 +1,24 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCMBRR
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCMBRR
 
-      /COPY RPGUNIT1,TESTCASE
+/COPY RPGUNIT1,TESTCASE
 
-      //---------------------------------------------------------------*
-      // test_check_mbr
-      //---------------------------------------------------------------*
-       dcl-proc test_check_mbr export;
+//---------------------------------------------------------------*
+// test_check_mbr
+//---------------------------------------------------------------*
+dcl-proc test_check_mbr export;
 
+  dcl-s pAnDesc Char(50);
+  dcl-s pAnMbr Char(10) inz('QBNLMODI');
+  dcl-s pAnLib Char(10) inz('QSYSINC');
 
-       end-proc test_check_mbr;
+  iEqual(0:MbrCheck('QRPGLESRC':pAnMbr:pAnDesc:pAnLib));
+  aEqual('LIST MODULE INFORMATION API':pAnDesc);
+
+end-proc test_check_mbr;
 

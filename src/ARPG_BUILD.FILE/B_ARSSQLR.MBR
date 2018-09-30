@@ -18,7 +18,7 @@
                                  &LIBOBJ/ARSSQL02 +                         
                                  &LIBOBJ/ARSSQL03) +                         
                           SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Sql +    
-                          functions') BNDSRVPGM((ARSOORR)) +       
+                          functions') BNDSRVPGM((ARSOORR) (ARSCALR)) +       
                           OPTION(&RSLVREF)                         
                           
 /* Only build testcases if RPGUnit exists */
@@ -26,9 +26,8 @@
              CHKOBJ     OBJ(RUTESTCASE) OBJTYPE(*SRVPGM)
              MONMSG     MSGID(CPF9801) EXEC(GOTO CMDLBL(END))
 
-             CRTSQLRPGI OBJ(&LIBSRC/T_ARSSQLR) +               
-                          SRCFILE(&LIBSRC/ARPG_TEST) +         
-                          OBJTYPE(*MODULE) DBGVIEW(*SOURCE)    
+             CRTRPGMOD  MODULE(&LIBSRC/T_ARSSQLR) +
+                          SRCFILE(&LIBSRC/ARPG_TEST) DBGVIEW(*LIST)
              CRTSRVPGM  SRVPGM(T_ARSSQLR) EXPORT(*ALL) +       
                           BNDSRVPGM((ARSSQLR) (RUTESTCASE)) +  
                           OPTION(&RSLVREF)                     
