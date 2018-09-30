@@ -1,55 +1,57 @@
-      /IF NOT DEFINED (AR_QLG__)
+**free
+/IF NOT DEFINED (AR_QLG__)
 
-      /DEFINE AR_QLG__
+/DEFINE AR_QLG__
 
-      // Structure for CCSID based request
-       dcl-ds Qlg_CCSID_ReqCtlBlk_t qualified template;
-         Type_of_Request int(10);
-         CCSID_of_Input_Data int(10);
-         Case_Request int(10);
-         Reserved char(10);
-       end-ds;
+// Structure for CCSID based request
+dcl-ds Qlg_CCSID_ReqCtlBlk_t qualified template;
+  Type_of_Request int(10);
+  CCSID_of_Input_Data int(10);
+  Case_Request int(10);
+  Reserved char(10);
+end-ds;
 
-      // Structures for request using table (*TBL)
-       dcl-ds Qlg_Qual_Tbl_Name_t qualified template;
-         Tbl_Name char(10);
-         Lib char(10);
-       end-ds;
+// Structures for request using table (*TBL)
+dcl-ds Qlg_Qual_Tbl_Name_t qualified template;
+  Tbl_Name char(10);
+  Lib char(10);
+end-ds;
 
-       dcl-ds Qlg_Table_ReqCtlBlk_t qualified template;
-         Type_of_Request int(10);
-         DBCS_Indicator int(10);
-         Qual_Tbl_Name likeds(Qlg_Qual_Tbl_Name_t);
-       end-ds;
+dcl-ds Qlg_Table_ReqCtlBlk_t qualified template;
+  Type_of_Request int(10);
+  DBCS_Indicator int(10);
+  Qual_Tbl_Name likeds(Qlg_Qual_Tbl_Name_t);
+end-ds;
 
-      // Structure for request using a user-defined conversion map
-       dcl-ds UsrDef_ReqCtlBlk_t qualified template;
-         Type_of_Request int(10);
-         DBCS_Indicator int(10);
-         Reserved int(10);
-         Length int(10);
-         //  char CvtMap[];    Variable length field    */
-       end-ds;
+// Structure for request using a user-defined conversion map
+dcl-ds UsrDef_ReqCtlBlk_t qualified template;
+  Type_of_Request int(10);
+  DBCS_Indicator int(10);
+  Reserved int(10);
+  Length int(10);
+  //  char CvtMap[];    Variable length field    */
+end-ds;
 
-       dcl-ds Qlg_Path_Name_t qualified template;
-         CCSID  int(10);
-         Country_ID char(2);      // Country or region ID        */
-         Language_ID char(3);
-         Reserved char(3);
-         Path_Type uns(10);
-         Path_Length int(10);
-         Path_Name_Delimiter char(2);
-         Reserved2 char(10);
-         Path_Name char(65535);
-       end-ds;
+dcl-ds Qlg_Path_Name_t qualified template;
+  CCSID  int(10);
+  Country_ID char(2);      // Country or region ID        */
+  Language_ID char(3);
+  Reserved char(3);
+  Path_Type uns(10);
+  Path_Length int(10);
+  Path_Name_Delimiter char(2);
+  Reserved2 char(10);
+  Path_Name char(65535);
+end-ds;
 
-      // Macros for Path_Type in the Qlg_Path_Name structure.
-       dcl-c QLG_CHAR_SINGLE              0;
-       dcl-c QLG_PTR_SINGLE               1;
-       dcl-c QLG_CHAR_DOUBLE              2;
-       dcl-c QLG_PTR_DOUBLE               3;
+// Macros for Path_Type in the Qlg_Path_Name structure.
+dcl-c QLG_CHAR_SINGLE              0;
+dcl-c QLG_PTR_SINGLE               1;
+dcl-c QLG_CHAR_DOUBLE              2;
+dcl-c QLG_PTR_DOUBLE               3;
 
-       dcl-c QLG_CURRENT_JOB_CCSID       0;         // current job CCSID
-       dcl-c QLG_CURRENT_JOB_REGION      x'0000';   // Job Country/Region
-       dcl-c QLG_CURRENT_JOB_LANGUAGE    x'000000'; // Job Country/Region
-      /ENDIF
+dcl-c QLG_CURRENT_JOB_CCSID       0;         // current job CCSID
+dcl-c QLG_CURRENT_JOB_REGION      x'0000';   // Job Country/Region
+dcl-c QLG_CURRENT_JOB_LANGUAGE    x'000000'; // Job Country/Region
+
+/ENDIF

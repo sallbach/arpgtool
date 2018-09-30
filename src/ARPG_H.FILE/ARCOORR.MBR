@@ -1,39 +1,41 @@
-      /IF DEFINED (AR_OORR__)
-      /EOF
-      /ENDIF
+**free
+/IF DEFINED (AR_OORR__)
 
-      /DEFINE AR_OORR__
-      /INCLUDE ARPG_H,ARCTYPES
+/DEFINE AR_OORR__
+/INCLUDE ARPG_H,ARCTYPES
 
-      //---------------------------------------------------------------*
-      // OoRObjectNew
-      //---------------------------------------------------------------*
-       dcl-pr OoRObjectNew int(10) extproc(*dclcase);
-         pAnRef  char(11) value;
-         pPtRef  pointer;
-         pInSize like(size_t) value options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// OoRObjectNew
+//---------------------------------------------------------------*
+dcl-pr OoRObjectNew int(10) extproc(*dclcase);
+  pAnRef  char(11) value;
+  pPtRef  pointer;
+  pInSize like(size_t) value options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // OoRObjectGet
-      //---------------------------------------------------------------*
-       dcl-pr OoRObjectGet pointer extproc(*dclcase);
-         pAnRef char(11) value;
-         pInObj int(10)  value;
-       end-pr;
+//---------------------------------------------------------------*
+// OoRObjectGet
+//---------------------------------------------------------------*
+dcl-pr OoRObjectGet pointer extproc(*dclcase);
+  pAnRef char(11) value;
+  pInObj int(10)  value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // OoRObjectIsValid
-      //---------------------------------------------------------------*
-       dcl-pr OoRObjectIsValid ind extproc(*dclcase);
-         pAnRef char(11) value;
-         pInObj int(10)  value;
-       end-pr;
+//---------------------------------------------------------------*
+// OoRObjectIsValid
+//---------------------------------------------------------------*
+dcl-pr OoRObjectIsValid ind extproc(*dclcase);
+  pAnRef char(11) value;
+  pInObj int(10)  value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // OoRObjectFree
-      //---------------------------------------------------------------*
-       dcl-pr OoRObjectFree int(10) extproc(*dclcase);
-         pAnRef char(11) value;
-         pInObj int(10)  value;
-       end-pr;
+//---------------------------------------------------------------*
+// OoRObjectFree
+//---------------------------------------------------------------*
+dcl-pr OoRObjectFree int(10) extproc(*dclcase);
+  pAnRef char(11) value;
+  pInObj int(10)  value;
+end-pr;
+  
+/ENDIF
+   

@@ -1,136 +1,138 @@
-      /IF NOT DEFINED (AR_STRING__)
+**free
+/IF NOT DEFINED (AR_STRING__)
 
-      /DEFINE AR_STRING__
-      /INCLUDE ARPG_H,ARCTYPES
+/DEFINE AR_STRING__
+/INCLUDE ARPG_H,ARCTYPES
 
-      //---------------------------------------------------------------*
-      // strcpy
-      //---------------------------------------------------------------*
-       dcl-pr strcpy pointer extproc(*dclcase);
-         dest pointer value;
-         src  pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// strcpy
+//---------------------------------------------------------------*
+dcl-pr strcpy pointer extproc(*dclcase);
+  dest pointer value;
+  src  pointer value options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // strncpy
-      //---------------------------------------------------------------*
-       dcl-pr strncpy pointer extproc(*dclcase);
-         dest pointer value;
-         src  pointer value options(*string);
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// strncpy
+//---------------------------------------------------------------*
+dcl-pr strncpy pointer extproc(*dclcase);
+  dest pointer value;
+  src  pointer value options(*string);
+  len  like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // strncat
-      //---------------------------------------------------------------*
-       dcl-pr strcat pointer extproc(*dclcase);
-         dest pointer value;
-         src  pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// strncat
+//---------------------------------------------------------------*
+dcl-pr strcat pointer extproc(*dclcase);
+  dest pointer value;
+  src  pointer value options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // strncat
-      //---------------------------------------------------------------*
-       dcl-pr strncat pointer extproc(*dclcase);
-         dest pointer value;
-         src  pointer value options(*string);
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// strncat
+//---------------------------------------------------------------*
+dcl-pr strncat pointer extproc(*dclcase);
+  dest pointer value;
+  src  pointer value options(*string);
+  len  like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // strlen
-      //---------------------------------------------------------------*
-       dcl-pr strlen like(size_t) extproc(*dclcase);
-         src  pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// strlen
+//---------------------------------------------------------------*
+dcl-pr strlen like(size_t) extproc(*dclcase);
+  src  pointer value options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // strcmp
-      //---------------------------------------------------------------*
-       dcl-pr strcmp int(10) extproc(*dclcase);
-         dest pointer value options(*string);
-         src  pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// strcmp
+//---------------------------------------------------------------*
+dcl-pr strcmp int(10) extproc(*dclcase);
+  dest pointer value options(*string);
+  src  pointer value options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // strncmp
-      //---------------------------------------------------------------*
-       dcl-pr strncmp int(10) extproc(*dclcase);
-         dest pointer value options(*string);
-         src  pointer value options(*string);
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// strncmp
+//---------------------------------------------------------------*
+dcl-pr strncmp int(10) extproc(*dclcase);
+  dest pointer value options(*string);
+  src  pointer value options(*string);
+  len  like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // strtok
-      //---------------------------------------------------------------*
-       dcl-pr strtok pointer extproc(*dclcase);
-         string pointer value options(*string);
-         token  pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// strtok
+//---------------------------------------------------------------*
+dcl-pr strtok pointer extproc(*dclcase);
+  string pointer value options(*string);
+  token  pointer value options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // strstr
-      //---------------------------------------------------------------*
-       dcl-pr strstr pointer extproc(*dclcase);
-         string pointer value options(*string);
-         token  pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// strstr
+//---------------------------------------------------------------*
+dcl-pr strstr pointer extproc(*dclcase);
+   string pointer value options(*string);
+   token  pointer value options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // memcmp
-      //---------------------------------------------------------------*
-       dcl-pr memcmp int(10) extproc(*dclcase);
-         dest pointer value;
-         src  pointer value options(*string);
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// memcmp
+//---------------------------------------------------------------*
+dcl-pr memcmp int(10) extproc(*dclcase);
+  dest pointer value;
+  src  pointer value options(*string);
+  len  like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // memcpy
-      //---------------------------------------------------------------*
-       dcl-pr memcpy pointer extproc(*dclcase);
-         dest pointer value;
-         src  pointer value;
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// memcpy
+//---------------------------------------------------------------*
+dcl-pr memcpy pointer extproc(*dclcase);
+  dest pointer value;
+  src  pointer value;
+  len  like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // memmove
-      //---------------------------------------------------------------*
-       dcl-pr memmove pointer extproc(*dclcase);
-         dest pointer value;
-         src  pointer value;
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// memmove
+//---------------------------------------------------------------*
+dcl-pr memmove pointer extproc(*dclcase);
+  dest pointer value;
+  src  pointer value;
+  len  like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // memset
-      //---------------------------------------------------------------*
-       dcl-pr memset pointer extproc(*dclcase);
-         dest pointer value;
-         val  char(1) value;
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// memset
+//---------------------------------------------------------------*
+dcl-pr memset pointer extproc(*dclcase);
+  dest pointer value;
+  val  char(1) value;
+  len  like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // atoi
-      //---------------------------------------------------------------*
-       dcl-pr atoi int(10) extproc(*dclcase);
-         atr pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// atoi
+//---------------------------------------------------------------*
+dcl-pr atoi int(10) extproc(*dclcase);
+  atr pointer value options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // atol
-      //---------------------------------------------------------------*
-       dcl-pr atol int(20) extproc(*dclcase);
-         atr pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// atol
+//---------------------------------------------------------------*
+dcl-pr atol int(20) extproc(*dclcase);
+  atr pointer value options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // atof
-      //---------------------------------------------------------------*
-       dcl-pr atof float(8) extproc(*dclcase);
-         atr pointer value options(*string);
-       end-pr;
-      /ENDIF
+//---------------------------------------------------------------*
+// atof
+//---------------------------------------------------------------*
+dcl-pr atof float(8) extproc(*dclcase);
+  atr pointer value options(*string);
+end-pr;
+
+/ENDIF

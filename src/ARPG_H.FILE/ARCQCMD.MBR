@@ -1,44 +1,45 @@
-      /IF NOT DEFINED (AR_QCMD__)
+**free
+/IF NOT DEFINED (AR_QCMD__)
 
-      /DEFINE AR_QCMD__
+/DEFINE AR_QCMD__
 
-      //---------------------------------------------------------------*
-      // Execute Command (QCMDEXC) API
-      //---------------------------------------------------------------*
-       dcl-pr CmdExc extpgm('QCMDEXC');
-         command char(65535) const options(*varsize);
-         length packed(15:5) const;
-         icg char(3) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Execute Command (QCMDEXC) API
+//---------------------------------------------------------------*
+dcl-pr CmdExc extpgm('QCMDEXC');
+  command char(65535) const options(*varsize);
+  length packed(15:5) const;
+  icg char(3) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Check Command Syntax (QCMDCHK) API
-      //---------------------------------------------------------------*
-       dcl-pr CmdChk extpgm('QCMDEXC');
-         command char(65535) options(*varsize);
-         length packed(15:5) const;
-         icg char(3) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// Check Command Syntax (QCMDCHK) API
+//---------------------------------------------------------------*
+dcl-pr CmdChk extpgm('QCMDEXC');
+  command char(65535) options(*varsize);
+  length packed(15:5) const;
+  icg char(3) const options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Process Commands (QCAPCMD) API
-      //---------------------------------------------------------------*
-       dcl-pr CapCmd extpgm('QCAPCMD');
-         command char(65535) const options(*varsize);
-         length int(10) const;
-         ocb char(65535) const options(*varsize);
-         ocblength int(10) const;
-         ocbform char(8) const;
-         chgcmd char(65535) options(*varsize);
-         cclenavail int(10) const;
-         cclenret int(10);
-         uSec char(65535) options(*varsize) noopt;
-       end-pr;
+//---------------------------------------------------------------*
+// Process Commands (QCAPCMD) API
+//---------------------------------------------------------------*
+dcl-pr CapCmd extpgm('QCAPCMD');
+  command char(65535) const options(*varsize);
+  length int(10) const;
+  ocb char(65535) const options(*varsize);
+  ocblength int(10) const;
+  ocbform char(8) const;
+  chgcmd char(65535) options(*varsize);
+  cclenavail int(10) const;
+  cclenret int(10);
+  uSec char(65535) options(*varsize) noopt;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // Display Command Line Window (QUSCMDLN) API
-      //---------------------------------------------------------------*
-       dcl-pr UsCmdLn extpgm('QUSCMDLN');
-       end-pr;
+//---------------------------------------------------------------*
+// Display Command Line Window (QUSCMDLN) API
+//---------------------------------------------------------------*
+dcl-pr UsCmdLn extpgm('QUSCMDLN');
+end-pr;
 
-      /ENDIF
+/ENDIF

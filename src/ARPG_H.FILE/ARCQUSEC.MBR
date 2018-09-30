@@ -1,23 +1,25 @@
-      /IF NOT DEFINED (AR_QUSEC__)
+**free
+/IF NOT DEFINED (AR_QUSEC__)
 
-      /DEFINE AR_QUSEC__
+/DEFINE AR_QUSEC__
 
-      //---------------------------------------------------------------*
-      // QUSec - suppress exceptions
-      //---------------------------------------------------------------*
-       dcl-ds QUSecF qualified;
-         BytP int(10) inz(%size(QUSecF));
-         BytA int(10);
-         Excp char(7);
-         Resv char(256);
-       end-ds;
-      //---------------------------------------------------------------*
-      // QUSec - throw exceptions
-      //---------------------------------------------------------------*
-       dcl-ds QUSecExcp qualified;
-         BytP int(10) inz(0);
-         BytA int(10);
-         Excp char(7);
-         Resv char(1);
-       end-ds;
-      /ENDIF
+//---------------------------------------------------------------*
+// QUSec - suppress exceptions
+//---------------------------------------------------------------*
+dcl-ds QUSecF qualified;
+  BytP int(10) inz(%size(QUSecF));
+  BytA int(10);
+  Excp char(7);
+  Resv char(256);
+end-ds;
+//---------------------------------------------------------------*
+// QUSec - throw exceptions
+//---------------------------------------------------------------*
+dcl-ds QUSecExcp qualified;
+  BytP int(10) inz(0);
+  BytA int(10);
+  Excp char(7);
+  Resv char(1);
+end-ds;
+
+/ENDIF
