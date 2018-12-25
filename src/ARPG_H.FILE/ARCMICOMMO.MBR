@@ -1,0 +1,108 @@
+**free
+/IF NOT DEFINED (AR_MICOMMON__)
+
+/DEFINE AR_MICOMMON__
+
+//----------------------------------------------------------------            
+// The standard definition for time in the MI library:                        
+//----------------------------------------------------------------            
+dcl-s MI_TIME char(8) template;                                 
+dcl-s MI_REQ_AUTH uns(5) template;                                 
+                                                                                
+//----------------------------------------------------------------            
+// Basic instruction template of RSLVSP, which is of length 34 bytes.         
+//----------------------------------------------------------------            
+dcl-ds rslvsp_tmpl_t qualified template;                       
+  obj_type char(2);                                            
+  obj_name char(30);                                            
+  auth char(2) inz(x'0000'); // required authorization                             
+end-ds;
+                                                                                
+//----------------------------------------------------------------            
+// constants                                              
+//----------------------------------------------------------
+dcl-c MI_AUTH_OBJ_CTRL x'8000';               
+dcl-c MI_AUTH_OBJ_MGMT x'4000';                
+dcl-c MI_AUTH_POINTER  x'2000';               
+dcl-c MI_AUTH_SPACE    x'1000';               
+dcl-c MI_AUTH_RETRIEVE x'0800';               
+dcl-c MI_AUTH_INSERT   x'0400';               
+dcl-c MI_AUTH_DELETE   x'0200';               
+dcl-c MI_AUTH_UPDATE   x'0100';               
+dcl-c MI_AUTH_OWNER    x'0080';               
+dcl-c MI_AUTH_EXCLUDED x'0040';         
+dcl-c MI_AUTH_LST_MGMT x'0020';         
+dcl-c MI_AUTH_EXECUTE  x'0010';         
+dcl-c MI_AUTH_ALTER    x'0008';         
+dcl-c MI_AUTH_REF      x'0004';         
+dcl-c MI_AUTH_ALL      x'FF1C';         
+dcl-c MI_AUTH_NONE     x'0000';        
+dcl-c MI_AUTH_ANY      x'0001';         
+                                                       
+dcl-c MI_PTR_T_NULL    x'00';           
+dcl-c MI_PTR_T_SYS     x'01';      
+dcl-c MI_PTR_T_SPC     x'02';      
+dcl-c MI_PTR_T_DATA    x'03';      
+dcl-c MI_PTR_T_INSTR   x'04';      
+dcl-c MI_PTR_T_INV     x'05';      
+dcl-c MI_PTR_T_PROC    x'06';      
+dcl-c MI_PTR_T_LBL     x'07';      
+dcl-c MI_PTR_T_SUSP    x'08';      
+dcl-c MI_PTR_T_SYNC    x'09';      
+
+//---------------------------------------------------------------*      
+// Convert Hex to Character (CVTHC)                                     
+//---------------------------------------------------------------*      
+dcl-pr cvthc int(10) extproc(*dclcase);
+  hex  char(65534) options(*varsize);                 
+  char char(32767) const options(*varsize);            
+  len  int(10) value;                             
+end-pr;
+                                                                         
+//---------------------------------------------------------------*      
+// Convert Character to Hex (CVTCH)                                     
+//---------------------------------------------------------------*      
+dcl-pr cvtch int(10) extproc(*dclcase);
+  char char(32767) options(*varsize);                  
+  hex  char(65534) const options(*varsize);           
+  len  int(10) value;                             
+end-pr;
+                                                                         
+//---------------------------------------------------------------*      
+// Resolve System Pointer (RSLVSP)                                      
+//---------------------------------------------------------------*      
+dcl-pr rslvsp pointer(*proc) extproc(*dclcase);         
+  HexObj  char(2) value;                             
+  Object  pointer value options(*string);                  
+  Library pointer value options(*string);                  
+  Auth    char(2) value;                                   
+end-pr;
+                                                                               
+//---------------------------------------------------------------*      
+// Resolve System Pointer (RSLVSP2)                                           
+//---------------------------------------------------------------*      
+dcl-pr rslvsp2 extproc('_RSLVSP2');                     
+  obj pointer;                                    
+  otp likeds(rslvsp_tmpl_t);
+end-pr;             
+                                                                               
+//---------------------------------------------------------------*      
+// Resolve System Pointer (RSLVSP4)                                           
+//---------------------------------------------------------------*      
+dcl-pr rslvsp4 extproc('_RSLVSP4');                     
+  obj pointer;                                    
+  otp likeds(rslvsp_tmpl_t);
+  lib pointer;                                    
+end-pr;             
+                                                                               
+//---------------------------------------------------------------*      
+// Convert Type (QLICVTTP) API                                      
+//---------------------------------------------------------------*      
+dcl-pr Q_LicVttp extpgm('QLICVTTP');                     
+  Conversion char(10) const;                        
+  SymObj char(10) const;                                  
+  HexObj char(2);                                 
+  Usec char(65535) options(*varsize) noopt;      
+end-pr;             
+
+/ENDIF

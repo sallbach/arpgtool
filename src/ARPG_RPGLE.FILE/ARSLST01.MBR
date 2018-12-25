@@ -1,0 +1,318 @@
+**Free
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// files
+//---------------------------------------------------------------*
+dcl-f ARFLSTA disk
+              usage(*update:*delete)
+              keyed;
+
+dcl-f ARFLSTA02 disk
+                usage(*update:*delete)
+                rename(ArfLStar:ArfLSta2r)
+                keyed;
+
+dcl-f ARFLSTV disk
+              usage(*update:*delete)
+              keyed;
+
+dcl-f QAMHJLPR disk
+               usage(*update:*delete)
+               rename(QMHPFT:QAMHJLPRr)
+               extfile(gAnQAMHJLPR)
+               extmbr(gAnOpenMbr)
+               usropn
+               infds(gInfQAMHJLPR);
+
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCLSTA
+/COPY ARPG_H,ARCJOBF
+/COPY ARPG_H,ARCCMDE
+/COPY ARPG_H,ARCMBRR
+/COPY ARPG_H,ARCSTRR
+/COPY ARPG_H,ARCQCEE
+/COPY ARPG_H,ARCUNISTD
+
+//---------------------------------------------------------------*
+// global variables
+//---------------------------------------------------------------*
+dcl-s gAnQAMHJLPR char(21);
+dcl-s gAnQAMHJLPRMbr char(10);
+dcl-s gAnOpenMbr char(10);
+dcl-s gInDest int(10) inz(-1);
+dcl-s gBoFirst ind inz(*on);
+
+//---------------------------------------------------------------*
+// global data structures
+//---------------------------------------------------------------*
+dcl-ds gInfQAMHJLPR qualified;
+  member char(10) pos(129);
+  records int(10) pos(156);
+end-ds;
+
+dcl-ds gDsQAMHJLPR extname('QAMHJLPR')
+end-ds;
+
+//---------------------------------------------------------------*
+//  LogStashStartLogger
+//---------------------------------------------------------------*
+//* Logging Server.
+//* <P>
+//* Reads the given log file, converts the messages with the given
+//* converter functions and sends the data to the handle of the connection
+//* function. After sending all messages the connection will be closed and
+//* reopened if there a new messages after the delay.
+//*
+//* @param pPtConnect - Function which opens the connection 
+//* @param pDsSettings - Logging settings. See LogStash_t. 
+//*
+//* @return &gt;0 - a valid reference, else -1.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashStartLogger export;
+  dcl-pi *N int(10);
+    pPtConnect pointer(*proc) value;
+    pDsSettings likeds(LogStash_t) value options(*nopass);
+  end-pi;
+
+  dcl-ds pDsSettings_ likeds(LogStash_t) inz(*likeds);
+
+  if gBoFirst;
+    CeeRegActGrpExit(%PAddr('LogStashFinalize'):*Omit);
+    gBoFirst = *off;
+  endif;
+
+  if %parms() >= %parmnum(pDsSettings);
+    pDsSettings_ = pDsSettings;
+  endif;
+
+  gAnQAMHJLPR = %trim(pDsSettings_.loglib) + '/' + pDsSettings_.logfile;
+
+  dou %shtdn() Or pDsSettings_.server < 1;
+
+    // Read all logs over all members
+    if LogStashReader(pPtConnect:pDsSettings_) = -1;
+      return -1;
+    endif;
+
+    // check inactive members
+    LogStashCheckIMbr();
+
+    // remove old empty members
+    LogStashRmvOldMbr();
+
+    // Check all jobs if they are still running
+    LogStashCheckJobs();
+
+    if pDsSettings_.server > 0;
+      sleep(pDsSettings_.server);
+    endif;
+
+  enddo;
+
+  return 0;
+
+end-proc LogStashStartLogger;
+//---------------------------------------------------------------*
+// Reader
+//---------------------------------------------------------------*
+dcl-proc LogStashReader;
+  dcl-pi *N int(10);
+	pPtConnect pointer(*proc) value;
+    pDsSettings likeds(LogStash_t) value;
+  end-pi;
+
+  dcl-s pBoIgnMsg ind;
+
+  dcl-pr connect int(10) extproc(pPtConnect);
+  end-pr;
+
+  gPtStashIsStartMsg = pDsSettings.startmsg;
+  gPtStashIsEndMsg = pDsSettings.endmsg;
+  gPtStashWriteMessage = pDsSettings.writer;
+  gInDest = -1;
+ 
+  gAnOpenMbr = API_ALL;
+  open QAMHJLPR; // LogStash
+
+  read QAMHJLPRr;
+  dow not %eof(QAMHJLPR) and
+        not %shtdn();
+
+    gAnQAMHJLPRMbr = gInfQAMHJLPR.member;
+
+    chain(n) (gAnQAMHJLPRMbr) ArfLStar;
+    if not %found();
+      close QAMHJLPR; // LStash01
+      LogStashRmvMbr(pDsSettings.logfile:pDsSettings.loglib:gAnQAMHJLPRMbr);
+      if LogStashReader(pPtConnect:pDsSettings) = -1;
+        return -1;
+      endif;
+      return 0;
+    endif;
+
+    dow not %eof(QAMHJLPR) and
+          not %shtdn() and
+          gAnQAMHJLPRMbr = gInfQAMHJLPR.member;
+
+      pBoIgnMsg = *off;
+      if IntLogStashIsStartMsg(gDsQAMHJLPR);
+        chain (gAnQAMHJLPRMbr) ArfLStar;
+        LsLOn = ON;
+        LsTime = %timestamp();
+        update ArfLStar;
+        pBoIgnMsg = *on;
+      elseif IntLogStashIsEndMsg(gDsQAMHJLPR);
+        chain (gAnQAMHJLPRMbr) ArfLStar;
+        LsLOn = OFF;
+        LsTime = %timestamp();
+        update ArfLStar;
+        pBoIgnMsg = *on;
+      elseif LogStashIsVarMsg(gDsQAMHJLPR);
+        pBoIgnMsg = *on;
+      endif;
+
+      if LsLOn = *On And not pBoIgnMsg;
+        if gInDest = -1;
+          gInDest = connect(); 
+          if gInDest = -1;
+            return -1;
+          endif;
+        endif;
+        if IntLogStashWriteMessage(gInDest:gDsQAMHJLPR:pDsSettings) <> 0;
+          return -1;
+        endif;
+      endif;
+
+      delete QAMHJLPRr;
+      read QAMHJLPRr;
+    enddo;
+
+    if LsStat = LSTASH_STAT_INACTIVE;
+      chain (gAnQAMHJLPRMbr) ArfLStar;
+      LsStat = LSTASH_STAT_DELETE;
+      LsTime = %timestamp();
+      update ArfLStar;
+    endif;
+
+  enddo;
+
+  close_(gInDest);
+  gInDest = -1;
+  close QAMHJLPR; // LStash01
+
+  return 0;
+
+end-proc LogStashReader;
+//---------------------------------------------------------------*
+// Remove old members
+//---------------------------------------------------------------*
+dcl-proc LogStashRmvOldMbr;
+
+  setll (LSTASH_STAT_DELETE:*Loval) ArfLSta2r;
+  reade (LSTASH_STAT_DELETE) ArfLSta2r;
+  dow not %eof;
+    if LogStashRmvMbr(LsFile:LsLib:LsMbr) = 0;
+      delete ArfLSta2r;
+    endif;
+    reade (LSTASH_STAT_DELETE) ArfLSta2r;
+  enddo;
+
+  unlock ArfLSta02;
+
+  return;
+
+end-proc LogStashRmvOldMbr;
+//---------------------------------------------------------------*
+// Remove member
+//---------------------------------------------------------------*
+dcl-proc LogStashRmvMbr;
+  dcl-pi *N int(10);
+    pAnFile char(10) value;
+    pAnLib char(10) value;
+    pAnMbr char(10) value;
+  end-pi;
+
+  if MbrCheck(pAnFile:pAnMbr:*Omit:pAnLib) <> 0;
+    return 0; // Member doesn't exist anymore
+  endif;
+
+  return CmdExec(
+           StrFillValues('RMVM FILE(&2/&1) MBR(&3)'
+                        :%trim(pAnFile)
+                        :%trim(pAnLib)
+                        :%trim(pAnMbr)));
+
+end-proc LogStashRmvMbr;
+//---------------------------------------------------------------*
+// Check Jobs
+//---------------------------------------------------------------*
+dcl-proc LogStashCheckJobs;
+
+  // check if jobs have finished
+  setll (LSTASH_STAT_ACTIVE:*Loval) ArfLSta2r;
+  reade (LSTASH_STAT_ACTIVE) ArfLSta2r;
+  dow not %eof;
+    if not JobIsRunning(LsJob:LsUser:LsJNum);
+      LsStat = LSTASH_STAT_INACTIVE;
+      LsTime = %timestamp();
+      update ArfLSta2r;
+    endif;
+    reade (LSTASH_STAT_ACTIVE) ArfLSta2r;
+  enddo;
+
+  unlock ArfLSta02;
+
+  return;
+
+end-proc LogStashCheckJobs;
+//---------------------------------------------------------------*
+// Check Inactive Members
+//---------------------------------------------------------------*
+dcl-proc LogStashCheckIMbr;
+
+  // check if jobs have finished
+  setll (LSTASH_STAT_INACTIVE:*Loval) ArfLSta2r;
+  reade (LSTASH_STAT_INACTIVE) ArfLSta2r;
+  dow not %eof;
+    gAnOpenMbr = LsMbr;
+    open(e) QAMHJLPR; // LogStash
+    if %error;
+      LsStat = LSTASH_STAT_DELETE;
+    else;
+      read QAMHJLPRr;
+      if %eof;
+        LsStat = LSTASH_STAT_DELETE;
+      endif;
+      close(e) QAMHJLPR; // LogStash             
+    endif;
+    if LsStat = LSTASH_STAT_DELETE;
+      LsTime = %timestamp();
+      update ArfLSta2r;
+    endif;
+    reade (LSTASH_STAT_INACTIVE) ArfLSta2r;
+  enddo;
+
+  unlock ArfLSta02;
+
+  return;
+
+end-proc LogStashCheckIMbr;
+//---------------------------------------------------------------*
+// LogStashFinalize
+//---------------------------------------------------------------*
+dcl-proc LogStashFinalize;
+
+  callp(e) close_(gInDest);
+  gInDest = -1;
+
+  return;
+
+end-proc LogStashFinalize;
+ 

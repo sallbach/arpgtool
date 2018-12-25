@@ -1,0 +1,33 @@
+**free
+/IF NOT DEFINED (AR_QOBJD__)
+
+/DEFINE AR_QOBJD__
+
+//---------------------------------------------------------------*
+//  Retrieve Object Description
+//---------------------------------------------------------------*
+dcl-pr Q_UsRObjD extpgm('QUSROBJD');
+  result char(65535) options(*varsize);
+  length int(10) const;
+  form char(8) const;
+  object char(20) const;
+  objecttype char(10) const;
+  usec char(65535) options(*varsize:*nopass) noopt;
+  asp char(65535) options(*varsize:*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+//  List Objects 
+//---------------------------------------------------------------*
+dcl-pr Q_UsLObj extpgm('QUSLOBJ');
+  userspace char(20) const;
+  form char(8) const;
+  object char(20) const;
+  objecttype char(10) const;
+  usec char(65535) options(*varsize:*nopass) noopt;
+  auth char(65535) options(*varsize:*nopass) const;
+  PAnSelc char(65535) options(*varsize:*nopass) const;
+  PAnAuxl char(65535) options(*varsize:*nopass) const;
+end-pr;
+
+/ENDIF

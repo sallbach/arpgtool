@@ -1,0 +1,41 @@
+Create or Replace table LogStashVarTable for system name ARFLSTV
+(
+  LStv_jobname     for LVJOB  Char(10) not null,
+  LStv_jobuser     for LVUSER Char(10) not null,
+  LStv_jobnumber   for LVJNUM Char(6)  not null,
+  LStv_sequence    for LVSEQ  int      not null,
+  LStv_variable    for LVVAR  Varchar(50)   allocate(30) not null,
+  LStv_logfile     for LVVAL  Varchar(1024) allocate(30) not null,
+  LStv_change_time for LVTIME Timestamp not null
+                                            with default current_timestamp,
+
+  primary key (LStv_jobname,
+               LStv_jobuser,
+               LStv_jobnumber,
+               LStv_variable)
+
+)  RcdFmt ARFLSTVR;
+
+Label on Table ARFLSTV is 'LogStash Variable Table';
+
+Label on Column ARFLSTV
+(
+  LVJOB   is 'Job name',
+  LVUSER  is 'Job user',
+  LVJNUM  is 'Job number',
+  LVSEQ   is 'Sequence',
+  LVVAR   is 'Variable name',
+  LVVAL   is 'Variable value',
+  LVTIME  is 'Last changed time'
+);
+
+Label on Column ARFLSTV
+(
+  LVJOB   text is 'Job name',
+  LVUSER  text is 'Job user',
+  LVJNUM  text is 'Job number',
+  LVSEQ   text is 'Sequence',
+  LVVAR   text is 'Variable name',
+  LVVAL   text is 'Variable value',
+  LVTIME  text is 'Last changed time'
+);

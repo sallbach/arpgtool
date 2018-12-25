@@ -1,80 +1,80 @@
-      /IF DEFINED (AR_APRCORE__)
-      /EOF
-      /ENDIF
+**free
+/IF NOT DEFINED (AR_APRCORE__)
 
-      /DEFINE AR_APRCORE__
-      /INCLUDE ARPG_H,ARCTYPES
+/DEFINE AR_APRCORE__
+/INCLUDE ARPG_H,ARCTYPES
 
-      //---------------------------------------------------------------*
-      // Apache Portable Runtime Utility Library: APR Utility Functions
-      //---------------------------------------------------------------*
-      // qhttpsvr/QZSRAPR
-      //---------------------------------------------------------------*
-      // https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_73/
-      // rzaie/apr_core_api/group___a_p_r___util.html
-      //---------------------------------------------------------------*
+//---------------------------------------------------------------*
+// Apache Portable Runtime Utility Library: APR Utility Functions
+//---------------------------------------------------------------*
+// qhttpsvr/QZSRAPR
+//---------------------------------------------------------------*
+// https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_73/
+// rzaie/apr_core_api/group___a_p_r___util.html
+//---------------------------------------------------------------*
 
-      //---------------------------------------------------------------*
-      // int isAsciiCcsid (int ccsid )
-      //---------------------------------------------------------------*
-       dcl-pr isAsciiCcsid int(10) extproc(*dclcase);
-         ccsid int(10) value;
-       end-pr;
+//---------------------------------------------------------------*
+// int isAsciiCcsid (int ccsid )
+//---------------------------------------------------------------*
+dcl-pr isAsciiCcsid int(10) extproc(*dclcase);
+  ccsid int(10) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // int isEbcdicCcsid (int ccsid )
-      //---------------------------------------------------------------*
-       dcl-pr isEbcdicCcsid int(10) extproc(*dclcase);
-         ccsid int(10) value;
-       end-pr;
+//---------------------------------------------------------------*
+// int isEbcdicCcsid (int ccsid )
+//---------------------------------------------------------------*
+dcl-pr isEbcdicCcsid int(10) extproc(*dclcase);
+  ccsid int(10) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // int apr_base64_encode_len (int len)
-      //---------------------------------------------------------------*
-       dcl-pr apr_base64_encode_len int(10) extproc(*dclcase);
-         len int(10) value;
-       end-pr;
+//---------------------------------------------------------------*
+// int apr_base64_encode_len (int len)
+//---------------------------------------------------------------*
+dcl-pr apr_base64_encode_len int(10) extproc(*dclcase);
+  len int(10) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // int apr_base64_encode (char *coded_dst,
-      //                        const char *plain_src, int len_plain_src)
-      //---------------------------------------------------------------*
-       dcl-pr apr_base64_encode int(10) extproc(*dclcase);
-         coded_dst pointer value;
-         plain_src pointer value options(*string);
-         len_plain_src like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// int apr_base64_encode (char *coded_dst,
+//                        const char *plain_src, int len_plain_src)
+//---------------------------------------------------------------*
+dcl-pr apr_base64_encode int(10) extproc(*dclcase);
+  coded_dst pointer value;
+  plain_src pointer value options(*string);
+  len_plain_src like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // int apr_base64_encode_binary (char *coded_dst, const unsigned
-      //                               char *plain_src, int len_plain_src)
-      //---------------------------------------------------------------*
-       dcl-pr apr_base64_encode_binary int(10) extproc(*dclcase);
-         coded_dst pointer value;
-         plain_src pointer value;
-         len_plain_src like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// int apr_base64_encode_binary (char *coded_dst, const unsigned
+//                               char *plain_src, int len_plain_src)
+//---------------------------------------------------------------*
+dcl-pr apr_base64_encode_binary int(10) extproc(*dclcase);
+  coded_dst pointer value;
+  plain_src pointer value;
+  len_plain_src like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // int apr_base64_decode_len (const char *coded_src)
-      //---------------------------------------------------------------*
-       dcl-pr apr_base64_decode_len int(10) extproc(*dclcase);
-         coded_src pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// int apr_base64_decode_len (const char *coded_src)
+//---------------------------------------------------------------*
+dcl-pr apr_base64_decode_len int(10) extproc(*dclcase);
+  coded_src pointer value options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // int apr_base64_decode (char *plain_dst, const char *coded_src)
-      //---------------------------------------------------------------*
-       dcl-pr apr_base64_decode int(10) extproc(*dclcase);
-         plain_dst pointer value;
-         coded_src pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// int apr_base64_decode (char *plain_dst, const char *coded_src)
+//---------------------------------------------------------------*
+dcl-pr apr_base64_decode int(10) extproc(*dclcase);
+  plain_dst pointer value;
+  coded_src pointer value options(*string);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // int apr_base64_decode_binary (unsigned char *plain_dst,
-      //                               const char *coded_src)
-      //---------------------------------------------------------------*
-       dcl-pr apr_base64_decode_binary int(10) extproc(*dclcase);
-         plain_dst pointer value;
-         coded_src pointer value;
-       end-pr;
+//---------------------------------------------------------------*
+// int apr_base64_decode_binary (unsigned char *plain_dst,
+//                               const char *coded_src)
+//---------------------------------------------------------------*
+dcl-pr apr_base64_decode_binary int(10) extproc(*dclcase);
+  plain_dst pointer value;
+  coded_src pointer value;
+end-pr;
+/ENDIF

@@ -1,155 +1,496 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCSTRR
-      /COPY ARPG_H,ARCSTRING
-      /COPY ARPG_H,ARCICONV
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCSTRR
+/COPY ARPG_H,ARCSTRING
+/COPY ARPG_H,ARCICONV
 
-      //---------------------------------------------------------------*
-      //  StrIConv
-      //---------------------------------------------------------------*
-      //* Convert String from one CCSID to another.
-      //*
-      //* @param pAnRef - Program reference. You should use the field
-      //*                 "program name" of the system data structure (SDS).
-      //* @param pPtRef - Pointer <> *Null of the referenced data.
-      //*
-      //* @return pointer to the new data.
-      //*         you have to deallocate this pointer !
-      //*
-      //* @diag messageCode to be defined
-      //*
-      //* @Author S.Allbach
-      //---------------------------------------------------------------*
-       dcl-proc StrIConv export;
-         dcl-pi *N pointer;
-           pPtStr    pointer value options(*string);
-           pInFrom   int(10) const;
-           pInTo     int(10) const;
-           pUiOutLen like(size_t) options(*omit:*nopass);
-           pUiLen    like(size_t) value options(*nopass);
-         end-pi;
+//---------------------------------------------------------------*
+// constants
+//---------------------------------------------------------------*
+dcl-c LOWER 'abcdefghijklmnopqrstuvwxyz';
+dcl-c UPPER 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-         dcl-s pUiLen_      like(size_t);
-         dcl-s pUiOutLen_   like(size_t);
-         dcl-s pPtRes       pointer;
-         dcl-s pUiResLen    like(size_t);
-         dcl-s pPtInBuf     pointer;
-         dcl-s pUiInBufLen  like(size_t);
-         dcl-s pPtOutBuf    pointer;
-         dcl-s pUiOutBufLen like(size_t);
+//---------------------------------------------------------------*
+//  StrIConv
+//---------------------------------------------------------------*
+//* Convert String from one CCSID to another.
+//*
+//* @param pAnRef - Program reference. You should use the field
+//*                 "program name" of the system data structure (SDS).
+//* @param pPtRef - Pointer <> *Null of the referenced data.
+//*
+//* @return pointer to the new data.
+//*         you have to deallocate this pointer !
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc StrIConv export;
+  dcl-pi *N pointer;
+    pPtStr    pointer value options(*string);
+    pInFrom   int(10) const;
+    pInTo     int(10) const;
+    pUiOutLen like(size_t) options(*omit:*nopass);
+    pUiLen    like(size_t) value options(*nopass);
+  end-pi;
 
-        // iconv()
-         dcl-ds pDsFromCode likeds(QtqCode_T);
-         dcl-ds pDsToCode   likeds(QtqCode_T);
-         dcl-ds pDsIconv    likeds(iconv_t);
+  dcl-s pUiLen_      like(size_t);
+  dcl-s pUiOutLen_   like(size_t);
+  dcl-s pPtRes       pointer;
+  dcl-s pUiResLen    like(size_t);
+  dcl-s pPtInBuf     pointer;
+  dcl-s pUiInBufLen  like(size_t);
+  dcl-s pPtOutBuf    pointer;
+  dcl-s pUiOutBufLen like(size_t);
 
-         if %parms() >= %parmnum(pUiOutLen);
-           pUiOutLen = 0;
-         endif;
+  // iconv()
+  dcl-ds pDsFromCode likeds(QtqCode_T);
+  dcl-ds pDsToCode   likeds(QtqCode_T);
+  dcl-ds pDsIconv    likeds(iconv_t);
 
-         // No String ?
-         if pPtStr = *Null;
-           return *Null;
-         endif;
+  if %parms() >= %parmnum(pUiOutLen);
+    pUiOutLen = 0;
+  endif;
 
-       // Check length
-       if %parms() >= %parmnum(pUiLen) And %Addr(pUiLen) <> *Null;
-         pUiLen_ = pUiLen;
-       else;
-         pUiLen_ = strlen(pPtStr);
-       endif;
+  // No String ?
+  if pPtStr = *Null;
+    return *Null;
+  endif;
 
-       // empty string ?
-       if pUiLen_ = *Zeros;
-         pPtRes = %alloc(1);
-         memset(pPtRes:NULL:1);
-         return pPtRes;
-       endif;
+  // Check length
+  if %parms() >= %parmnum(pUiLen) And %Addr(pUiLen) <> *Null;
+    pUiLen_ = pUiLen;
+  else;
+    pUiLen_ = strlen(pPtStr);
+  endif;
 
-       //- init iconv()
-       pDsFromCode.CcsId = pInFrom;
-       pDsFromCode.cnv_alternative = 0;
-       pDsFromCode.subs_alternative = 0;
-       pDsFromCode.shift_alternative = 1;
-       pDsFromCode.length_option = 0;
-       pDsFromCode.mx_error_option = 0;
-       pDsFromCode.reserved = *allx'00';
+  // empty string ?
+  if pUiLen_ = *Zeros;
+    pPtRes = %alloc(1);
+    memset(pPtRes:NULL:1);
+    return pPtRes;
+  endif;
 
-       pDsToCode.CcsId = pInTo;
-       pDsToCode.cnv_alternative = 0;
-       pDsToCode.subs_alternative = 0;
-       pDsToCode.shift_alternative = 0;
-       pDsToCode.length_option = 0;
-       pDsToCode.mx_error_option = 0;
-       pDsToCode.reserved = *allx'00';
+  //- init iconv()
+  pDsFromCode.CcsId = pInFrom;
+  pDsFromCode.cnv_alternative = 0;
+  pDsFromCode.subs_alternative = 0;
+  pDsFromCode.shift_alternative = 1;
+  pDsFromCode.length_option = 0;
+  pDsFromCode.mx_error_option = 0;
+  pDsFromCode.reserved = *allx'00';
 
-       // iconv open
-       pDsIconv = QtqIconvOpen(pDsToCode:pDsFromCode);
-       if pDsIconv.return_value = -1;
-         // MSG
-         return *Null;
-       endif;
+  pDsToCode.CcsId = pInTo;
+  pDsToCode.cnv_alternative = 0;
+  pDsToCode.subs_alternative = 0;
+  pDsToCode.shift_alternative = 0;
+  pDsToCode.length_option = 0;
+  pDsToCode.mx_error_option = 0;
+  pDsToCode.reserved = *allx'00';
 
-       // Allocate memory for result
-       pUiResLen = (pUiLen_ * 1.5) + 1;
-       pPtRes = %alloc(pUiResLen + 1);
-       if pPtRes = *Null;
-         // MSG
-         return *Null;
-       endif;
+  // iconv open
+  pDsIconv = QtqIconvOpen(pDsToCode:pDsFromCode);
+  if pDsIconv.return_value = -1;
+    // MSG
+    return *Null;
+  endif;
 
-       // Set helper variables for iconv
-       pPtInBuf     = pPtStr;
-       pUiInBufLen  = pUiLen_;
-       pPtOutBuf    = pPtRes;
-       pUiOutBufLen = pUiResLen - 1;
+  // Allocate memory for result
+  pUiResLen = (pUiLen_ * 1.5) + 1;
+  pPtRes = %alloc(pUiResLen + 1);
+  if pPtRes = *Null;
+    // MSG
+    return *Null;
+  endif;
 
-       dow 1=1;
-         if iconv(pDsIconv
-                 :pPtInBuf
-                 :pUiInBufLen
-                 :pPtOutBuf
-                 :pUiOutBufLen) = -1;
-           // MSG
-           iconv_close(pDsIconv);
-           dealloc pPtRes;
-           return *Null;
-         endif;
+  // Set helper variables for iconv
+  pPtInBuf     = pPtStr;
+  pUiInBufLen  = pUiLen_;
+  pPtOutBuf    = pPtRes;
+  pUiOutBufLen = pUiResLen - 1;
 
-         // There is enough memory => finish
-         if pUiInBufLen = 0;
-           leave;
-         endif;
+  dow 1=1;
+    if iconv(pDsIconv
+            :pPtInBuf
+            :pUiInBufLen
+            :pPtOutBuf
+            :pUiOutBufLen) = -1;
+      // MSG
+      iconv_close(pDsIconv);
+      dealloc pPtRes;
+      return *Null;
+    endif;
 
-         pUiOutBufLen = pPtOutBuf - pPtRes;
+    // There is enough memory => finish
+    if pUiInBufLen = 0;
+      leave;
+    endif;
 
-         // Memory to small => allocate more menory
-         pUiResLen += (pUiInBufLen * 1.5) + 1;
-         pPtRes = %realloc(pPtRes:pUiResLen + 1);
-         if pPtRes = *Null;
-           // MSG
-           iconv_close(pDsIconv);
-           return *Null;
-         endif;
+    pUiOutBufLen = pPtOutBuf - pPtRes;
 
-         pPtOutBuf    = pPtRes + pUiOutBufLen;
-         pUiOutBufLen = pUiResLen - pUiOutBufLen - 1;
-       enddo;
+    // Memory to small => allocate more menory
+    pUiResLen += (pUiInBufLen * 1.5) + 1;
+    pPtRes = %realloc(pPtRes:pUiResLen + 1);
+    if pPtRes = *Null;
+      // MSG
+     iconv_close(pDsIconv);
+     return *Null;
+    endif;
 
-       iconv_close(pDsIconv);
+    pPtOutBuf    = pPtRes + pUiOutBufLen;
+    pUiOutBufLen = pUiResLen - pUiOutBufLen - 1;
+  enddo;
 
-       // Add NULL
-       pUiOutLen_ = pPtOutBuf - pPtRes;
-       memset(pPtRes + pUiOutLen_:NULL:1);
+  iconv_close(pDsIconv);
 
-       if %parms() >= %parmnum(pUiOutLen) And %Addr(pUiOutLen) <> *Null;
-         pUiOutLen = pUiOutLen_;
-       endif;
+  // Add NULL
+  pUiOutLen_ = pPtOutBuf - pPtRes;
+  memset(pPtRes + pUiOutLen_:NULL:1);
 
-       return PPtRes;
+  if %parms() >= %parmnum(pUiOutLen) And %Addr(pUiOutLen) <> *Null;
+    pUiOutLen = pUiOutLen_;
+  endif;
 
-       end-proc StrIConv;
+  return PPtRes;
+
+end-proc StrIConv;
+//---------------------------------------------------------------*
+//  StrFillValues
+//---------------------------------------------------------------*
+//* Fill string with variables.
+//*
+//* @param pPtStr - String with place holders &1 - &20
+//* @param pPtP1 - pPtP20 - Values for place holders.
+//*
+//* @return Returns new string.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc StrFillValues export;
+  dcl-pi *N varchar(65535);
+    pPtStr pointer value options(*string);
+    pPtP1  pointer value options(*string:*nopass);
+    pPtP2  pointer value options(*string:*nopass);
+    pPtP3  pointer value options(*string:*nopass);
+    pPtP4  pointer value options(*string:*nopass);
+    pPtP5  pointer value options(*string:*nopass);
+    pPtP6  pointer value options(*string:*nopass);
+    pPtP7  pointer value options(*string:*nopass);
+    pPtP8  pointer value options(*string:*nopass);
+    pPtP9  pointer value options(*string:*nopass);
+    pPtP10 pointer value options(*string:*nopass);
+    pPtP11 pointer value options(*string:*nopass);
+    pPtP12 pointer value options(*string:*nopass);
+    pPtP13 pointer value options(*string:*nopass);
+    pPtP14 pointer value options(*string:*nopass);
+    pPtP15 pointer value options(*string:*nopass);
+    pPtP16 pointer value options(*string:*nopass);
+    pPtP17 pointer value options(*string:*nopass);
+    pPtP18 pointer value options(*string:*nopass);
+    pPtP19 pointer value options(*string:*nopass);
+    pPtP20 pointer value options(*string:*nopass);
+  end-pi;
+
+  dcl-s pAnRes varchar(65535);
+  dcl-s pPtP pointer dim(20) inz(*null);
+  dcl-s i int(10);
+
+  if pPtStr = *Null Or strlen(pPtStr) = 0;
+    return '';
+  endif;
+
+  if %parms() >= %parmnum(pPtP1) Or %parms() = -1 And %Addr(pPtP1) <> *Null;
+    pPtP(1) = pPtP1;
+  endif;
+  if %parms() >= %parmnum(pPtP2) Or %parms() = -1 And %Addr(pPtP2) <> *Null;
+    pPtP(2) = pPtP2;
+  endif;
+  if %parms() >= %parmnum(pPtP3) Or %parms() = -1 And %Addr(pPtP3) <> *Null;
+    pPtP(3) = pPtP3;
+  endif;
+  if %parms() >= %parmnum(pPtP4) Or %parms() = -1 And %Addr(pPtP4) <> *Null;
+    pPtP(4) = pPtP4;
+  endif;
+  if %parms() >= %parmnum(pPtP5) Or %parms() = -1 And %Addr(pPtP5) <> *Null;
+    pPtP(5) = pPtP5;
+  endif;
+  if %parms() >= %parmnum(pPtP6) Or %parms() = -1 And %Addr(pPtP6) <> *Null;
+    pPtP(6) = pPtP6;
+  endif;
+  if %parms() >= %parmnum(pPtP7) Or %parms() = -1 And %Addr(pPtP7) <> *Null;
+    pPtP(7) = pPtP7;
+  endif;
+  if %parms() >= %parmnum(pPtP8) Or %parms() = -1 And %Addr(pPtP8) <> *Null;
+    pPtP(8) = pPtP8;
+  endif;
+  if %parms() >= %parmnum(pPtP9) Or %parms() = -1 And %Addr(pPtP9) <> *Null;
+    pPtP(9) = pPtP9;
+  endif;
+  if %parms() >= %parmnum(pPtP10) Or %parms() = -1 And %Addr(pPtP10) <> *Null;
+    pPtP(10) = pPtP10;
+  endif;
+  if %parms() >= %parmnum(pPtP11) Or %parms() = -1 And %Addr(pPtP11) <> *Null;
+    pPtP(11) = pPtP11;
+  endif;
+  if %parms() >= %parmnum(pPtP12) Or %parms() = -1 And %Addr(pPtP12) <> *Null;
+    pPtP(12) = pPtP12;
+  endif;
+  if %parms() >= %parmnum(pPtP13) Or %parms() = -1 And %Addr(pPtP13) <> *Null;
+    pPtP(13) = pPtP13;
+  endif;
+  if %parms() >= %parmnum(pPtP14) Or %parms() = -1 And %Addr(pPtP14) <> *Null;
+    pPtP(14) = pPtP14;
+  endif;
+  if %parms() >= %parmnum(pPtP15) Or %parms() = -1 And %Addr(pPtP15) <> *Null;
+    pPtP(15) = pPtP15;
+  endif;
+  if %parms() >= %parmnum(pPtP16) Or %parms() = -1 And %Addr(pPtP16) <> *Null;
+    pPtP(16) = pPtP16;
+  endif;
+  if %parms() >= %parmnum(pPtP17) Or %parms() = -1 And %Addr(pPtP17) <> *Null;
+    pPtP(17) = pPtP17;
+  endif;
+  if %parms() >= %parmnum(pPtP18) Or %parms() = -1 And %Addr(pPtP18) <> *Null;
+    pPtP(18) = pPtP18;
+  endif;
+  if %parms() >= %parmnum(pPtP19) Or %parms() = -1 And %Addr(pPtP19) <> *Null;
+    pPtP(19) = pPtP19;
+  endif;
+  if %parms() >= %parmnum(pPtP20) Or %parms() = -1 And %Addr(pPtP20) <> *Null;
+    pPtP(20) = pPtP20;
+  endif;
+
+  pAnRes = %str(pPtStr);
+  for i=%elem(pPtP) downto 1;
+    if pPtP(i) = *Null;
+      iter;
+    endif;
+    pAnRes = %scanrpl('&' + %char(i):%str(pPtP(i)):pAnRes);
+  endfor;
+
+  return pAnRes;
+
+end-proc StrFillValues;
+//---------------------------------------------------------------*
+// StrHexStrToBytes
+//---------------------------------------------------------------*
+//* Converts a hex string to a byte stream.
+//* <P>
+//* You can convert a hex string with a maximum length of 65534 characters.
+//* <P>
+//*
+//* @param pAnStr - Hex string.
+//* @param pPtBytes - Length of byte stream if it's not a null terminated string (optional).
+//* @param pInLen - Max length of pPtBytes (optional).
+//*
+//* @return Converted byte stream, else %len(0)
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc StrHexStrToBytes export;
+  dcl-pi *N int(10);
+    pAnStr varchar(65535) const options(*varsize);
+    pPtBytes pointer const;
+    pInLen int(10) const options(*nopass);
+  end-pi;
+
+  dcl-s pInLen_ like(size_t);
+  dcl-s pAnStr_ varchar(65534);
+
+  dcl-pr cvtch extproc('cvtch');
+    hexVal pointer value;
+    charVal pointer value options(*string);
+    charLen int(10) value;
+  end-pr;
+
+  if %rem(%len(pAnStr):2) > 0;
+    return -1;
+  endif;
+
+  if pPtBytes = *Null;
+    return -1;
+  endif;
+
+  pInLen_ = %len(pAnStr) / 2;
+  if %parms() >= %parmnum(pInLen) And pInLen < pInLen_;
+    pInLen_ = pInLen;
+  endif;
+
+  pAnStr_ = pAnStr;
+  StrUppr(%addr(pAnStr_:*data):%len(pAnStr_));
+  monitor;
+    CvtCh(pPtBytes:pAnStr_:pInLen_*2);
+  on-error;
+    return -1;
+  endmon;
+
+  return pInLen_;
+
+end-proc StrHexStrToBytes;
+//---------------------------------------------------------------*
+// StrBytesToHexStr
+//---------------------------------------------------------------*
+//* Converts a byte stream to a hex string (e.g. 0adf0012).
+//* <P>
+//* You can convert a maximum of 32767 bytes.
+//* <P>
+//* <DL><DT><B>Options :</B></DT>
+//* <DD>@const STR_UPPER - Result in upper case (Default).
+//* <DD>@const STR_LOWER - Result in lower case
+//* </DL>
+//*
+//* @param PPtBytes - Pointer to byte stream (*String).
+//* @param PInLen   - Length of byte stream if it's not a null terminated string (optional).
+//* @param PInOpt   - Options (optional).
+//*
+//* @return Converted byte stream, else %len(0)
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc StrBytesToHexStr export;
+  dcl-pi *N varchar(65534);
+    pPtBytes pointer const options(*string);
+    pInLen int(10) const options(*nopass:*omit);
+    pInOptions int(10) const options(*nopass);
+  end-pi;
+
+  dcl-s pInLen_ like(size_t);
+  dcl-s pAnRes varchar(65534);
+
+  dcl-pr cvthc extproc('cvthc');
+    hexVal pointer value;
+    charVal pointer value;
+    hexLen int(10) value;
+  end-pr;
+
+  if pPtBytes = *Null;
+    return '';
+  endif;
+
+  if %parms() >= %parmnum(pInLen) and %Addr(pInLen) <> *Null;
+    pInLen_ = pInLen;
+  else;
+    pInLen_ = strlen(pPtBytes);
+  endif;
+
+  if pInLen_ = *Zeros;
+    return '';
+  endif;
+
+  if pInLen_ > %size(pAnRes) / 2;
+    return '';
+  endif;
+
+  %len(pAnRes) = pInLen_ * 2;
+  CvtHc(%addr(pAnRes:*data):pPtBytes:%len(pAnRes));
+
+  if %parms() >= %parmnum(pInOptions) And
+        %bitand(pInOptions:STR_LOWER) = STR_LOWER;
+    StrLowr(%addr(pAnRes:*data):%len(pAnRes));
+    return PAnRes;
+  endif;
+
+  return PAnRes;
+
+end-proc StrBytesToHexStr;
+//---------------------------------------------------------------*
+// StrUppr
+//---------------------------------------------------------------*
+//* Converts all characters of a string to upper case.
+//* <P>
+//*
+//* @param pPtString - String to convert.
+//* @param PInLen   - Length of string, if it's not a null terminated string (optional).
+//*
+//* @return Length of converted string.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc StrUppr export;
+  dcl-pi *N int(10);
+    pPtString pointer value;
+    pInLen int(10) const options(*nopass);
+  end-pi;
+
+  dcl-s pInLen_ like(size_t);
+  dcl-s i like(size_t);
+  dcl-s pInConvert like(size_t) inz(%size(pAnConvert));
+  dcl-s pPtConvert pointer;
+  dcl-s pAnConvert char(65535) based(PPtConvert);
+
+  if %parms() >= %parmnum(pInLen);
+    pInLen_ = pInLen;
+  else;
+    pInLen_ = strlen(pPtString);
+  endif;
+
+  if pInLen_ = *Zeros;
+    return 0;
+  endif;
+
+  for i=0 by %size(pAnConvert) to pInLen_-1;
+    pPtConvert = pPtString + i;
+    if pInConvert + i > pInLen_;
+      pInConvert = pInLen_ - i;
+    endif;
+    %subst(pAnConvert:1:pInConvert) = %xlate(LOWER
+                                            :UPPER
+                                            :%subst(pAnConvert:1:pInConvert));
+  endfor;
+
+  return pInLen_;
+
+end-proc StrUppr;
+//---------------------------------------------------------------*
+// StrLowr
+//---------------------------------------------------------------*
+//* Converts all characters of a string to lower case.
+//* <P>
+//*
+//* @param pPtString - String to convert.
+//* @param PInLen   - Length of string, if it's not a null terminated string (optional).
+//*
+//* @return Length of converted string.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc StrLowr export;
+  dcl-pi *N int(10);
+    pPtString pointer value;
+    pInLen int(10) const options(*nopass);
+  end-pi;
+
+  dcl-s pInLen_ like(size_t);
+  dcl-s i like(size_t);
+  dcl-s pInConvert like(size_t) inz(%size(pAnConvert));
+  dcl-s pPtConvert pointer;
+  dcl-s pAnConvert char(65535) based(PPtConvert);
+
+  if %parms() >= %parmnum(pInLen);
+    pInLen_ = pInLen;
+  else;
+    pInLen_ = strlen(pPtString);
+  endif;
+
+  if pInLen_ = *Zeros;
+    return 0;
+  endif;
+
+  for i=0 by %size(pAnConvert) to pInLen_-1;
+    pPtConvert = pPtString + i;
+    if pInConvert + i > pInLen_;
+      pInConvert = pInLen_ - i;
+    endif;
+    %subst(pAnConvert:1:pInConvert) = %xlate(UPPER
+                                            :LOWER
+                                            :%subst(pAnConvert:1:pInConvert));
+  endfor;
+
+  return pInLen_;
+
+end-proc StrLowr;

@@ -1,155 +1,172 @@
-      /IF DEFINED (AR_TYPES__)
-      /EOF
-      /ENDIF
+**free
+/IF NOT DEFINED (AR_TYPES__)
+/DEFINE AR_TYPES__
 
-      /DEFINE AR_TYPES__
+//---------------------------------------------------------------*
+// typedefs
+//---------------------------------------------------------------*
+dcl-s clock_t    int(10) template;
+dcl-s dev_t      uns(10) template;
+dcl-s dev64_t    uns(20) template;
+dcl-s gid_t      uns(10) template;
+dcl-s ino_t      uns(10) template;
+dcl-s key_t      int(10) template;
+dcl-s mode_t     uns(10) template;
+dcl-s nlink_t    uns(5)  template;
+dcl-s nlink32_t  uns(10) template;
+dcl-s off_t      int(10) template;
+dcl-s pid_t      int(10) template;
+dcl-s size_t     uns(10) template;
+dcl-s ssize_t    int(10) template;
+dcl-s time_t     int(10) template;
+dcl-s uid_t      uns(10) template;
+dcl-s useconds_t uns(10) template;
+dcl-s u_char     uns(3)  template;
+dcl-s u_int      uns(10) template;
+dcl-s u_short    uns(5)  template;
+dcl-s u_long     uns(10) template;
+dcl-s uchar      uns(3)  template;
+dcl-s uint       uns(10) template;
+dcl-s ushort     uns(5)  template;
+dcl-s ulong      uns(10) template;
 
-      //---------------------------------------------------------------*
-      // typedefs
-      //---------------------------------------------------------------*
-       dcl-s clock_t    int(10) template;
-       dcl-s dev_t      uns(10) template;
-       dcl-s dev64_t    uns(20) template;
-       dcl-s gid_t      uns(10) template;
-       dcl-s ino_t      uns(10) template;
-       dcl-s key_t      int(10) template;
-       dcl-s mode_t     uns(10) template;
-       dcl-s nlink_t    uns(5)  template;
-       dcl-s nlink32_t  uns(10) template;
-       dcl-s off_t      int(10) template;
-       dcl-s pid_t      int(10) template;
-       dcl-s size_t     uns(10) template;
-       dcl-s ssize_t    int(10) template;
-       dcl-s time_t     int(10) template;
-       dcl-s uid_t      uns(10) template;
-       dcl-s useconds_t uns(10) template;
-       dcl-s u_char     uns(3)  template;
-       dcl-s u_int      uns(10) template;
-       dcl-s u_short    uns(5)  template;
-       dcl-s u_long     uns(10) template;
-       dcl-s uchar      uns(3)  template;
-       dcl-s uint       uns(10) template;
-       dcl-s ushort     uns(5)  template;
-       dcl-s ulong      uns(10) template;
+//---------------------------------------------------------------*
+// constants
+//---------------------------------------------------------------*
+dcl-c NULL    x'00';
+dcl-c CR      x'0d';
+dcl-c LF      x'25';
+dcl-c LF_ASC  x'0a';
+dcl-c CRLF    x'0d25';
+dcl-c NEWLINE x'0d25';
+dcl-c FALSE   0;
+dcl-c TRUE    1;
+dcl-c ON      *on;
+dcl-c OFF     *off;
 
-      //---------------------------------------------------------------*
-      // constants
-      //---------------------------------------------------------------*
-       dcl-c NULL    x'00';
-       dcl-c CR      x'0d';
-       dcl-c LF      x'25';
-       dcl-c LF_ASC  x'0a';
-       dcl-c CRLF    x'0d25';
-       dcl-c NEWLINE x'0d25';
+dcl-c API_FIRST       '*FIRST';
+dcl-c API_LAST        '*LAST';
+dcl-c API_NEXT        '*NEXT';
+dcl-c API_PRV         '*PRV';
+dcl-c API_INT         '*INT';
+dcl-c API_IFS         '*IFS';
+dcl-c API_DIR         '*DIR';
+dcl-c API_DDIR        '*DDIR';
+dcl-c API_FLR         '*FLR';
+dcl-c API_LIB         '*LIB';
+dcl-c API_REPLACE     '*REPLACE';
+dcl-c API_CHANGE      '*CHANGE';
+dcl-c API_ADD         '*ADD';
+dcl-c API_PRINT       '*PRINT';
+dcl-c API_OUTFILE     '*OUTFILE';
+dcl-c API_OUTQ        '*OUTQ';
+dcl-c API_NONE        '*NONE';
+dcl-c API_ALL         '*ALL';
+dcl-c API_EXT         '*EXT';
+dcl-c API_LIBL        '*LIBL';
+dcl-c API_CURLIB      '*CURLIB';
+dcl-c API_USRLIBL     '*USRLIBL';
+dcl-c API_ALLUSR      '*ALLUSR';
+dcl-c API_YES         '*YES';
+dcl-c API_NO          '*NO';
+dcl-c API_FILETYPE    '*FILETYPE';
+dcl-c API_FILE        '*FILE';
+dcl-c API_STMF        '*STMF';
+dcl-c API_DSTMF       '*DSTMF';
+dcl-c API_PGM         '*PGM';
+dcl-c API_SRVPGM      '*SRVPGM';
+dcl-c API_CURRENT     '*CURRENT';
+dcl-c API_RELEASE     '*RELEASE';
+dcl-c API_USRPRF      '*USRPRF';
+dcl-c API_JOBD        '*JOBD';
+dcl-c API_SAV         '*SAV';
+dcl-c API_COMP        '*COMP';
+dcl-c API_DIAG        '*DIAG';
+dcl-c API_ESCAPE      '*ESCAPE';
+dcl-c API_INFO        '*INFO';
+dcl-c API_STATUS      '*STATUS';
+dcl-c API_IPDS        '*IPDS';
+dcl-c API_AFPDS       '*AFPDS';
+dcl-c API_SCS         '*SCS';
+dcl-c API_USERASCII   '*USERASCII';
+dcl-c API_LOCAL       '*LOCAL';
+dcl-c API_SYSTEM      '*SYSTEM';
+dcl-c API_BYKEY       '*BYKEY';
+dcl-c API_DEFAULT     '*DEFAULT';
+dcl-c API_UNKNOWN     '*UNKNOWN';
+dcl-c API_INTERN      '*INTERN';
+dcl-c API_HEXTOSYM    '*HEXTOSYM';
+dcl-c API_SYMTOHEX    '*SYMTOHEX';
+dcl-c API_DTAQ        '*DTAQ';
+dcl-c API_USRQ        '*USRQ';
+dcl-c API_MSGQ        '*MSGQ';
+dcl-c API_USRSPC      '*USRSPC';
+dcl-c API_USRIDX      '*USRIDX';
+dcl-c API_DTAARA      '*DTAARA';
+dcl-c API_SPLF        '*SPLF';
+dcl-c API_DEVD        '*DEVD';
+dcl-c API_ERROR       '*ERROR';
+dcl-c API_DEBUG       '*DEBUG';
+dcl-c API_AUTO        '*AUTO';
+dcl-c API_COR         '*COR';
+dcl-c API_USER        '*USER';
+dcl-c API_PGMBDY      '*PGMBDY';
+dcl-c API_INQ         '*INQ';
+dcl-c API_REMOVE      '*REMOVE';
+dcl-c API_SYSOPR      '*SYSOPR';
+dcl-c API_OLD         '*OLD';
+dcl-c API_RQS         '*RQS';
+dcl-c API_SAME        '*SAME';
+dcl-c API_PGMQ        '*PGMQ';
+dcl-c API_RPY         '*RPY';
+dcl-c API_CALL        '*CALL';
+dcl-c API_NOMAX       '*NOMAX';
+dcl-c API_MBR         '*MBR';
+dcl-c API_ANY         '*ANY';
+dcl-c API_ONLY        '*ONLY';
+dcl-c API_ACTIVE      '*ACTIVE';
+dcl-c API_INACTIVE    '*INACTIVE';
+dcl-c API_ENDING      '*ENDING';
+dcl-c API_RESTRICTED  '*RESTRICTED';
+dcl-c API_STARTINGD   '*STARTING';
+dcl-c API_PUBLIC      '*PUBLIC';
+dcl-c API_IMMED       '*IMMED';
 
-       dcl-c API_FIRST       '*FIRST';
-       dcl-c API_LAST        '*LAST';
-       dcl-c API_NEXT        '*NEXT';
-       dcl-c API_PRV         '*PRV';
-       dcl-c API_INT         '*INT';
-       dcl-c API_IFS         '*IFS';
-       dcl-c API_DIR         '*DIR';
-       dcl-c API_DDIR        '*DDIR';
-       dcl-c API_FLR         '*FLR';
-       dcl-c API_LIB         '*LIB';
-       dcl-c API_REPLACE     '*REPLACE';
-       dcl-c API_CHANGE      '*CHANGE';
-       dcl-c API_ADD         '*ADD';
-       dcl-c API_PRINT       '*PRINT';
-       dcl-c API_OUTFILE     '*OUTFILE';
-       dcl-c API_OUTQ        '*OUTQ';
-       dcl-c API_NONE        '*NONE';
-       dcl-c API_ALL         '*ALL';
-       dcl-c API_EXT         '*EXT';
-       dcl-c API_LIBL        '*LIBL';
-       dcl-c API_CURLIB      '*CURLIB';
-       dcl-c API_USRLIBL     '*USRLIBL';
-       dcl-c API_ALLUSR      '*ALLUSR';
-       dcl-c API_YES         '*YES';
-       dcl-c API_NO          '*NO';
-       dcl-c API_FILETYPE    '*FILETYPE';
-       dcl-c API_FILE        '*FILE';
-       dcl-c API_STMF        '*STMF';
-       dcl-c API_DSTMF       '*DSTMF';
-       dcl-c API_PGM         '*PGM';
-       dcl-c API_SRVPGM      '*SRVPGM';
-       dcl-c API_CURRENT     '*CURRENT';
-       dcl-c API_RELEASE     '*RELEASE';
-       dcl-c API_USRPRF      '*USRPRF';
-       dcl-c API_JOBD        '*JOBD';
-       dcl-c API_SAV         '*SAV';
-       dcl-c API_COMP        '*COMP';
-       dcl-c API_DIAG        '*DIAG';
-       dcl-c API_ESCAPE      '*ESCAPE';
-       dcl-c API_INFO        '*INFO';
-       dcl-c API_STATUS      '*STATUS';
-       dcl-c API_IPDS        '*IPDS';
-       dcl-c API_AFPDS       '*AFPDS';
-       dcl-c API_SCS         '*SCS';
-       dcl-c API_USERASCII   '*USERASCII';
-       dcl-c API_LOCAL       '*LOCAL';
-       dcl-c API_SYSTEM      '*SYSTEM';
-       dcl-c API_BYKEY       '*BYKEY';
-       dcl-c API_DEFAULT     '*DEFAULT';
-       dcl-c API_UNKNOWN     '*UNKNOWN';
-       dcl-c API_INTERN      '*INTERN';
-       dcl-c API_HEXTOSYM    '*HEXTOSYM';
-       dcl-c API_SYMTOHEX    '*SYMTOHEX';
-       dcl-c API_DTAQ        '*DTAQ';
-       dcl-c API_USRQ        '*USRQ';
-       dcl-c API_MSGQ        '*MSGQ';
-       dcl-c API_USRSPC      '*USRSPC';
-       dcl-c API_USRIDX      '*USRIDX';
-       dcl-c API_DTAARA      '*DTAARA';
-       dcl-c API_SPLF        '*SPLF';
-       dcl-c API_DEVD        '*DEVD';
-       dcl-c API_ERROR       '*ERROR';
-       dcl-c API_DEBUG       '*DEBUG';
-       dcl-c API_AUTO        '*AUTO';
-       dcl-c API_COR         '*COR';
-       dcl-c API_USER        '*USER';
-       dcl-c API_PGMBDY      '*PGMBDY';
-       dcl-c API_INQ         '*INQ';
-       dcl-c API_REMOVE      '*REMOVE';
-       dcl-c API_SYSOPR      '*SYSOPR';
-       dcl-c API_OLD         '*OLD';
-       dcl-c API_RQS         '*RQS';
-       dcl-c API_SAME        '*SAME';
-       dcl-c API_PGMQ        '*PGMQ';
-       dcl-c API_RPY         '*RPY';
-       dcl-c API_CALL        '*CALL';
-       dcl-c API_NOMAX       '*NOMAX';
-       dcl-c API_MBR         '*MBR';
-       dcl-c API_ANY         '*ANY';
-       dcl-c API_ONLY        '*ONLY';
-       dcl-c API_ACTIVE      '*ACTIVE';
-       dcl-c API_INACTIVE    '*INACTIVE';
-       dcl-c API_ENDING      '*ENDING';
-       dcl-c API_RESTRICTED  '*RESTRICTED';
-       dcl-c API_STARTINGD   '*STARTING';
-       dcl-c API_PUBLIC      '*PUBLIC';
+//* Constant used for fields in qlg_nls_t :
+//* Use the job CCSID value
+ dcl-c QLG_JOB_CCSID x'00000000';
 
-      //* Constant used for fields in qlg_nls_t :
-      //* Use the job CCSID value
-       dcl-c QLG_JOB_CCSID x'00000000';
-      //* Constant used for fields in qlg_nls_t :
-      //* Use the job language value
-       dcl-c QLG_JOB_COUNTRY x'0000';
-      //* Constant used for fields in qlg_nls_t :
-      //* Use the job country value
-       dcl-c QLG_JOB_LANG x'000000';
-      //--------------------------------------------------------------------
-      //  NLS structure used in path name.  This defines the extra
-      //  information needed to make the path names NLS enabled.
-      //--------------------------------------------------------------------
-       dcl-ds qlg_nls_t qualified align template;
-         ccsid         int(10); // CCSID of the path
-         country_id    char(2); // country identifier
-         language_id   char(3); // language identifier
-         nls_reserved  char(2); // must be null
-       end-ds;
+//* Constant used for fields in qlg_nls_t :
+//* Use the job language value
+dcl-c QLG_JOB_COUNTRY x'0000';
 
-      //--------------------------------------------------------------------
-      //  AS/400 Object Type used in the stat structure.
-      //--------------------------------------------------------------------
-       dcl-s qp0l_objtype_t char(11) template; // AS/400 Object Type
+//* Constant used for fields in qlg_nls_t :
+//* Use the job country value
+dcl-c QLG_JOB_LANG x'000000';
+
+//--------------------------------------------------------------------
+//  NLS structure used in path name.  This defines the extra
+//  information needed to make the path names NLS enabled.
+//--------------------------------------------------------------------
+dcl-ds qlg_nls_t qualified align template;
+  ccsid         int(10); // CCSID of the path
+  country_id    char(2); // country identifier
+  language_id   char(3); // language identifier
+  nls_reserved  char(2); // must be null
+end-ds;
+
+//--------------------------------------------------------------------
+//  AS/400 Object Type used in the stat structure.
+//--------------------------------------------------------------------
+dcl-s qp0l_objtype_t char(11) template; // AS/400 Object Type
+
+//--------------------------------------------------------------------
+// job
+//--------------------------------------------------------------------
+dcl-ds job_t qualified align template;
+  jobname char(10);
+  jobuser char(10);
+  jobnumber char(6);
+end-ds;
+
+/ENDIF

@@ -1,22 +1,23 @@
-      //---------------------------------------------------------------*
-      // controle specs for all modules
-      //---------------------------------------------------------------*
-       ctl-opt datfmt(*iso);
-       ctl-opt timfmt(*iso);
-      /IF DEFINED(POINT)
-       ctl-opt decedit('0.');
-      /ELSE
-       ctl-opt decedit('0,');
-      /ENDIF
-      /IF DEFINED(DEBUG)
-       ctl-opt debug Option(*SrcStmt);
-      /ELSE
-       ctl-opt Option(*SrcStmt:*NoDebugIO:*NoUnRef);
-      /ENDIF
-      /IF NOT DEFINED(NOT_SERIALIZE)
-       ctl-opt Thread(*SERIALIZE);
-      /ELSE
-       ctl-opt Thread(*CONCURRENT);
-      /ENDIF
-       ctl-opt copyright('(C) Copyright S.Allbach 2016, 2017 /-
-        Eclipse Public License - v 1.0');
+**free
+//---------------------------------------------------------------*
+// controle specs for all modules
+//---------------------------------------------------------------*
+ctl-opt datfmt(*iso);
+ctl-opt timfmt(*iso);
+/IF DEFINED(COMMA)
+  ctl-opt decedit('0,');
+/ELSE
+  ctl-opt decedit('0.');
+/ENDIF
+/IF DEFINED(DEBUG)
+  ctl-opt debug Option(*SrcStmt);
+/ELSE
+  ctl-opt Option(*SrcStmt:*NoDebugIO:*NoUnRef);
+/ENDIF
+/IF DEFINED(CONCURRENT)
+  ctl-opt Thread(*CONCURRENT);
+/ELSE
+  ctl-opt Thread(*SERIALIZE);
+/ENDIF
+ctl-opt copyright('(C) Copyright S.Allbach 2016 - 2018 /-
+ Eclipse Public License - v 1.0');

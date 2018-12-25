@@ -1,7 +1,23 @@
-             PGM        PARM(&TYPE &LIBSRC)
+             PGM        PARM(&LIBSRC)
 
-             DCL        VAR(&TYPE) TYPE(*CHAR) LEN(10)
              DCL        VAR(&LIBSRC) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&FILE) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&MBR)  TYPE(*CHAR) LEN(10)
+             DCL        VAR(&TYPE) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&TEXT) TYPE(*CHAR) LEN(50)
 
+             DCLF       FILE(ARPG_META)
+ LOOP:       RCVF
+             MONMSG     MSGID(CPF0864) EXEC(GOTO CMDLBL(END))
 
-             ENDPGM
+             CHGVAR     VAR(&FILE) VALUE(%SST(&ARPG_META  1 10))
+             CHGVAR     VAR(&MBR)  VALUE(%SST(&ARPG_META 11 10))
+             CHGVAR     VAR(&TYPE) VALUE(%SST(&ARPG_META 21 10))
+             CHGVAR     VAR(&TEXT) VALUE(%SST(&ARPG_META 31 50))
+
+             CHGPFM     FILE(&LIBSRC/&FILE) MBR(&MBR) SRCTYPE(&TYPE) +
+                          TEXT(&TEXT)
+             MONMSG     MSGID(CPF0000)
+             GOTO       CMDLBL(LOOP)  
+
+ END:        ENDPGM

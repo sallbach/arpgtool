@@ -1,0 +1,267 @@
+**free
+/IF NOT DEFINED (AR_QSQPRC__)
+
+/DEFINE AR_QSQPRC__
+/INCLUDE ARPG_H,ARCQUSEC
+/INCLUDE QSYSINC/QRPGLESRC,QSQPRCED
+
+//---------------------------------------------------------------*
+//  sqlca & sqlda
+//---------------------------------------------------------------*
+// Exec Sql Include SQLCA;
+/IF DEFINED (AR_QSQPRC_SQLCA__)
+DCL-DS SQLCA;                                 
+  SQLCAID CHAR(8) INZ(X'0000000000000000');   
+   SQLAID CHAR(8) OVERLAY(SQLCAID);           
+  SQLCABC INT(10);                            
+   SQLABC BINDEC(9) OVERLAY(SQLCABC);         
+  SQLCODE INT(10);                            
+   SQLCOD BINDEC(9) OVERLAY(SQLCODE);         
+  SQLERRML INT(5);                            
+   SQLERL BINDEC(4) OVERLAY(SQLERRML);        
+  SQLERRMC CHAR(70);                          
+   SQLERM CHAR(70) OVERLAY(SQLERRMC);         
+  SQLERRP CHAR(8);                            
+   SQLERP CHAR(8) OVERLAY(SQLERRP);           
+  SQLERR CHAR(24);                            
+   SQLER1 BINDEC(9) OVERLAY(SQLERR:*NEXT);    
+   SQLER2 BINDEC(9) OVERLAY(SQLERR:*NEXT);    
+   SQLER3 BINDEC(9) OVERLAY(SQLERR:*NEXT);    
+   SQLER4 BINDEC(9) OVERLAY(SQLERR:*NEXT);    
+   SQLER5 BINDEC(9) OVERLAY(SQLERR:*NEXT); 
+   SQLER6 BINDEC(9) OVERLAY(SQLERR:*NEXT); 
+   SQLERRD INT(10) DIM(6) OVERLAY(SQLERR); 
+  SQLWRN CHAR(11);                         
+   SQLWN0 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN1 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN2 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN3 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN4 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN5 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN6 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN7 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN8 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWN9 CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWNA CHAR(1) OVERLAY(SQLWRN:*NEXT);   
+   SQLWARN CHAR(1) DIM(11) OVERLAY(SQLWRN);
+  SQLSTATE CHAR(5);                        
+   SQLSTT CHAR(5) OVERLAY(SQLSTATE);       
+END-DS SQLCA;      
+   
+// Exec Sql Include SQLDA;
+/SET CCSID(*CHAR:*JOBRUNMIX)  
+// SQL DESCRIPTOR AREA        
+DCL-DS SQLDA;                         
+  SQLDAID CHAR(8) INZ('SQLDA');                    
+  SQLDABC INT(10) INZ(%size(SqlDa));                    
+  SQLN INT(5) INZ;                        
+  SQLD INT(5) INZ;                        
+  SQL_VAR CHAR(80) DIM(SQL_NUM);      
+   *N POINTER OVERLAY(SQL_VAR:17);    
+   *N POINTER OVERLAY(SQL_VAR:33);                  
+END-DS SQLDA;                                       
+DCL-DS SQLVAR;                                      
+  SQLTYPE INT(5);                                   
+  SQLLEN INT(5);                                    
+  SQLRES CHAR(12);                                  
+  SQLINFO1 CHAR(16);                                
+   SQLDATA POINTER OVERLAY(SQLINFO1);               
+   SQL_RESULT_SET_LOCATOR INT(20) OVERLAY(SQLINFO1);
+  SQLINFO2 CHAR(16);                                
+   SQLIND POINTER OVERLAY(SQLINFO2);                
+   SQL_ROW_CHANGE INT(10) OVERLAY(SQLINFO2);        
+   SQL_RESULT_SET_ROWS INT(10) OVERLAY(SQLINFO2);   
+  SQLNAMELEN INT(5);                                
+  SQLNAME CHAR(30);                                 
+END-DS SQLVAR;                                      
+// EXTENDED SQLDA     
+DCL-DS SQLVAR2;       
+  SQLLONGL INT(10);   
+  SQLRSVDL CHAR(28);  
+  SQLDATAL POINTER;   
+  SQLTNAMELN INT(5);  
+  SQLTNAME CHAR(30);  
+END-DS SQLVAR2;       
+/RESTORE CCSID(*CHAR)    
+/ENDIF
+
+dcl-ds DsSqPrcEd_t qualified template; // SQLP0400
+  function char(1) inz;     
+  packagename char(10) inz; 
+  packagelib char(10) inz('QTEMP');  
+  mainpgm char(10) inz;     
+  mainlib char(10) inz(API_LIBL);     
+  stmname char(18) inz;     
+  cursorname char(18) inz;  
+  openopt char(1) inz;      
+  describe char(1) inz(SQL_USING_CLAUSE_BOTH);     
+  commitctl char(1) inz(SQL_COMMIT_CONTROL_NONE);       
+  datfmt char(3) inz(SQL_DATE_FORMAT_ISO);       
+  datsep char(1) inz('-');        
+  timfmt char(3) inz(SQL_TIME_FORMAT_ISO);       
+  timsep char(1) inz('.');       
+  naming char(3) inz(SQL_NAMING_SYS);       
+  decpoint char(1) inz('.');     
+  blocking int(5) inz(1);      
+  scroll int(5) inz(SQL_CURSOR_SCROLLABLE_NO);        
+  position int(5) inz;      
+  rrn int(10) inz(0);          
+  insert int(10) inz(0);       
+  directmap char(1) inz(SQL_DIRECT_MAP_NO);    
+  reuseda char(1) inz;      
+  namecheck char(1) inz;    
+  useptrs char(1) inz;      
+  withhold char(1) inz;     
+  userdef char(18) inz;     
+  closefile char(10) inz;   
+  closelib char(10) inz;    
+  reopen char(1) inz;       
+  useperf char(1) inz;      
+  reval char(1) inz;        
+  maxscale uns(5) inz(11);     
+  maxprec char(1) inz(SQL_MAX_PRECISION_31);      
+  mindiv char(1) inz;       
+  stmccsid int(10) inz(CCSID_JOB);     
+  packsyp pointer inz(*Null);          
+  mainsyp pointer inz(*Null);      
+  sorttab char(10) inz(SQL_SORT_TABLE_JOB);     
+  sortlib char(10) inz;     
+  langid char(10) inz(SQL_LANGUAGE_ID_JOB);      
+  allowcpy char(1) inz(SQL_ALLOW_COPY_OF_DATA_AUTO);     
+  allowblk char(1) inz(SQL_ALLOW_BLOCKING_ALLREAD);     
+  sqlstm like(sqlstmvar_t);    
+end-ds;
+
+//---------------------------------------------------------------*
+//  constants
+//---------------------------------------------------------------*
+dcl-c SQL_ALLOW_COPY_OF_DATA_AUTO 'A';
+dcl-c SQL_ALLOW_COPY_OF_DATA_SYSTEM 'S';
+dcl-c SQL_ALLOW_COPY_OF_DATA_NO 'N';
+
+dcl-c SQL_ALLOW_BLOCKING_READ 'S';
+dcl-c SQL_ALLOW_BLOCKING_NONE 'F';
+dcl-c SQL_ALLOW_BLOCKING_ALLREAD 'L';
+
+dcl-c SQL_AUTOCOMMIT_NO '0';
+dcl-c SQL_AUTOCOMMIT_YES '1';
+
+dcl-c SQL_COMMIT_CONTROL_CHG 'C';
+dcl-c SQL_COMMIT_CONTROL_CS 'S';
+dcl-c SQL_COMMIT_CONTROL_ALL 'A';
+dcl-c SQL_COMMIT_CONTROL_NONE 'N';
+
+dcl-c SQL_CONCURRENT_ACCESS_WAIT 'W';
+dcl-c SQL_CONCURRENT_ACCESS_SKIP 'S';
+dcl-c SQL_CONCURRENT_ACCESS_USE 'U';
+
+dcl-c SQL_DATE_FORMAT_USA 'USA';
+dcl-c SQL_DATE_FORMAT_ISO 'ISO';
+dcl-c SQL_DATE_FORMAT_EUR 'EUR';
+dcl-c SQL_DATE_FORMAT_JIS 'JIS';
+dcl-c SQL_DATE_FORMAT_MDY 'MDY';
+dcl-c SQL_DATE_FORMAT_DMY 'DMY';
+dcl-c SQL_DATE_FORMAT_YMD 'YMD';
+dcl-c SQL_DATE_FORMAT_JUL 'JUL';
+
+dcl-c SQL_DIRECT_MAP_YES 'Y';
+dcl-c SQL_DIRECT_MAP_NO 'N';
+
+dcl-c SQL_EXTENDED_INDICATOR_YES 'Y';
+dcl-c SQL_EXTENDED_INDICATOR_NO 'N';
+
+dcl-c SQL_FUNCTION_BUILD_PACKAGE '1';
+dcl-c SQL_FUNCTION_PREPARE '2';
+dcl-c SQL_FUNCTION_EXECUTE '3';
+dcl-c SQL_FUNCTION_OPEN '4';
+dcl-c SQL_FUNCTION_FETCH '5';
+dcl-c SQL_FUNCTION_CLOSE '6';
+dcl-c SQL_FUNCTION_DESCRIBE '7';
+dcl-c SQL_FUNCTION_CLOSE_DELETE '8';
+dcl-c SQL_FUNCTION_PREPARE_DESCRIBE '9';
+dcl-c SQL_FUNCTION_INQUIRE 'A';
+dcl-c SQL_FUNCTION_CLOSE_PSEUDO_CLOSED 'B';
+dcl-c SQL_FUNCTION_DELETE_PACKAGE 'C';
+dcl-c SQL_FUNCTION_DIAG 'D';
+
+dcl-c SQL_HEX_LITERAL_AS_CHAR '0';
+dcl-c SQL_HEX_LITERAL_AS_BINARY '1';
+
+dcl-c SQL_LANGUAGE_ID_JOB '*JOB';
+dcl-c SQL_LANGUAGE_ID_JOBRUN '*JOBRUN';
+
+dcl-c SQL_NAME_CHECK_YES 'Y';
+dcl-c SQL_NAME_CHECK_NO 'N';
+
+dcl-c SQL_NAMING_SYS 'SYS';
+dcl-c SQL_NAMING_SQL 'SQL';
+
+dcl-c SQL_OPEN_READ x'80'; // b'10000000'
+dcl-c SQL_OPEN_WRITE x'40'; // b'01000000'
+dcl-c SQL_OPEN_UPDATE x'20'; // b'00100000'
+dcl-c SQL_OPEN_DELETE x'10'; // b'00010000'
+
+dcl-c SQL_FETCH_NEXT 0;
+dcl-c SQL_FETCH_PRIOR 1;
+dcl-c SQL_FETCH_FIRST 2;
+dcl-c SQL_FETCH_LAST 3;
+dcl-c SQL_FETCH_BEFORE 4;
+dcl-c SQL_FETCH_AFTER 5;
+dcl-c SQL_FETCH_CURRENT 6;
+dcl-c SQL_FETCH_RELATIVE 7;
+
+dcl-c SQL_REOPEN_YES '1';
+dcl-c SQL_REOPEN_NO '0';
+
+dcl-c SQL_PERFORMANCE_AREA_YES '1';
+dcl-c SQL_PERFORMANCE_AREA_NO '0'; 
+
+dcl-c SQL_REUSE_SQLDA_YES 'Y';
+dcl-c SQL_REUSE_SQLDA_NO 'N';
+
+dcl-c SQL_CURSOR_SCROLLABLE_YES 1;
+dcl-c SQL_CURSOR_SCROLLABLE_NO 0;
+
+dcl-c SQL_SORT_TABLE_JOB '*JOB';
+dcl-c SQL_SORT_TABLE_JOBRUN '*JOBRUN';
+dcl-c SQL_SORT_TABLE_LANGIDUNQ '*LANGIDUNQ';
+dcl-c SQL_SORT_TABLE_LANGIDSHR '*LANGIDSHR';
+dcl-c SQL_SORT_TABLE_HEX '*HEX';
+
+dcl-c SQL_LENGTH_TYPE_2 '0';
+dcl-c SQL_LENGTH_TYPE_4 '1';
+
+dcl-c SQL_TIME_FORMAT_HMS 'HMS';
+dcl-c SQL_TIME_FORMAT_USA 'USA';
+dcl-c SQL_TIME_FORMAT_ISO 'ISO';
+dcl-c SQL_TIME_FORMAT_EUR 'EUR';
+dcl-c SQL_TIME_FORMAT_JIS 'JIS';
+
+dcl-c SQL_USE_POINTERS_YES '1';
+dcl-c SQL_USE_POINTERS_NO '0';
+
+dcl-c SQL_USING_CLAUSE_NAMES 'N';
+dcl-c SQL_USING_CLAUSE_LABELS 'L';
+dcl-c SQL_USING_CLAUSE_BOTH 'B';
+dcl-c SQL_USING_CLAUSE_ANY 'A';
+
+dcl-c SQL_WITH_HOLD 'Y';
+dcl-c SQL_WITHOUT_HOLD 'N';
+
+dcl-c SQL_MAX_PRECISION_31 '1';
+dcl-c SQL_MAX_PRECISION_63 '2';
+
+//---------------------------------------------------------------*
+//  Process Extended Dynamic SQL (QSQPRCED) API
+//---------------------------------------------------------------*
+dcl-pr Q_SqPrcEd extpgm('QSQPRCED');
+  SqlCa likeds(QSQS);
+  SqlDa char(65535) options(*varsize) const;
+  FuncTemplateFmt char(8) const;
+  FuncTemplate char(65535) options(*varsize) const;
+  USec char(65535) options(*varsize) noopt;
+  SqlOut char(65535) options(*varsize:*nopass);
+  SqlOutLen int(10) const options(*nopass);
+end-pr;
+
+/ENDIF

@@ -1,0 +1,36 @@
+**free
+/IF NOT DEFINED (AR_OBJR__)
+
+/DEFINE AR_OBJR__
+/INCLUDE ARPG_H,ARCTYPES
+
+//---------------------------------------------------------------*
+// ObjCheck
+//---------------------------------------------------------------*
+dcl-pr ObjCheck int(10) extproc(*dclcase);
+  object char(10) value;
+  type char(10) value;
+  description char(50) options(*nopass:*omit);
+  library char(10) options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+// ObjGetObjPointer
+//---------------------------------------------------------------*
+dcl-pr ObjGetObjPointer extproc(*dclcase);
+  objectPtr pointer;
+  object char(10) value;
+  type char(10) value;
+  library char(10) value options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+// ObjGetProcedurePointer
+//---------------------------------------------------------------*
+dcl-pr ObjGetProcedurePointer pointer(*proc) extproc(*dclcase);
+  servicepgm char(10) value;
+  procedure varchar(128) value;
+  library char(10) value options(*nopass);
+end-pr;
+
+/ENDIF

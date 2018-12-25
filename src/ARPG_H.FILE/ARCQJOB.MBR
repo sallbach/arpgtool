@@ -1,0 +1,134 @@
+**free
+/IF NOT DEFINED (AR_QJOB__)
+
+/DEFINE AR_QJOB__
+/INCLUDE ARPG_H,ARCQUSEC
+
+//---------------------------------------------------------------*
+// Constants
+//---------------------------------------------------------------*
+
+//---------------------------------------------------------------*
+// Retrieve Job Status
+//---------------------------------------------------------------*
+dcl-pr Q_WCrJbSt extpgm('QWCRJBST');
+  result char(65535) options(*varsize);
+  len int(10) const;
+  jobId char(26) const options(*varsize);
+  form char(8) const;
+  uSec char(65535) options(*varsize) noopt;
+end-pr;
+
+//---------------------------------------------------------------*
+// List Job
+//---------------------------------------------------------------*
+dcl-pr Q_UsLJob extpgm('QUSLJOB');
+  usrSpc char(20) const;
+  form char(8) const;
+  jobName char(26) const;
+  stat char(10) const;
+  uSec char(65535) options(*varsize) noopt;
+  jobType char(1) const options(*nopass);
+  numFields int(10) const options(*nopass);
+  keyFields int(10) dim(32767) const options(*varsize:*nopass);
+  cHdl char(48) const options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+// Retrieve Job Information
+//---------------------------------------------------------------*
+dcl-pr Q_UsrJobI extpgm('QUSRJOBI');
+  result char(65535) options(*varsize);
+  len int(10) const;
+  form char(8) const;
+  jobId char(26) const;
+  jobInt char(16) const;
+  uSec char(65535) options(*varsize) noopt;
+  rstStat char(1) const options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+// Change Current Job
+//---------------------------------------------------------------*
+dcl-pr Q_WcccJob extpgm('QWCCCJOB');
+  jobI char(65535) const options(*varsize);
+  uSec char(65535) options(*varsize) noopt;
+end-pr;
+
+//---------------------------------------------------------------*
+// Change Job
+//---------------------------------------------------------------*
+dcl-pr Q_WTChgJb extpgm('QWTCHGJB');
+  jobId char(26) const;
+  jobInt char(16) const;
+  form char(8) const;
+  jobChg char(65535) const options(*varsize);
+  uSec char(65535) options(*varsize) noopt;
+  jTId char(65535) const options(*varsize:*nopass);
+  formJI char(8) const options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+// Retrieve Network Attributes
+//---------------------------------------------------------------*
+dcl-pr Q_WCrNetA extpgm('QWCRNETA');
+  result char(65535) options(*varsize);
+  len int(10) const;
+  numNetA int(10) const;
+  netANam char(10) const dim(32767) options(*varsize);
+  uSec char(65535) options(*varsize) noopt;
+end-pr;
+
+//---------------------------------------------------------------*
+// List Open Files
+//---------------------------------------------------------------*
+dcl-pr Q_DmLOpnF extpgm('QDMLOPNF');
+  result char(65535) options(*varsize);
+  len int(10) const;
+  form char(8) const;
+  jobI char(65535) const options(*varsize);
+  formI char(8) const;
+  uSec char(65535) options(*varsize) noopt;
+end-pr;
+
+//---------------------------------------------------------------*
+// Retrieve Subsystem Information
+//---------------------------------------------------------------*
+dcl-pr Q_WdrSbsD extpgm('QWDRSBSD');
+  result char(65535) options(*varsize);
+  len int(10) const;
+  form char(8) const;
+  sbs char(20) const dim(9999) options(*varsize);
+  uSec char(65535) options(*varsize) noopt;
+  numSbs int(10) const options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+// Retrieve Job Description Information (QWDRJOBD) API
+//---------------------------------------------------------------*
+dcl-pr Q_WdrJobD extpgm('QWDRJOBD');
+  result char(65535) options(*varsize);
+  len int(10) const;
+  form char(8) const;
+  jobd char(20) const;
+  uSec char(65535) options(*varsize) noopt;
+end-pr;
+
+//---------------------------------------------------------------*
+// Convert Date and Time Format (QWCCVTDT) API
+//---------------------------------------------------------------*
+dcl-pr Q_WcCvtDt extpgm('QWCCVTDT');
+  inFormat char(10) const;
+  input char(65535) const options(*varsize);
+  outFormat char(10) const;
+  output char(65535) options(*varsize);
+  uSec char(65535) options(*varsize) noopt;
+  inTimeZone char(10) const options(*nopass);
+  outTimeZone char(10) const options(*nopass);
+  timeZoneInf char(65535) options(*varsize:*nopass);
+  lenTimeZoneInf int(10) const options(*nopass);
+  precisionInd char(1) const options(*nopass);
+  inTimeInd char(1) const options(*nopass);
+end-pr;
+
+/ENDIF

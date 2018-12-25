@@ -1,0 +1,11 @@
+             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSOORR__')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSOORR - OO and storage functions                                    */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('OoRObjectNew')
+             EXPORT     SYMBOL('OoRObjectGet')
+             EXPORT     SYMBOL('OoRObjectIsValid')
+             EXPORT     SYMBOL('OoRObjectFree')
+
+             ENDPGMEXP

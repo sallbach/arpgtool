@@ -1,9 +1,13 @@
              STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSSTRR__')
 
      /*-----------------------------------------------------------------------*/
-     /* SRVSTRR - String functions                                            */
+     /* ARSSTRR - String functions                                            */
      /*-----------------------------------------------------------------------*/
              EXPORT     SYMBOL('StrIConv')
-        /*   EXPORT     SYMBOL('StrFunctions') */
+             EXPORT     SYMBOL('StrFillValues')
+             EXPORT     SYMBOL('StrHexStrToBytes')
+             EXPORT     SYMBOL('StrBytesToHexStr')
+             EXPORT     SYMBOL('StrUppr')
+             EXPORT     SYMBOL('StrLowr')
 
              ENDPGMEXP

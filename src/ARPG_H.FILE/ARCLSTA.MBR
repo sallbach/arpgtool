@@ -1,0 +1,192 @@
+**free
+/IF NOT DEFINED (AR_LSTA__)
+
+/DEFINE AR_LSTA__
+/INCLUDE ARPG_H,ARCSTRR
+/INCLUDE ARPG_H,ARCTYPES
+/INCLUDE ARPG_H,ARCFCNTL
+
+//---------------------------------------------------------------*
+// constants
+//---------------------------------------------------------------*
+//* MessageId
+dcl-c LSTASH_MSGID 'CPF9897';
+//* Message file
+dcl-c LSTASH_MSGF  'QCPFMSG   *LIBL     ';
+
+
+//* Message data of start task message
+dcl-c LSTASH_START       '**LOGSTASH-START';
+//* Message data of end task message
+dcl-c LSTASH_END         '**LOGSTASH-END';
+//* Message data of set variable message
+dcl-c LSTASH_VAR         '**LOGSTASH-VAR';
+//* Message data of remove variable message
+dcl-c LSTASH_VAR_REMOVE  '**LOGSTASH-REMOVE';
+
+//* Log member is currently in use
+dcl-c LSTASH_STAT_ACTIVE   'A';
+//* Log member is inactive
+dcl-c LSTASH_STAT_INACTIVE 'I';
+//* Log member can be deleted
+dcl-c LSTASH_STAT_DELETE   'D';
+
+//* No server mode. Logger runs only once.
+dcl-c LSTASH_SERVER_NO       0;
+//* Default server mode. Logger loops every 5 seconds
+dcl-c LSTASH_SERVER_DEFAULT  5;
+
+//* Don't print second level message
+dcl-c LSTASH_SECLVL_NO      0;
+//* Print second level message as separate field
+dcl-c LSTASH_SECLVL_SEP     1;
+//* Concat first and second level message
+dcl-c LSTASH_SECLVL_CONCAT  2;
+
+//---------------------------------------------------------------*
+// typedefs
+//---------------------------------------------------------------*
+// Settings for both - Job and Logger-Server
+dcl-ds LogStash_t qualified template align;
+  version int(10) inz(%size(LogStash_t));
+  logfile char(10) inz('LOGSTASH'); // Logger/Job - LogFile
+  loglib char(10) inz(API_LIBL); // Logger/Job - LogLib
+  immed ind inz(*off); // Job - *on - logging starts immediately with LogStashStart()
+                       //       *off - logging starts with LogStashStartTask()
+  wrap int(10) inz(60); // Job - Minutes -> 1h / 0 = NoWrap
+  server int(10) inz(LSTASH_SERVER_DEFAULT); // Logger - Server mode - Delay > 0
+  pretty ind inz(*off); // Logger - Pretty print json/xml
+  ccsid int(10) inz(CCSID_UTF8); // Logger - Ccsid json/xml
+  minserv int(10) inz(0); // Logger - min. severity 0=All
+  seclvl int(10) inz(LSTASH_SECLVL_SEP); // Logger - second level message
+  hexcase int(10) inz(STR_LOWER); // case of hex strings
+  linesep varchar(10) inz(LF); // Logger - Optional line separator - &N, &P, &B
+  fieldsep varchar(10) inz(' | '); // Logger - Optional field separator
+  useutc ind inz(*off);
+  utcoffset ind inz(*on);
+  //writer pointer(*proc) inz(%pAddr('LogStashWriteMessage'));
+  writer pointer(*proc) inz(%pAddr('LogStashWriteJsonMessage'));
+  startmsg pointer(*proc) inz(%pAddr('LogStashIsStartMsg'));
+  endmsg pointer(*proc) inz(%pAddr('LogStashIsEndMsg'));
+end-ds;
+
+dcl-ds LogStash01_t extname('QAMHJLPR') qualified template;
+end-ds;
+
+dcl-ds LogStashVar_t template;
+  Type Char(20);
+  sep1 Char(3) inz('&N ');
+  Var  Char(50);
+  sep2 Char(3) inz('&N ');
+  Data Char(1024);
+end-ds;
+
+dcl-s LogStashMsg_t varchar(4096) template;
+
+//---------------------------------------------------------------*
+// LogStashStart
+//---------------------------------------------------------------*
+dcl-pr LogStashStart int(10) extproc(*dclcase);
+  settings likeds(LogStash_t) value options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+// LogStashStartTask
+//---------------------------------------------------------------*
+dcl-pr LogStashStartTask int(10) extproc(*dclcase);
+end-pr;
+
+//---------------------------------------------------------------*
+// LogStashEndTask
+//---------------------------------------------------------------*
+dcl-pr LogStashEndTask int(10) extproc(*dclcase);
+end-pr;
+
+//---------------------------------------------------------------*
+// LogStashSetVar
+//---------------------------------------------------------------*
+dcl-pr LogStashSetVar int(10) extproc(*dclcase);
+  varName char(50) value;
+  varVal varchar(1024) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// LogStashRmvVar
+//---------------------------------------------------------------*
+dcl-pr LogStashRmvVar int(10) extproc(*dclcase);
+  varName char(50) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// LogStashStartLogger
+//---------------------------------------------------------------*
+dcl-pr LogStashStartLogger int(10) extproc(*dclcase);
+  connect pointer(*proc) value;
+  settings likeds(LogStash_t) value options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+// LogStashIsStartMsg
+//---------------------------------------------------------------*
+dcl-s gPtStashIsStartMsg pointer(*proc) inz(*Null);
+dcl-pr IntLogStashIsStartMsg ind extproc(gPtStashIsStartMsg);
+  message likeds(LogStash01_t) value;
+end-pr;
+
+dcl-pr LogStashIsStartMsg ind extproc(*dclcase);
+  message likeds(LogStash01_t) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// LogStashIsEndMsg
+//---------------------------------------------------------------*
+dcl-s gPtStashIsEndMsg pointer(*proc) inz(*Null);
+dcl-pr IntLogStashIsEndMsg ind extproc(gPtStashIsEndMsg);
+  message likeds(LogStash01_t) value;
+end-pr;
+
+dcl-pr LogStashIsEndMsg ind extproc(*dclcase);
+  message likeds(LogStash01_t) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// LogStashIsVarMsg
+//---------------------------------------------------------------*
+dcl-pr LogStashIsVarMsg ind extproc(*dclcase);
+  message likeds(LogStash01_t) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// LogStashWriteMessage
+//---------------------------------------------------------------*
+dcl-s gPtStashWriteMessage pointer(*proc) inz(*Null);
+dcl-pr IntLogStashWriteMessage int(10) extproc(gPtStashWriteMessage);
+  destination int(10) value;
+  message likeds(LogStash01_t) value;
+  pDsSettings likeds(LogStash_t) value;
+end-pr;
+
+dcl-pr LogStashWriteMessage int(10) extproc(*dclcase);
+  destination int(10) value;
+  message likeds(LogStash01_t) value;
+  pDsSettings likeds(LogStash_t) value;
+end-pr;
+
+dcl-pr LogStashWriteJsonMessage int(10) extproc(*dclcase);
+  destination int(10) value;
+  message likeds(LogStash01_t) value;
+  pDsSettings likeds(LogStash_t) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// LogStashGetMsgText
+//---------------------------------------------------------------*
+dcl-pr LogStashGetMsgText int(10) extproc(*dclcase);
+  message likeds(LogStash01_t) value;
+  linesep varchar(10) value;
+  pInToCcsid int(10) value;
+  msg1 varchar(65535);
+  msg2 varchar(65535);
+end-pr;
+
+/ENDIF

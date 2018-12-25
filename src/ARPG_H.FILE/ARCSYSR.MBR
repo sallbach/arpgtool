@@ -1,46 +1,46 @@
-      /IF DEFINED (AR_SYSR__)
-      /EOF
-      /ENDIF
+**free
+/IF NOT DEFINED (AR_SYSR__)
 
-      /DEFINE AR_SYSR__
-      /INCLUDE ARPG_H,ARCTYPES
+/DEFINE AR_SYSR__
+/INCLUDE ARPG_H,ARCTYPES
 
-      //---------------------------------------------------------------*
-      // PSDS - program status
-      //---------------------------------------------------------------*
-       dcl-ds gDsSys PSDS;
-        s#prog *proc;
-        s#stat *status;
-        s#psta zoned(5) pos(16);
-        s#line char(8)  pos(21);
-        s#rout *routine;
-        s#parm *parms;
-        s#exty char(3)  pos(40);
-        s#exnu char(4)  pos(43);
-        s#plib char(10) pos(81);
-        s#exdt char(80) pos(91);
-        s#exid char(4)  pos(171);
-        s#lfil char(10) pos(175);
-        s#date char(8)  pos(191);
-        s#year zoned(2) pos(199);
-        s#lfi2 char(8)  pos(201);
-        s#finf char(35) pos(209);
-        s#job  char(10) pos(244);
-        s#user char(10) pos(254);
-        s#jobn zoned(6) pos(264);
-        s#jobd zoned(6) pos(270);
-        s#pgmd zoned(6) pos(276);
-        s#pgmt zoned(6) pos(282);
-        s#pgcd char(6)  pos(288);
-        s#pgct char(6)  pos(294);
-        s#clvl char(4)  pos(300);
-        s#srcf char(10) pos(304);
-        s#srcl char(10) pos(314);
-        s#srcm char(10) pos(324);
-        s#pgmp char(10) pos(334);
-        s#modp char(10) pos(344);
-        s#cusr char(10) pos(358);
-        s#eerr int(10)  pos(368);
-        s#xmle int(20)  pos(372);
-       end-ds;
+//---------------------------------------------------------------*
+// PSDS - program status
+//---------------------------------------------------------------*
+dcl-ds gDsSys PSDS;
+  s#prog *proc;
+  s#stat *status;
+  s#psta zoned(5) pos(16);
+  s#line char(8)  pos(21);
+  s#rout *routine;
+  s#parm *parms;
+  s#exty char(3)  pos(40);
+  s#exnu char(4)  pos(43);
+  s#plib char(10) pos(81);
+  s#exdt char(80) pos(91);
+  s#exid char(4)  pos(171);
+  s#lfil char(10) pos(175);
+  s#date char(8)  pos(191);
+  s#year zoned(2) pos(199);
+  s#lfi2 char(8)  pos(201);
+  s#finf char(35) pos(209);
+  s#job  char(10) pos(244);
+  s#user char(10) pos(254);
+  s#jobn zoned(6) pos(264);
+  s#jobd zoned(6) pos(270);
+  s#pgmd zoned(6) pos(276);
+  s#pgmt zoned(6) pos(282);
+  s#pgcd char(6)  pos(288);
+  s#pgct char(6)  pos(294);
+  s#clvl char(4)  pos(300);
+  s#srcf char(10) pos(304);
+  s#srcl char(10) pos(314);
+  s#srcm char(10) pos(324);
+  s#pgmp char(10) pos(334);
+  s#modp char(10) pos(344);
+  s#cusr char(10) pos(358);
+  s#eerr int(10)  pos(368);
+  s#xmle int(20)  pos(372);
+end-ds;
 
+/ENDIF

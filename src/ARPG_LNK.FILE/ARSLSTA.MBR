@@ -1,0 +1,31 @@
+             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSLSTA__')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSLSTA - LogStash functions                                          */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('LogStashStart')
+             EXPORT     SYMBOL('LogStashStartTask')
+             EXPORT     SYMBOL('LogStashEndTask')
+             EXPORT     SYMBOL('LogStashSetVar')
+             EXPORT     SYMBOL('LogStashRmvVar')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSLST01 - Logstash Logger (Server)                                   */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('LogStashStartLogger')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSLST02 - Logstash Message Parser (Interface)                        */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('LogStashIsStartMsg')
+             EXPORT     SYMBOL('LogStashIsEndMsg')
+             EXPORT     SYMBOL('LogStashIsVarMsg')
+             EXPORT     SYMBOL('LogStashGetMsgText')
+             EXPORT     SYMBOL('LogStashWriteMessage')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSLST03 - Logstash Message writer (JSON)                             */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('LogStashWriteJsonMessage')
+
+             ENDPGMEXP

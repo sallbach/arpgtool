@@ -1,0 +1,31 @@
+**free
+/IF NOT DEFINED (AR_DATE__)
+
+/DEFINE AR_DATE__
+/INCLUDE ARPG_H,ARCTYPES
+
+//---------------------------------------------------------------*
+// constants
+//---------------------------------------------------------------*
+dcl-c DAT_ADJ_JOB '*JOB';
+dcl-c DAT_ADJ_UTC '*UTC';
+dcl-c DAT_ADJ_SYS '*SYS';
+
+//---------------------------------------------------------------*
+// DatAdjTs
+//---------------------------------------------------------------*
+dcl-pr DatAdjTs timestamp extproc(*dclcase);
+  inTime timestamp const;
+  toZone varchar(10) const options(*nopass);
+  fromZone varchar(10) const options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+// DatGetUtcOffset
+//---------------------------------------------------------------*
+dcl-pr DatGetUtcOffset char(6) extproc(*dclcase);
+  inTime timestamp const;
+  fromZone varchar(10) const options(*nopass);
+end-pr;
+
+/ENDIF

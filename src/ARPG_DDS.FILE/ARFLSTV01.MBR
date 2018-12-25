@@ -1,0 +1,9 @@
+Create index ARFLSTV01 on ARFLSTV
+(
+  LStv_jobname,
+  LStv_jobuser,
+  LStv_jobnumber,
+  LStv_sequence
+);
+
+Label on Index ARFLSTV01 is 'job/user/jobnum/sequence';

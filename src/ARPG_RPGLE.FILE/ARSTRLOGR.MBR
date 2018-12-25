@@ -1,0 +1,96 @@
+**Free
+main(ArStrLogrr);
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCLSTA
+/COPY ARPG_H,ARCIFSR
+/COPY ARPG_H,ARCDATE
+/COPY ARPG_H,ARCYAJL
+/COPY ARPG_H,ARCQMH
+/COPY ARPG_H,ARCNETDB
+
+dcl-s gAnServer varchar(128);
+dcl-s gInPort int(10);
+
+//---------------------------------------------------------------*
+// ArStrLogrr
+//---------------------------------------------------------------*
+dcl-proc ArStrLogrr;
+  dcl-pi ArStrLogrr;
+	gAnServer varchar(128) const;
+	gInPort int(10) const; 
+	gDsLogFile likeds(file_t) const;
+	gInSecLvl int(10) const;
+	gInDelay int(10) const;
+	gInCcsid int(10) const;
+  end-pi;  
+
+  dcl-ds pDsSettings likeds(LogStash_t) inz(*likeds);
+
+  // settings
+  pDsSettings.logfile = gDsLogFile.name;
+  pDsSettings.loglib  = gDsLogFile.lib;
+  pDsSettings.seclvl  = gInSecLvl;
+  pDsSettings.server  = gInDelay;
+  pDsSettings.ccsid   = gInCcsid;
+
+  gAnServer = pAnServer;
+  gInPort   = PInPort;
+
+  LogStashStartLogger(%Paddr(Connection):pDsSettings)
+
+  return;
+
+end-proc ArStrLogrr;
+//---------------------------------------------------------------*
+// Connection
+//---------------------------------------------------------------*
+dcl-proc Connection;
+  dcl-pi *N int(10);
+  end-pi;
+
+  dcl-s pInSocket int(10);
+  dcl-s pInIP uns(10);
+  dcl-s pInAddrLen uns(10);
+  dcl-s pPtConnectTo pointer;
+
+  pInIP = inet_Addr(%trim(gAnServer));
+  if pInIP = INADDR_NONE;
+    p_hostent = getHostByName(%trim(gAnServer));
+    if p_hostent <> *Null;
+      pInIP = h_addr;
+    endif;
+  endif;
+
+   if pInIP = INADDR_NONE;
+     return -1; // error connect failed
+   endif;
+
+  // create socket
+  pInSocket = socket(AF_INET:SOCK_STREAM:IPPROTO_IP);
+
+  // connect socket
+  pInAddrLen = %size(sockaddr);
+
+  // allocate memory to store the socket adress into
+  pPtConnectTo = %alloc(pInAddrLen);
+
+  // Point the socket address structure at the newly allocated
+  p_sockaddr = pPtConnectTo;
+
+  // Populate the sockaddr_in structure
+  sin_family = AF_INET;
+  sin_addr = pInIP;
+  sin_port = pInPort;
+  sin_zero = *allx'00';
+
+  // connect to a server
+  if connect(pInSocket : pPtConnectTo : pInAddrLen) < 0 ;
+    return -1; // error connect failed
+  endif;
+
+  return pInSocket;
+
+end-proc Connection;

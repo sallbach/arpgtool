@@ -1,71 +1,72 @@
-      /IF DEFINED (AR_UNISTD__)
-      /EOF
-      /ENDIF
+**free
+/IF NOT DEFINED (AR_UNISTD__)
 
-      /DEFINE AR_UNISTD__
-      /INCLUDE ARPG_H,ARCTYPES
+/DEFINE AR_UNISTD__
+/INCLUDE ARPG_H,ARCTYPES
 
-      // Constants for lseek()
-       dcl-c SEEK_SET 0;
-       dcl-c SEEK_CUR 1;
-       dcl-c SEEK_END 2;
+// Constants for lseek()
+dcl-c SEEK_SET 0;
+dcl-c SEEK_CUR 1;
+dcl-c SEEK_END 2;
 
-      //*************************************************************@C3A*/
-      //  Symbolic constants that define the descriptors associated  @C3A*/
-      //  with the C language stdin, stdout, and stderr.  Note that  @C3A*/
-      //  the descriptors are NOT automatically set up and should    @C3A*/
-      //  only be used within certain environments that do set the   @C3A*/
-      //  descriptors appropriately.  To enable C-runtime, must      @C3A*/
-      //  set environment variable QIBM_USE_DESCRIPTOR_STDIO to 'Y'  @C3A*/
-      //  prior to performing I/O to any standard stream.            @C3A*/
-      //*************************************************************@C3A*/
-       dcl-c STDIN_FILENO  0;
-       dcl-c STDOUT_FILENO 1;
-       dcl-c STDERR_FILENO 2;
+//*************************************************************@C3A*/
+//  Symbolic constants that define the descriptors associated  @C3A*/
+//  with the C language stdin, stdout, and stderr.  Note that  @C3A*/
+//  the descriptors are NOT automatically set up and should    @C3A*/
+//  only be used within certain environments that do set the   @C3A*/
+//  descriptors appropriately.  To enable C-runtime, must      @C3A*/
+//  set environment variable QIBM_USE_DESCRIPTOR_STDIO to 'Y'  @C3A*/
+//  prior to performing I/O to any standard stream.            @C3A*/
+//*************************************************************@C3A*/
+dcl-c STDIN_FILENO  0;
+dcl-c STDOUT_FILENO 1;
+dcl-c STDERR_FILENO 2;
 
-      // Constants for access()
-       dcl-c R_OK  4;
-       dcl-c W_OK  2;
-       dcl-c X_OK  1;
-       dcl-c F_OK  0;
+// Constants for access()
+dcl-c R_OK  4;
+dcl-c W_OK  2;
+dcl-c X_OK  1;
+dcl-c F_OK  0;
 
-      //---------------------------------------------------------------*
-      // write
-      //---------------------------------------------------------------*
-       dcl-pr write_ int(10) extproc('write');
-         hdl  int(10) value;
-         data pointer value options(*string);
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// write
+//---------------------------------------------------------------*
+dcl-pr write_ int(10) extproc('write');
+  hdl  int(10) value;
+  data pointer value options(*string);
+  len  like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // read
-      //---------------------------------------------------------------*
-       dcl-pr read_ int(10) extproc('read');
-         hdl  int(10) value;
-         data pointer value;
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// read
+//---------------------------------------------------------------*
+dcl-pr read_ int(10) extproc('read');
+  hdl  int(10) value;
+  data pointer value;
+  len  like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // lseek
-      //---------------------------------------------------------------*
-       dcl-pr lseek int(10) extproc(*dclcase);
-         hdl  int(10) value;
-         offc like(off_t) value;
-         pos  int(10) value;
-       end-pr;
+//---------------------------------------------------------------*
+// lseek
+//---------------------------------------------------------------*
+dcl-pr lseek int(10) extproc(*dclcase);
+  hdl  int(10) value;
+  offc like(off_t) value;
+  pos  int(10) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // sleep
-      //---------------------------------------------------------------*
-       dcl-pr sleep uns(10) extproc(*dclcase);
-         seconds  uns(10) value;
-       end-pr;
+//---------------------------------------------------------------*
+// sleep
+//---------------------------------------------------------------*
+dcl-pr sleep uns(10) extproc(*dclcase);
+  seconds  uns(10) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // unlink
-      //---------------------------------------------------------------*
-       dcl-pr unlink int(10) extproc(*dclcase);
-         path pointer value options(*string);
-       end-pr;
+//---------------------------------------------------------------*
+// unlink
+//---------------------------------------------------------------*
+dcl-pr unlink int(10) extproc(*dclcase);
+  path pointer value options(*string);
+end-pr;
+
+/ENDIF

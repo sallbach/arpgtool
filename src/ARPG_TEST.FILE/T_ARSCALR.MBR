@@ -1,0 +1,19 @@
+**Free
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCCALR
+
+/COPY RPGUNIT1,TESTCASE
+
+//---------------------------------------------------------------*
+// test
+//---------------------------------------------------------------*
+dcl-proc test_Caller export;
+
+  aEqual('T_ARSCALR':CalGetCaller(0));     
+
+end-proc test_Caller;

@@ -1,69 +1,69 @@
-      /IF DEFINED (AR_IFSR__)
-      /EOF
-      /ENDIF
+**free
+/IF NOT DEFINED (AR_IFSR__)
 
-      /DEFINE AR_IFSR__
-      /INCLUDE ARPG_H,ARCFCNTL
+/DEFINE AR_IFSR__
+/INCLUDE ARPG_H,ARCFCNTL
 
-      //---------------------------------------------------------------*
-      // IfsOpenFile
-      //---------------------------------------------------------------*
-       dcl-pr IfsOpenFile int(10) extproc(*dclcase);
-         path pointer value options(*string);
-         openflags int(10) value;
-         mode int(10) value options(*nopass);
-         ccsid int(10) value options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// IfsOpenFile
+//---------------------------------------------------------------*
+dcl-pr IfsOpenFile int(10) extproc(*dclcase);
+  path pointer value options(*string);
+  openflags int(10) value;
+  mode int(10) value options(*nopass);
+  ccsid int(10) value options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // IfsCloseFile
-      //---------------------------------------------------------------*
-       dcl-pr IfsCloseFile int(10) extproc(*dclcase);
-         hdl  int(10) value;
-       end-pr;
+//---------------------------------------------------------------*
+// IfsCloseFile
+//---------------------------------------------------------------*
+dcl-pr IfsCloseFile int(10) extproc(*dclcase);
+  hdl  int(10) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // IfsWriteFile
-      //---------------------------------------------------------------*
-       dcl-pr IfsWriteFile int(10) extproc(*dclcase);
-         hdl  int(10) value;
-         data pointer value options(*string);
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// IfsWriteFile
+//---------------------------------------------------------------*
+dcl-pr IfsWriteFile int(10) extproc(*dclcase);
+  hdl  int(10) value;
+  data pointer value options(*string);
+  len  like(size_t) value options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // IfsReadFile
-      //---------------------------------------------------------------*
-       dcl-pr IfsReadFile int(10) extproc(*dclcase);
-         hdl  int(10) value;
-         data pointer value;
-         len  like(size_t) value;
-       end-pr;
+//---------------------------------------------------------------*
+// IfsReadFile
+//---------------------------------------------------------------*
+dcl-pr IfsReadFile int(10) extproc(*dclcase);
+  hdl  int(10) value;
+  data pointer value;
+  len  like(size_t) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // IfsReadLine
-      //---------------------------------------------------------------*
-       dcl-pr IfsReadLine int(10) extproc(*dclcase);
-         hdl  int(10) value;
-         data pointer value;
-         len  like(size_t) value;
-         nl   ind options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// IfsReadLine
+//---------------------------------------------------------------*
+dcl-pr IfsReadLine int(10) extproc(*dclcase);
+  hdl  int(10) value;
+  data pointer value;
+  len  like(size_t) value;
+  nl   ind options(*nopass);
+end-pr;
 
-      //---------------------------------------------------------------*
-      // IfsLSeek
-      //---------------------------------------------------------------*
-       dcl-pr IfsLSeek int(10) extproc(*dclcase);
-         hdl  int(10) value;
-         offc like(off_t) value;
-         pos  int(10) value;
-       end-pr;
+//---------------------------------------------------------------*
+// IfsLSeek
+//---------------------------------------------------------------*
+dcl-pr IfsLSeek int(10) extproc(*dclcase);
+  hdl  int(10) value;
+  offc like(off_t) value;
+  pos  int(10) value;
+end-pr;
 
-      //---------------------------------------------------------------*
-      // IfsSetFileCcsid
-      //---------------------------------------------------------------*
-       dcl-pr IfsSetFileCcsid int(10) extproc(*dclcase);
-         file  pointer const options(*string);
-         ccsid int(10) const options(*nopass);
-       end-pr;
+//---------------------------------------------------------------*
+// IfsSetFileCcsid
+//---------------------------------------------------------------*
+dcl-pr IfsSetFileCcsid int(10) extproc(*dclcase);
+  file  pointer const options(*string);
+  ccsid int(10) const options(*nopass);
+end-pr;
 
+/ENDIF

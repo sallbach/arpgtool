@@ -1,18 +1,19 @@
-      /IF DEFINED (AR_QLGUSR__)
-      /EOF
-      /ENDIF
+**free
+/IF NOT DEFINED (AR_QLGUSR__)
 
-      /DEFINE AR_QLGUSR__
+/DEFINE AR_QLGUSR__
 
-      //---------------------------------------------------------------*
-      // QlgCvtTextDescToDesc() - Convert Text Descriptor API
-      //---------------------------------------------------------------*
-       dcl-pr QlgCvtTextDescToDesc int(10) extproc(*dclcase);
-         pInInType    int(10) value;
-         pInOutType   int(10) value;
-         pAnInDesc    char(65535) const options(*varsize);
-         pInInDesSize int(10) value;
-         pAnOuDesc    char(65535) options(*varsize);
-         pInOuDesSize int(10) value;
-         pInJobCcsid  int(10) value;
-       end-pr;
+//---------------------------------------------------------------*
+// QlgCvtTextDescToDesc() - Convert Text Descriptor API
+//---------------------------------------------------------------*
+dcl-pr QlgCvtTextDescToDesc int(10) extproc(*dclcase);
+  pInInType    int(10) value;
+  pInOutType   int(10) value;
+  pAnInDesc    char(65535) const options(*varsize);
+  pInInDesSize int(10) value;
+  pAnOuDesc    char(65535) options(*varsize);
+  pInOuDesSize int(10) value;
+  pInJobCcsid  int(10) value;
+end-pr;
+
+/ENDIF

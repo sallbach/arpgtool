@@ -6,24 +6,25 @@
 - Optional, your can install [RPGUnit](http://rpgunit.sourceforge.net/ "RPGUnit") to test the installation.
 
 ## Install
-Create the physical source files on your IBM i.
+Create the physical source files on your IBM i (or modify and use the script putarpg.in).
 
     CRTSRCPF FILE(YOURLIB/ARPG_BUILD) RCDLEN(92)  TEXT('aRPGtool - Build sources')
     CRTSRCPF FILE(YOURLIB/ARPG_CLLE)  RCDLEN(92)  TEXT('aRPGtool - CL sources')
     CRTSRCPF FILE(YOURLIB/ARPG_CMD)   RCDLEN(92)  TEXT('aRPGtool - Command sources')
+    CRTSRCPF FILE(YOURLIB/ARPG_DDS)   RCDLEN(92)  TEXT('aRPGtool - File sources')
     CRTSRCPF FILE(YOURLIB/ARPG_H)     RCDLEN(112) TEXT('aRPGtool - Prototypes')
     CRTSRCPF FILE(YOURLIB/ARPG_HTML)  RCDLEN(212) TEXT('aRPGtool - HTML templates')
     CRTSRCPF FILE(YOURLIB/ARPG_LNK)   RCDLEN(92)  TEXT('aRPGtool - Exports')
     CRTSRCPF FILE(YOURLIB/ARPG_RPGLE) RCDLEN(112) TEXT('aRPGtool - Program sources')
     CRTSRCPF FILE(YOURLIB/ARPG_TEST)  RCDLEN(112) TEXT('aRPGtool - RPGUnit test cases')
     CRTSRCPF FILE(YOURLIB/ARPG_UIM)   RCDLEN(92)  TEXT('aRPGtool - Command help')
+    CRTPF    FILE(YOURLIB/ARPG_META)  RCDLEN(80)  TEXT('aRPGtool - Meta data')
 
 Upload the source code
 
     > cd /download_path_arpgtool/src
     > ftp your.host
     ftp> ascii
-    ftp> prompt
     ftp> cd /qsys.lib/yourlib.lib
     ftp> mput ARPG*.FILE/*.MBR
     ftp> bye

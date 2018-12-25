@@ -1,7 +1,7 @@
              STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSXMLR__')
 
      /*-----------------------------------------------------------------------*/
-     /* SRVXMLR - XML writer functions                                        */
+     /* ARSXMLR - XML writer functions                                        */
      /*-----------------------------------------------------------------------*/
              EXPORT     SYMBOL('XmlDocument')
              EXPORT     SYMBOL('XmlPrettyPrint')
@@ -24,7 +24,7 @@
              EXPORT     SYMBOL('XmlToWriter')
 
      /*-----------------------------------------------------------------------*/
-     /* SRVXML01 - XML helper functions                                       */
+     /* ARSXML01 - XML helper functions                                       */
      /*-----------------------------------------------------------------------*/
              EXPORT     SYMBOL('XmlIanaToCcsid')
              EXPORT     SYMBOL('XmlCcsidToIana')
@@ -32,5 +32,13 @@
              EXPORT     SYMBOL('XmlBoolean')
              EXPORT     SYMBOL('XmlDate')
              EXPORT     SYMBOL('XmlDateTime')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSXMLxx - New helper functions                                       */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('XmlHeader')
+             EXPORT     SYMBOL('XmlPi')
+             EXPORT     SYMBOL('XmlComment')
+             EXPORT     SYMBOL('XmlNamespace')
 
              ENDPGMEXP

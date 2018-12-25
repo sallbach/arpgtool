@@ -1,0 +1,55 @@
+Create or Replace table LogStashJobTable for system name ARFLSTA
+(
+  LSta_jobname     for LSJOB  Char(10) not null,
+  LSta_jobuser     for LSUSER Char(10) not null,
+  LSta_jobnumber   for LSJNUM Char(6)  not null,
+  LSta_logfile     for LSFILE Char(10) not null,
+  LSta_loglibrary  for LSLIB  Char(10) not null,
+  LSta_logmember   for LSMBR  Char(10) not null,
+  LSta_log_on      for LSLON  Char(1)  not null,
+  LSta_log_status  for LSSTAT Char(1)  not null,
+  LSta_change_time for LSTIME Timestamp not null
+                                            with default current_timestamp,
+
+  primary key (LSta_logmember)
+
+)  RcdFmt ARFLSTAR;
+
+Label on Table ARFLSTA is 'LogStash Job Table';
+
+Label on Column ARFLSTA
+(
+  LSJOB   is 'Job name',
+  LSUSER  is 'Job user',
+  LSJNUM  is 'Job number',
+  LSFILE  is 'Log file',
+  LSLIB   is 'Log library',
+  LSMBR   is 'Log member',
+  LSLON   is 'Logging on/off',
+  LSSTAT  is 'Log status',
+  LSTIME  is 'Last changed time'
+);
+
+Label on Column ARFLSTA
+(
+  LSJOB   text is 'Job name',
+  LSUSER  text is 'Job user',
+  LSJNUM  text is 'Job number',
+  LSFILE  text is 'Log file',
+  LSLIB   text is 'Log library',
+  LSMBR   text is 'Log member',
+  LSLON   text is 'Logging on/off',
+  LSSTAT  text is 'Log status',
+  LSTIME  text is 'Last changed time'
+);
+
+Comment on Column ARFLSTA
+(
+  LSLON is 'Current logging status :
+            1 = on
+            0 = off',
+  LSSTAT is 'Current log status :
+             A = active
+             I = inactive
+             D = delete'
+);

@@ -1,0 +1,126 @@
+**Free
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCMBRR
+/COPY ARPG_H,ARCSTRING
+/COPY ARPG_H,ARCQUSPC
+/COPY ARPG_H,ARCQOBJD
+/COPY ARPG_H,ARCQFILE
+
+
+//---------------------------------------------------------------*
+//  MbrCheck
+//---------------------------------------------------------------*
+//* Check existence and description of a file member.
+//*
+//* @param pAnFile - file name
+//* @param pAnMember - input/output member name (Name,*FIRST,*LAST).
+//* @param pAnDesc - output member description (optional, omit)
+//* @param pAnLib - input/output object library 
+//*                  (Name,*LIBL,*CURLIB,*USRLIBL,*ALLUSR,*ALL)  
+//*                  (Default - @const API_LIBL)
+//*
+//* @return 0 - Member found.
+//* @return 1 - Member not found.
+//* @return 2 - Error.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc MbrCheck export;
+  dcl-pi *N int(10);
+    pAnFile char(10) value;
+    pAnMember char(10);
+    pAnDesc char(50) options(*nopass:*omit);
+    pAnLib char(10) options(*nopass);
+  end-pi;
+
+  dcl-s pAnLib_ char(10) inz(API_LIBL);
+  dcl-s pBoFirst ind static inz(*on);
+  dcl-s pPtUsrSp pointer;
+  dcl-s pInStr int(10) inz(1);
+  dcl-s i int(10);
+ 
+  dcl-c USRSPCTMP 'ARSMBRRUSPQTEMP     '; 
+ 
+/COPY QSYSINC/QRPGLESRC,QUSGEN
+/COPY QSYSINC/QRPGLESRC,QUSRMBRD
+/COPY QSYSINC/QRPGLESRC,QUSLOBJ
+ 
+  // Create UserSpace 
+  if PBoFirst;
+    callp(e) Q_UsCrtUs(USRSPCTMP
+                      :*Blanks
+                      :32768
+                      :*Blanks
+                      :API_CHANGE
+                      :*Blanks
+                      :API_YES
+                      :QUsecExcp);
+    if %error;
+      return 2;
+    endif;
+    PBoFirst = *off;
+  endif;
+ 
+  if %parms >= %parmnum(PAnLib) and PAnLib <> *Blanks;
+    PAnLib_ = PAnLib;
+  endif;
+ 
+  // create object list
+  callp(e) Q_UsLObj(USRSPCTMP
+                   :'OBJL0100'
+                   :pAnFile + pAnLib_
+                   :API_FILE
+                   :QUsecExcp);
+  if %error;
+    return 2;
+  endif;
+ 
+  callp(e) Q_UsPtrUs(USRSPCTMP:PPtUsrSp:QUsecExcp);
+  if %error;
+    return 2;
+  endif;
+ 
+  // Userspace Header
+  memcpy(%Addr(QUsH0100):pPtUsrSp:%size(QUsH0100));
+  pInStr = QUsOLD;
+ 
+  // Objekte aus Userspace lesen
+  for i = 1 by 1 to QUsNbrLe;
+ 
+    memcpy(%Addr(QUsL010003):pPtUsrSp + pInStr:%size(QUsL010003));
+ 
+    clear QUsecF.Excp;
+    Q_UsrMbrD(QUSM0100
+             :%size(QUSM0100)
+             :'MBRD0100'
+             :QUsObjNu + QUsOLNu
+             :pAnMember
+             :'1'
+             :QUsecF);
+ 
+    if QUsecF.Excp <> *Blanks;
+      PInStr += %size(QUsL010003);
+      iter;
+    endif;
+ 
+    pAnMember = QUSMN02;
+ 
+    if %parms >= %parmnum(pAnDesc);
+      pAnDesc = QUSTD03;
+    endif;
+
+    if %parms >= %parmnum(pAnLib);
+      pAnLib = QUSDFILL;
+    endif;
+
+    return 0;
+  endfor;
+ 
+  return 1;     
+       
+end-proc MbrCheck;
+

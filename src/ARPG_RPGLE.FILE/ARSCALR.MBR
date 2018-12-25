@@ -1,0 +1,96 @@
+**Free
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCCALR
+/COPY ARPG_H,ARCQMH
+
+//---------------------------------------------------------------*
+// global variables
+//---------------------------------------------------------------*
+
+//---------------------------------------------------------------*
+// global data structures
+//---------------------------------------------------------------*
+
+//---------------------------------------------------------------*
+// CalGetCaller
+//---------------------------------------------------------------*
+//* Get calling program name.
+//*
+//* @param pAnCmd - Command string
+//* @param pInOptions - Options )optional)
+//*
+//* @return Calling program name.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc CalGetCaller export;
+  dcl-pi *N char(10);
+    pInPosition int(10) value options(*nopass);
+    pAnModul char(10) options(*nopass);
+    pAnProcedure char(256) options(*nopass);
+    pAnStatment char(10) options(*nopass);
+  end-pi;
+
+/COPY QSYSINC/QRPGLESRC,QMHRCVPM
+  dcl-ds QMHM0300Var qualified;
+    fix likeds(QMHM0300);
+    var char(2048);
+  end-ds;  
+
+  dcl-s pInPosition_ int(10) inz(2);
+  
+  if %parms() >= %parmnum(pInPosition);
+    pInPosition_ = pInPosition + 1;
+  endif;
+ 
+  Q_MhSndPM('CPF9897'
+           :QCPFMSG
+           :*Blanks
+           :0
+           :API_INFO
+           :'*'
+           :pInPosition_
+           :Msg_Key
+           :QUsecF); 
+ 
+  Q_MhRcvPM(QMHM0300Var
+           :%size(QMHM0300Var)
+           :'RCVM0300'
+           :'*'
+           :pInPosition_
+           :API_ANY
+           :Msg_Key
+           :0
+           :API_REMOVE
+           :QUsecF);
+         
+  clear QMHRS;
+  if not %error;
+    QMHRS = %subst(QMHM0300Var.Var
+                   :1
+                    + QMHM0300Var.Fix.QMhLDRtn01   // Length Data Returned
+                    + QMHM0300Var.Fix.QMhLMRtn01   // Length Message Returned
+                    + QMHM0300Var.Fix.QMhLHRtn01   // Length Help Returned
+                   :QMHM0300Var.Fix.QMhLSRtn);     // Length Send Returned
+  endif;
+ 
+ 
+  if %parms() >= %parmnum(pAnModul);
+    pAnModul = QMhRMN;
+  endif;
+ 
+  if %parms() >= %parmnum(pAnProcedure);
+    pAnProcedure = QMhRPN;
+  endif;
+ 
+  if %parms() >= %parmnum(pAnStatment);
+    pAnStatment = QMhRS00;
+  endif;
+ 
+  return QMhRPgmN01; 
+
+end-proc CalGetCaller;

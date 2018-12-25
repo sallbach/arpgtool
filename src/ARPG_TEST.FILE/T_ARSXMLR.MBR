@@ -1,18 +1,18 @@
 **Free
-       ctl-opt nomain;
-      /COPY ARPG_H,ARCALLCTL
-      //---------------------------------------------------------------*
-      // extern prototypes
-      //---------------------------------------------------------------*
-      /COPY ARPG_H,ARCXMLR
-      /COPY ARPG_H,ARCIFSR
-      /COPY ARPG_H,ARCSTRING
-      /COPY ARPG_H,ARCERRNO
-      /COPY ARPG_H,ARCB64R
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCXMLR
+/COPY ARPG_H,ARCIFSR
+/COPY ARPG_H,ARCSTRING
+/COPY ARPG_H,ARCERRNO
+/COPY ARPG_H,ARCB64R
 
-      /COPY RPGUNIT1,TESTCASE
+/COPY RPGUNIT1,TESTCASE
 
-       dcl-c teststring123 x'74657374537472696e67313233-
+dcl-c teststring123 x'74657374537472696e67313233-
 74657374537472696e67313233-
 74657374537472696e67313233-
 74657374537472696e67313233-
@@ -23,345 +23,455 @@
 74657374537472696e67313233-
 74657374537472696e67313233';
 
-      dcl-s gInPos int(10) inz(0);
+dcl-s gInPos int(10) inz(0);
 
-      //---------------------------------------------------------------*
-      // XmlNode
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_Node export;
+//---------------------------------------------------------------*
+// XmlNode
+//---------------------------------------------------------------*
+dcl-proc test_Xml_Node export;
 
-       dcl-s pPtString pointer;
+  dcl-s pPtString pointer;
 
-         XmlPrettyPrint(*off);
-         XmlDocument(37);
-         XmlNode('root');
-           XmlNode('child1');
-             XmlNode('child1.2':'data 1.2');
-           XmlNodeEnd();
-           XmlNode('child2':'data 2');
-           XmlNode('child3':'data 3');
-           XmlNodeNum('num1':123,1);
-           XmlNodeBool('bool1':*on);
-           XmlNodeBool('bool2':*off);
-             XmlAttributeBool('test':*on);
-           XmlNodeBool('bool3':*on:*on);
-           XmlSetNullOnNull(*on);
-             XmlAttributeBool('test1':*on:*on);
-             XmlAttributeBool('test2':*off);
-           XmlNode('child4');
-             XmlNode('child4.1':'1':*on);
-             XmlNode('child4.2':'2':*on);
-           XmlNodeEnd();
-           XmlNode('child5');
-             XmlAttributeBool('test1':*on:*on);
-             XmlNode('child5.1':'test':*on);
-             XmlNode('child5.2':'test':*on);
-           XmlNodeEnd();
-           XmlSetNullOnNull(*off);
-           XmlNode('child6':'test':*on);
-           XmlNodeDate('child7':d'2017-02-05');
-           XmlNodeDateTime('child8':z'2017-02-05-19.15.14.341779');
-         XmlNodeEnd();
-         pPtString = XmlToString();
+  XmlDocument(37);
+  XmlNode('root');
+    XmlNode('child1');
+      XmlNode('child1.2':'data 1.2');
+    XmlNodeEnd();
+    XmlNode('child2':'data 2');
+    XmlNode('child3':'data 3');
+    XmlNodeNum('num1':123,1);
+    XmlNodeBool('bool1':*on);
+    XmlNodeBool('bool2':*off);
+      XmlAttributeBool('test':*on);
+    XmlNodeBool('bool3':*on:*on);
+    XmlSetNullOnNull(*on);
+      XmlAttributeBool('test1':*on:*on);
+      XmlAttributeBool('test2':*off);
+    XmlNode('child4');
+      XmlNode('child4.1':'1':*on);
+      XmlNode('child4.2':'2':*on);
+    XmlNodeEnd();
+    XmlNode('child5');
+      XmlAttributeBool('test1':*on:*on);
+      XmlNode('child5.1':'test':*on);
+      XmlNode('child5.2':'test':*on);
+    XmlNodeEnd();
+    XmlSetNullOnNull(*off);
+    XmlNode('child6':'test':*on);
+    XmlNodeDate('child7':d'2017-02-05');
+    XmlNodeDateTime('child8':z'2017-02-05-19.15.14.341779');
+  XmlNodeEnd();
+  pPtString = XmlToString();
 
-         aEqual('<?xml version="1.0" encoding="IBM037"?>'
-               + '<root>'
-                 + '<child1>'
-                   + '<child1.2>data 1.2</child1.2>'
-                 + '</child1>'
-                 + '<child2>data 2</child2>'
-                 + '<child3>data 3</child3>'
-                 + '<num1>123.1</num1>'
-                 + '<bool1>true</bool1>'
-                 + '<bool2 test="true">false</bool2>'
-                 + '<bool3 test2="false" />'
-                 + '<child6 />'
-                 + '<child7>2017-02-05</child7>'
-                 + '<child8>2017-02-05T19:15:14</child8>'
-                 +'</root>'
-               :%str(pPtString));
+  aEqual('<?xml version="1.0" encoding="IBM037" ?>'
+        + '<root>'
+          + '<child1>'
+            + '<child1.2>data 1.2</child1.2>'
+          + '</child1>'
+          + '<child2>data 2</child2>'
+          + '<child3>data 3</child3>'
+          + '<num1>123.1</num1>'
+          + '<bool1>true</bool1>'
+          + '<bool2 test="true">false</bool2>'
+          + '<bool3 test2="false" />'
+          + '<child6 />'
+          + '<child7>2017-02-05</child7>'
+          + '<child8>2017-02-05T19:15:14</child8>'
+          +'</root>'
+        :%str(pPtString));
 
-         dealloc pPtString;
+  dealloc pPtString;
 
-       end-proc test_Xml_Node;
-      //---------------------------------------------------------------*
-      // XmlAttr
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_Attr export;
+end-proc test_Xml_Node;
+//---------------------------------------------------------------*
+// XmlAttr
+//---------------------------------------------------------------*
+dcl-proc test_Xml_Attr export;
 
-       dcl-s pPtString pointer;
+  dcl-s pPtString pointer;
 
-         XmlPrettyPrint(*on);
-         XmlDocument(37);
-         XmlNode('root');
-           XmlNode('child1');
-             XmlNode('child1.1':'data 1.1');
-               XmlAttribute('atr1':'value 1xxx');
-               XmlAttributeNum('atr2':1.23);
-               XmlAttribute('atr3':'value 3xxx');
-             XmlNode('child1.2':'data 1.2');
-           XmlNodeEnd();
-           XmlNode('child2':'data 2&3');
-           XmlNodeNum('child3':22.333);
-           XmlNode('child4':'');
-             XmlAttribute('atr1':'value "1xxx"');
-             XmlAttribute('atr2':'value 2xxx');
-         XmlNodeEnd();
-         pPtString = XmlToString();
+  XmlDocument(37);
+  XmlPrettyPrint(*on);
+  XmlNode('root');
+    XmlNode('child1');
+      XmlNode('child1.1':'data 1.1');
+        XmlAttribute('atr1':'value 1xxx');
+        XmlAttributeNum('atr2':1.23);
+        XmlAttribute('atr3':'value 3xxx');
+      XmlNode('child1.2':'data 1.2');
+    XmlNodeEnd('child1');
+    XmlNode('child2':'data 2&3');
+    XmlNodeNum('child3':22.333);
+    XmlNode('child4':'');
+      XmlAttribute('atr1':'value "1xxx"');
+      XmlAttribute('atr2':'value 2xxx');
+  XmlNodeEnd('root');
+  pPtString = XmlToString();
 
-         aEqual('<?xml version="1.0" encoding="IBM037"?>' + LF
-               + '<root>' + LF
-                 + '  <child1>' + LF
-                   + '    <child1.1 '
-                            + 'atr1="value 1xxx" '
-                            + 'atr2="1.23" '
-                            + 'atr3="value 3xxx"'
-                   + '>data 1.1</child1.1>' + LF
-                   + '    <child1.2>data 1.2</child1.2>' + LF
-                 + '  </child1>' + LF
-                 + '  <child2>data 2&amp;3</child2>' + LF
-                 + '  <child3>22.333</child3>' + LF
-                 + '  <child4 '
-                         + 'atr1="value &quot;1xxx&quot;" '
-                         + 'atr2="value 2xxx"'
-                     + ' />' + LF
-                 +'</root>'
-               :%str(pPtString));
+  aEqual('<?xml version="1.0" encoding="IBM037" ?>' + LF
+        + '<root>' + LF
+          + '  <child1>' + LF
+            + '    <child1.1 '
+                     + 'atr1="value 1xxx" '
+                     + 'atr2="1.23" '
+                     + 'atr3="value 3xxx"'
+            + '>data 1.1</child1.1>' + LF
+            + '    <child1.2>data 1.2</child1.2>' + LF
+          + '  </child1>' + LF
+          + '  <child2>data 2&amp;3</child2>' + LF
+          + '  <child3>22.333</child3>' + LF
+          + '  <child4 '
+                  + 'atr1="value &quot;1xxx&quot;" '
+                  + 'atr2="value 2xxx"'
+              + ' />' + LF
+          +'</root>'
+        :%str(pPtString));
 
-         dealloc pPtString;
+  dealloc pPtString;
 
-       end-proc test_Xml_Attr;
-      //---------------------------------------------------------------*
-      // XmltoFile
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_File export;
+end-proc test_Xml_Attr;
+//---------------------------------------------------------------*
+// XmltoFile
+//---------------------------------------------------------------*
+dcl-proc test_Xml_File export;
 
-         dcl-s pAnString varchar(1024);
-         dcl-s pInFile int(10);
-         dcl-s len int(10);
-         dcl-s pPtErrno pointer;
-         dcl-s pInErrno int(10) based(pPtErrno);
+  dcl-s pAnString varchar(1024);
+  dcl-s pInFile int(10);
+  dcl-s len int(10);
+  dcl-s pPtErrno pointer;
+  dcl-s pInErrno int(10) based(pPtErrno);
 
-         dcl-ds suba qualified template;
-           child11 likeds(subb);
-           child12 char(20);
-         end-ds;
+  dcl-ds suba qualified template;
+    child11 likeds(subb);
+    child12 char(20);
+  end-ds;
 
-         dcl-ds subb qualified template;
-           atr1 char(20);
-           atr2 packed(15:6);
-           atr3 char(20);
-           data char(20);
-         end-ds;
+  dcl-ds subb qualified template;
+    atr1 char(20);
+    atr2 packed(15:6);
+    atr3 char(20);
+    data char(20);
+  end-ds;
 
-         dcl-ds root qualified;
-           child1 likeds(suba);
-           child2 char(20);
-           child3 packed(15:6);
-           child4 likeds(subb);
-         end-ds;
+  dcl-ds root qualified;
+    child1 likeds(suba);
+    child2 char(20);
+    child3 packed(15:6);
+    child4 likeds(subb);
+  end-ds;
 
-         XmlPrettyPrint(*on);
-         XmlDocument(CCSID_UTF8);
-         XmlNode('root');
-           XmlNode('child1');
-             XmlNode('child11':'data 1.1');
-               XmlAttribute('atr1':'value 1xxx');
-               XmlAttributeNum('atr2':1.23);
-               XmlAttribute('atr3':'value 3xxx');
-             XmlNode('child12':'data 1.2');
-           XmlNodeEnd();
-           XmlNode('child2':'data 2&3');
-           XmlNodeNum('child3':22.333);
-           XmlNode('child4':'');
-           XmlAttribute('atr1':'value "1xxx"');
-           XmlAttribute('atr2':'567.88');
-         XmlNodeEnd();
-         iEqual(0:XmlToStmf('/tmp/t_arsxmlr_unit_test.xml'));
+  XmlDocument(CCSID_UTF8);
+  XmlPrettyPrint(*on);
+  XmlPi('xml-stylesheet type="text/xsl" href="test.xsl"');
+  XmlNode('root');
+    XmlComment('Comment before root');
+    XmlNode('child1');
+      XmlNode('child11':'data 1.1');
+      XmlComment('Comment before child11');
+        XmlAttribute('atr1':'value 1xxx');
+        XmlAttributeNum('atr2':1.23);
+        XmlAttribute('atr3':'value 3xxx');
+      XmlNode('child12':'data 1.2');
+    XmlNodeEnd();
+    XmlNode('child2':'data 2&3');
+    XmlNodeNum('child3':22.333);
+    XmlNode('child4':'');
+    XmlAttribute('atr1':'value "1xxx"');
+    XmlAttribute('atr2':'567.88');
+  XmlNodeEnd();
+  iEqual(0:XmlToStmf('/tmp/t_arsxmlr_unit_test.xml'));
 
-         pInFile = IfsOpenFile('/tmp/t_arsxmlr_unit_test.xml'
-                              :O_RDONLY + O_TEXTDATA + O_CCSID
-                              :0
-                              :CCSID_US);
-         pPtErrno = errno();
-         assert(pInFile <> -1:%str(strerror(pInErrno)));
-         %len(pAnString) = %len(pAnString:*max);
-         %len(pAnString) = IfsReadFile(pInFile
-                                      :%Addr(pAnString:*data)
-                                      :%len(pAnString:*max));
-         //%len(pAnString) = len;
-         IfsCloseFile(pInFile);
+  pInFile = IfsOpenFile('/tmp/t_arsxmlr_unit_test.xml'
+                       :O_RDONLY + O_TEXTDATA + O_CCSID
+                       :0
+                       :CCSID_US);
+  pPtErrno = errno();
+  assert(pInFile <> -1:%str(strerror(pInErrno)));
+  %len(pAnString) = %len(pAnString:*max);
+  %len(pAnString) = IfsReadFile(pInFile
+                               :%Addr(pAnString:*data)
+                               :%len(pAnString:*max));
+  //%len(pAnString) = len;
+  IfsCloseFile(pInFile);
 
-         aEqual('<?xml version="1.0" encoding="UTF-8"?>' + LF
-               + '<root>' + LF
-                 + '  <child1>' + LF
-                   + '    <child11 '
-                            + 'atr1="value 1xxx" '
-                            + 'atr2="1.23" '
-                            + 'atr3="value 3xxx"'
-                   + '>data 1.1</child11>' + LF
-                   + '    <child12>data 1.2</child12>' + LF
-                 + '  </child1>' + LF
-                 + '  <child2>data 2&amp;3</child2>' + LF
-                 + '  <child3>22.333</child3>' + LF
-                 + '  <child4 '
-                         + 'atr1="value &quot;1xxx&quot;" '
-                         + 'atr2="567.88"'
-                     + ' />' + LF
-                 +'</root>'
-               :pAnString);
+  aEqual('<?xml version="1.0" encoding="UTF-8" ?>' + LF
+         +'<?xml-stylesheet type="text/xsl" href="test.xsl" ?>' + LF
+         + '<!-- Comment before root -->' + LF
+         + '<root>' + LF
+           + '  <child1>' + LF
+             + '    <!-- Comment before child11 -->' + LF
+             + '    <child11 '
+                      + 'atr1="value 1xxx" '
+                      + 'atr2="1.23" '
+                      + 'atr3="value 3xxx"'
+             + '>data 1.1</child11>' + LF
+             + '    <child12>data 1.2</child12>' + LF
+           + '  </child1>' + LF
+           + '  <child2>data 2&amp;3</child2>' + LF
+           + '  <child3>22.333</child3>' + LF
+           + '  <child4 '
+                   + 'atr1="value &quot;1xxx&quot;" '
+                   + 'atr2="567.88"'
+               + ' />' + LF
+           +'</root>'
+         :pAnString);
 
-        xml-into root %xml('/tmp/t_arsxmlr_unit_test.xml':
-                           'doc=file -
-                            datasubf=data -
-                            allowmissing=yes');
+  xml-into root %xml('/tmp/t_arsxmlr_unit_test.xml':
+                     'doc=file -
+                      datasubf=data -
+                      allowmissing=yes');
 
-        aEqual('value 1xxx':root.child1.child11.atr1);
-        assert(1.23 = root.child1.child11.atr2:'fail');
-        aEqual('value 3xxx':root.child1.child11.atr3);
-        aEqual('data 1.1':root.child1.child11.data);
-        aEqual('data 1.2':root.child1.child12);
-        aEqual('data 2&3':root.child2);
-        assert(22.333 = root.child3:'Fail');
-        aEqual('value "1xxx"':root.child4.atr1);
-        assert(567.88 = root.child4.atr2:'fail');
+  aEqual('value 1xxx':root.child1.child11.atr1);
+  assert(1.23 = root.child1.child11.atr2:'fail');
+  aEqual('value 3xxx':root.child1.child11.atr3);
+  aEqual('data 1.1':root.child1.child11.data);
+  aEqual('data 1.2':root.child1.child12);
+  aEqual('data 2&3':root.child2);
+  assert(22.333 = root.child3:'Fail');
+  aEqual('value "1xxx"':root.child4.atr1);
+  assert(567.88 = root.child4.atr2:'fail');
 
-        unlink('/tmp/t_arsxmlr_unit_test.xml');
+  unlink('/tmp/t_arsxmlr_unit_test.xml');
 
-       end-proc test_Xml_File;
-      //---------------------------------------------------------------*
-      // iana to ccsid
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_iana_ccsid export;
+end-proc test_Xml_File;
+//---------------------------------------------------------------*
+// XmlComment
+//---------------------------------------------------------------*
+dcl-proc test_Xml_Comment export;
 
-         iEqual(1208:XmlIanaToCcsid('UTF-8'));
-         iEqual(819:XmlIanaToCcsid('ISO-8859-1'));
+  dcl-s pPtString pointer;
 
-       end-proc test_Xml_iana_ccsid;
-      //---------------------------------------------------------------*
-      // ccsid to inana
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_ccsid_iana export;
+  XmlDocument(37);
+  XmlHeader(*off);
+  XmlPrettyPrint(*on);
+  XmlNode('root');
+    XmlComment('Comment before root');
+    XmlNode('child1');
+      XmlNode('child1.1':'data 1.1');
+      XmlComment('Comment before child1.1');
+        XmlAttribute('atr1':'value 1xxx');
+        XmlAttributeNum('atr2':1.23);
+        XmlAttribute('atr3':'value 3xxx');
+      XmlNode('child1.2':'data 1.2');
+    XmlNodeEnd();
+    XmlNode('child2':'data 2&3');
+    XmlNodeNum('child3':22.333);
+    XmlNode('child4':'');
+      XmlAttribute('atr1':'value "1xxx"');
+      XmlAttribute('atr2':'value 2xxx');
+  XmlNodeEnd();
+  pPtString = XmlToString();
 
-         aEqual('UTF-8':XmlCcsidToIana(1208));
-         aEqual('ISO-8859-1':XmlCcsidToIana(819));
+  aEqual('<!-- Comment before root -->' + LF
+        + '<root>' + LF
+          + '  <child1>' + LF
+            + '    <!-- Comment before child1.1 -->' + LF
+            + '    <child1.1 '
+                     + 'atr1="value 1xxx" '
+                     + 'atr2="1.23" '
+                     + 'atr3="value 3xxx"'
+            + '>data 1.1</child1.1>' + LF
+            + '    <child1.2>data 1.2</child1.2>' + LF
+          + '  </child1>' + LF
+          + '  <child2>data 2&amp;3</child2>' + LF
+          + '  <child3>22.333</child3>' + LF
+          + '  <child4 '
+                  + 'atr1="value &quot;1xxx&quot;" '
+                  + 'atr2="value 2xxx"'
+              + ' />' + LF
+          +'</root>'
+        :%str(pPtString));
 
-       end-proc test_Xml_ccsid_iana;
-      //---------------------------------------------------------------*
-      // test xmlNumber
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_number export;
+  dealloc pPtString;
 
-         aEqual('123.43':XmlNumber(123.43));
-         aEqual('-123.43':XmlNumber(-123.43));
-         aEqual('123':XmlNumber(123));
-         aEqual('0':XmlNumber(0));
+end-proc test_Xml_Comment;
+//---------------------------------------------------------------*
+// XmlNameSpace
+//---------------------------------------------------------------*
+dcl-proc test_Xml_Namespace export;
 
-       end-proc test_Xml_number;
-      //---------------------------------------------------------------*
-      // test xmlBoolean
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_boolean export;
+  dcl-s pPtString pointer;
 
-         aEqual('true':XmlBoolean(*on));
-         aEqual('false':XmlBoolean(*off));
+  XmlDocument(37);
+  XmlPrettyPrint(*on);
+  XmlNode('root');
+    XmlNamespace(API_DEFAULT:'http://default.test');
+    XmlNamespace('a':'http://ns1.test');
+    XmlNamespace('b':'http://ns2.test');
+    XmlNode('a:child1');
+      XmlNode('a:child1.1':'data 1.1');
+        XmlAttribute('atr1':'value 1xxx');
+        XmlAttributeNum('atr2':1.23);
+        XmlAttribute('atr3':'value 3xxx');
+      XmlNode('a:child1.2':'data 1.2');
+    XmlNodeEnd();
+    XmlNode('b:child2':'data 2&3');
+    XmlNodeNum('child3':22.333);
+    XmlNode('child4':'');
+      XmlAttribute('atr1':'value "1xxx"');
+      XmlAttribute('atr2':'value 2xxx');
+  XmlNodeEnd();
+  pPtString = XmlToString();
 
-       end-proc test_Xml_boolean;
-      //---------------------------------------------------------------*
-      // test xmlDate
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_date export;
+  aEqual('<?xml version="1.0" encoding="IBM037" ?>' + LF
+        + '<root '
+            + 'xmlns="http://default.test" '
+            + 'xmlns:a="http://ns1.test" '
+            + 'xmlns:b="http://ns2.test"'
+        + '>' + LF
+          + '  <a:child1>' + LF
+          + '    <a:child1.1 '
+                     + 'atr1="value 1xxx" '
+                     + 'atr2="1.23" '
+                     + 'atr3="value 3xxx"'
+            + '>data 1.1</a:child1.1>' + LF
+            + '    <a:child1.2>data 1.2</a:child1.2>' + LF
+          + '  </a:child1>' + LF
+          + '  <b:child2>data 2&amp;3</b:child2>' + LF
+          + '  <child3>22.333</child3>' + LF
+          + '  <child4 '
+                  + 'atr1="value &quot;1xxx&quot;" '
+                  + 'atr2="value 2xxx"'
+              + ' />' + LF
+          +'</root>'
+        :%str(pPtString));
 
-         aEqual('2017-02-07':XmlDate(d'2017-02-07'));
+  dealloc pPtString;
 
-       end-proc test_Xml_date;
-      //---------------------------------------------------------------*
-      // test xmlDateTime
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_datetime export;
+end-proc test_Xml_Namespace;
+//---------------------------------------------------------------*
+// iana to ccsid
+//---------------------------------------------------------------*
+dcl-proc test_Xml_iana_ccsid export;
 
-         aEqual('2017-02-07T11:22:44':XmlDateTime(d'2017-02-07' + t'11.22.44'));
+  iEqual(1208:XmlIanaToCcsid('UTF-8'));
+  iEqual(819:XmlIanaToCcsid('ISO-8859-1'));
 
-       end-proc test_Xml_datetime;
-      //---------------------------------------------------------------*
-      // test xmlNodeB64
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_NodeB64 export;
+end-proc test_Xml_iana_ccsid;
+//---------------------------------------------------------------*
+// ccsid to inana
+//---------------------------------------------------------------*
+dcl-proc test_Xml_ccsid_iana export;
 
-         dcl-s pAnBinary char(65535);
-         dcl-s pPtString pointer;
-         dcl-ds testb64 qualified;
-           data varchar(2048);
-         end-ds;
+  aEqual('UTF-8':XmlCcsidToIana(1208));
+  aEqual('ISO-8859-1':XmlCcsidToIana(819));
 
-         pAnBinary = teststring123;
+ end-proc test_Xml_ccsid_iana;
+//---------------------------------------------------------------*
+// test xmlNumber
+//---------------------------------------------------------------*
+dcl-proc test_Xml_number export;
 
-         XmlDocument(37);
-         XmlNode('testb64');
-           XmlNodeB64('data':%addr(pAnBinary):%size(teststring123));
-         XmlNodeEnd();
-         pPtString = XmlToString();
-         pAnBinary = %str(pPtString);
-         dealloc pPtString;
+  aEqual('123.43':XmlNumber(123.43));
+  aEqual('-123.43':XmlNumber(-123.43));
+  aEqual('123':XmlNumber(123));
+  aEqual('0':XmlNumber(0));
 
-         xml-into testb64 %xml(pAnBinary);
+end-proc test_Xml_number;
+//---------------------------------------------------------------*
+// test xmlBoolean
+//---------------------------------------------------------------*
+dcl-proc test_Xml_boolean export;
 
-         pPtString = B64StringDecode(testb64.data);
-         pAnBinary = %str(pPtString);
-         dealloc pPtString;
-         aEqual(teststring123:pAnBinary);
+  aEqual('true':XmlBoolean(*on));
+  aEqual('false':XmlBoolean(*off));
 
-       end-proc test_Xml_NodeB64;
-      //---------------------------------------------------------------*
-      // test xmlNodeB64Reader
-      //---------------------------------------------------------------*
-       dcl-proc test_Xml_NodeB64Reader export;
+end-proc test_Xml_boolean;
+//---------------------------------------------------------------*
+// test xmlDate
+//---------------------------------------------------------------*
+dcl-proc test_Xml_date export;
 
-         dcl-s pAnBinary char(65535);
-         dcl-s pPtString pointer;
-         dcl-ds testb64 qualified;
-           data varchar(2048);
-         end-ds;
+  aEqual('2017-02-07':XmlDate(d'2017-02-07'));
 
-         XmlDocument(37);
-         XmlNode('testb64');
-           XmlNodeB64Reader('data':%paddr('INTB64READER'):0);
-         XmlNodeEnd();
-         pPtString = XmlToString();
-         pAnBinary = %str(pPtString);
-         dealloc pPtString;
+end-proc test_Xml_date;
+//---------------------------------------------------------------*
+// test xmlDateTime
+//---------------------------------------------------------------*
+dcl-proc test_Xml_datetime export;
 
-         xml-into testb64 %xml(pAnBinary);
+  aEqual('2017-02-07T11:22:44':XmlDateTime(d'2017-02-07' + t'11.22.44'));
 
-         pPtString = B64StringDecode(testb64.data);
-         pAnBinary = %str(pPtString);
-         dealloc pPtString;
-         aEqual(teststring123 + teststring123 + teststring123:pAnBinary);
+end-proc test_Xml_datetime;
+//---------------------------------------------------------------*
+// test xmlNodeB64
+//---------------------------------------------------------------*
+dcl-proc test_Xml_NodeB64 export;
 
-       end-proc test_Xml_NodeB64Reader;
-      //---------------------------------------------------------------*
-       dcl-proc intB64Reader;
-         dcl-pi *N int(10);
-           pInHdl     int(10) value;
-           pPtData    pointer value;
-           pInLen     int(10) value;
-         end-pi;
+  dcl-s pAnBinary char(65535);
+  dcl-s pPtString pointer;
+  dcl-ds testb64 qualified;
+    data varchar(2048);
+  end-ds;
 
-         dcl-c RLEN 50;
-         dcl-s pAnBinary char(65535);
-         dcl-s pPtBinary pointer inz(%Addr(pAnBinary));
-         dcl-s pInLen_ int(10);
+  pAnBinary = teststring123;
 
-         pAnBinary = teststring123 + teststring123 + teststring123;
+  XmlDocument(37);
+  XmlNode('testb64');
+    XmlNodeB64('data':%addr(pAnBinary):%size(teststring123));
+  XmlNodeEnd();
+  pPtString = XmlToString();
+  pAnBinary = %str(pPtString);
+  dealloc pPtString;
 
-         pInLen_ = RLEN;
-         if gInPos + pInLen_ > 3*%size(teststring123);
-           pInLen_ = 3*%size(teststring123) - gInPos;
-         endif;
+  xml-into testb64 %xml(pAnBinary);
 
-         memcpy(pPtData:pPtBinary + gInPos:pInLen_);
-         gInPos += pInLen_;
+  pPtString = B64StringDecode(testb64.data);
+  pAnBinary = %str(pPtString);
+  dealloc pPtString;
+  aEqual(teststring123:pAnBinary);
 
-         return pInLen_;
+end-proc test_Xml_NodeB64;
+//---------------------------------------------------------------*
+// test xmlNodeB64Reader
+//---------------------------------------------------------------*
+dcl-proc test_Xml_NodeB64Reader export;
 
-       end-proc intB64Reader;
+  dcl-s pAnBinary char(65535);
+  dcl-s pPtString pointer;
+  dcl-ds testb64 qualified;
+    data varchar(2048);
+  end-ds;
+
+  XmlDocument(37);
+  XmlNode('testb64');
+     XmlNodeB64Reader('data':%paddr('INTB64READER'):0);
+  XmlNodeEnd();
+  pPtString = XmlToString();
+  pAnBinary = %str(pPtString);
+  dealloc pPtString;
+
+  xml-into testb64 %xml(pAnBinary);
+
+  pPtString = B64StringDecode(testb64.data);
+  pAnBinary = %str(pPtString);
+  dealloc pPtString;
+  aEqual(teststring123 + teststring123 + teststring123:pAnBinary);
+
+end-proc test_Xml_NodeB64Reader;
+//---------------------------------------------------------------*
+dcl-proc intB64Reader;
+  dcl-pi *N int(10);
+    pInHdl     int(10) value;
+    pPtData    pointer value;
+    pInLen     int(10) value;
+  end-pi;
+
+  dcl-c RLEN 50;
+  dcl-s pAnBinary char(65535);
+  dcl-s pPtBinary pointer inz(%Addr(pAnBinary));
+  dcl-s pInLen_ int(10);
+
+  pAnBinary = teststring123 + teststring123 + teststring123;
+
+  pInLen_ = RLEN;
+  if gInPos + pInLen_ > 3*%size(teststring123);
+    pInLen_ = 3*%size(teststring123) - gInPos;
+  endif;
+
+  memcpy(pPtData:pPtBinary + gInPos:pInLen_);
+  gInPos += pInLen_;
+
+  return pInLen_;
+
+end-proc intB64Reader;

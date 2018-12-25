@@ -1,0 +1,14 @@
+             PGM        PARM(&SERVER &PORT &LOGFILE &SECLVL +
+                             &DELAY  &CCSID)
+
+             DCL        VAR(&SERVER) TYPE(*CHAR) LEN(130)
+             DCL        VAR(&PORT) TYPE(*INT)
+             DCL        VAR(&LOGFILE) TYPE(*CHAR) LEN(20)
+             DCL        VAR(&SECLVL) TYPE(*INT)
+             DCL        VAR(&DELAY) TYPE(*INT)
+             DCL        VAR(&CCSID) TYPE(*INT)
+
+             CALLPRC (ARSTRLOGRR) PARM(&SERVER &PORT &LOGFILE &SECLVL +
+                                       &DELAY  &CCSID)
+
+             ENDPGM
