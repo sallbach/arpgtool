@@ -1,6 +1,6 @@
 # ARSSQLR - SQL-Tools
 
-Example reading a table.
+Example reading a table. 
 
 	dcl-s pInResultSet int(10) const;
 	dcl-s pAnA varchar(20);
