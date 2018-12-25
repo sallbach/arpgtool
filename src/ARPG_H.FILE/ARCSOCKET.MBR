@@ -1,0 +1,24 @@
+**free
+/IF NOT DEFINED (AR_SOCKET__)
+
+/DEFINE AR_SOCKET__
+/INCLUDE ARPG_H,ARCTYPES
+/INCLUDE ARPG_H,ARCNETINET
+
+//---------------------------------------------------------------*
+// connect
+//---------------------------------------------------------------*
+dcl-pr connect int(10) extproc(*dclcase);
+  sock_desc int(10) value;
+  dest_addr pointer value;
+  addr_len int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// inet_ntoa
+//---------------------------------------------------------------*
+dcl-pr inet_ntoa pointer extproc(*dclcase);
+  internet_addr likeds(in_addr) value;
+end-pr;
+
+/ENDIF

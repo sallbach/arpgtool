@@ -1,0 +1,266 @@
+**Free
+ctl-opt nomain;
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// files
+//---------------------------------------------------------------*
+dcl-f ARFLSTV disk
+              usage(*update:*delete:*output)
+              keyed;
+
+
+dcl-f ARFLSTV01 disk
+                prefix(S)
+                rename(ArfLstvr:ArfLstv1r)
+                keyed;
+
+
+//---------------------------------------------------------------*
+// extern prototypes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCLSTA
+/COPY ARPG_H,ARCIFSR
+/COPY ARPG_H,ARCDATE
+/COPY ARPG_H,ARCYAJL
+/COPY ARPG_H,ARCQMH
+
+//---------------------------------------------------------------*
+// global variables
+//---------------------------------------------------------------*
+
+//---------------------------------------------------------------*
+// global data structures
+//---------------------------------------------------------------*
+
+//---------------------------------------------------------------*
+// LogStashIsStartMsg
+//---------------------------------------------------------------*
+//* Check if message is a start logging message.
+//*
+//* @param pAnMsdId - Message ID
+//* @param pAnData - Message data
+//* @param pInCcsid - Message data Ccsid
+//*
+//* @return *On - If start message else *Off.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashIsStartMsg export;
+  dcl-pi *N ind;
+    pDsMsd likeds(LogStash01_t) value;
+  end-pi;
+
+  dcl-ds pDsLogStashVar likeds(LogStashVar_t);
+  pDsLogStashVar = pDsMsd.QMHMDT;
+
+  return (pDsMsd.QMHMID = LSTASH_MSGID And
+          pDsLogStashVar.Type = LSTASH_START);
+
+end-proc LogStashIsStartMsg;
+//---------------------------------------------------------------*
+// LogStashIsEndMsg
+//---------------------------------------------------------------*
+//* Check if message is an end logging message.
+//*
+//* @param pAnMsdId - Message ID
+//* @param pAnData - Message data
+//* @param pInCcsid - Message data Ccsid
+//*
+//* @return *On - If end message else *Off.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashIsEndMsg export;
+  dcl-pi *N ind;
+    pDsMsd likeds(LogStash01_t) value;
+  end-pi;
+
+  dcl-ds pDsLogStashVar likeds(LogStashVar_t);
+  pDsLogStashVar = pDsMsd.QMHMDT;
+
+  return (pDsMsd.QMHMID = LSTASH_MSGID And
+          pDsLogStashVar.Type = LSTASH_END);
+
+end-proc LogStashIsEndMsg;
+//---------------------------------------------------------------*
+// LogStashIsVarMsg
+//---------------------------------------------------------------*
+//* Check if message is an end logging message.
+//*
+//* @param pAnMsdId - Message ID
+//* @param pAnData - Message data
+//* @param pInCcsid - Message data Ccsid
+//*
+//* @return *On - If end message else *Off.
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashIsVarMsg export;
+  dcl-pi *N ind;
+    pDsMsd likeds(LogStash01_t) value;
+  end-pi;
+
+  dcl-ds pDsLogStashVar likeds(LogStashVar_t);
+  dcl-ds pDsJob likeds(job_t);
+
+  pDsLogStashVar = pDsMsd.QMHMDT;
+  pDsJob = pDsMsd.QMHJOB;
+
+  if not (pDsMsd.QMHMID = LSTASH_MSGID And
+          pDsLogStashVar.Type = LSTASH_VAR);
+    return *off;
+  endif;
+
+  // Delete variable
+  if pDsLogStashVar.Data = LSTASH_VAR_REMOVE And 
+       pDsLogStashVar.Var = API_ALL;
+    setll (pDsJob.jobname:pDsJob.jobUser:pDsJob.jobnumber:*loval) ArfLstvr;
+    reade (pDsJob.jobname:pDsJob.jobUser:pDsJob.jobnumber) ArfLstvr;
+    dow not %eof;
+      delete ArfLstvr;
+      reade (pDsJob.jobname:pDsJob.jobUser:pDsJob.jobnumber) ArfLstvr;
+    enddo;          
+    return *on;
+  elseif pDsLogStashVar.Data = LSTASH_VAR_REMOVE;
+    delete(e) (pDsJob.jobname:pDsJob.jobUser:pDsJob.jobnumber:pDsLogStashVar.Var) ArfLstvr;
+    return *on;
+  endif;
+
+  // add or change variable
+  chain(e) (pDsJob.jobname
+           :pDsJob.jobuser
+           :pDsJob.jobnumber
+           :pDsLogStashVar.Var) ArfLstvr;
+
+  LvJob  = pDsJob.jobname;
+  LvUser = pDsJob.jobuser;
+  LvJNum = pDsJob.jobnumber;
+  LvVar  = %trimr(pDsLogStashVar.Var);
+  LvVal  = pDsLogStashVar.data;
+  %len(LvVal) = %len(pDsMsd.QMHMDT)
+                - (%size(pDsLogStashVar) - %size(pDsLogStashVar.Data));
+  LvTime = %timestamp();
+  if %found();
+    update ArfLstvr;
+    return *on;
+  endif;
+
+  // get next sequence number
+  setgt (pDsJob.jobname
+         :pDsJob.jobuser
+         :pDsJob.jobnumber
+         :*hival) ArfLstv1r;
+  readpe (pDsJob.jobname
+          :pDsJob.jobuser
+          :pDsJob.jobnumber) ArfLstv1r;
+  if %eof;
+    sLvSeq = *Zeros;
+  endif;
+
+  LvSeq = sLvSeq + 1;
+  write ArfLstvr;
+
+  return *on;
+
+end-proc LogStashIsVarMsg;
+//---------------------------------------------------------------*
+// LogStashGetMsgText
+//---------------------------------------------------------------*
+//* Format the first and second level message.
+//*
+//* @param pDsMsd - Message likeds(LogStash01_t)
+//* @param pInToCcsid - To Ccsid.
+//* @param pAnLinesep - Lineseparator for &N, &P and &B.
+//* @param pAnLvl1 - Return value first level message.
+//* @param pAnLvl2 - Return value second level message.
+//*
+//* @return 0 - successful else -1.
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc LogStashGetMsgText export;
+  dcl-pi *N int(10);
+    pDsMsd likeds(LogStash01_t) value;
+    pAnLinesep varchar(10) value;
+    pInToCcsid int(10) value;
+    pAnLvl1 varchar(65535);
+    pAnLvl2 varchar(65535);
+  end-pi;
+
+/COPY QSYSINC/QRPGLESRC,QMHRTVM
+
+  dcl-s i int(10);
+  dcl-s RtnCtlC char(10) inz(API_YES);
+  dcl-ds *n;
+    pAnRpl char(6) inz('&N&P&B');
+    pArRpl char(2) dim(3) overlay(pAnRpl);
+  end-ds;
+  dcl-ds pDsMh100 qualified inz;
+    mh100 likeds (QMHM010004);
+    data  char(65535);
+  end-ds;
+
+  pAnLvl1 = '';
+  pAnLvl2 = '';
+
+  if %len(pAnLinesep) = 0;
+    RtnCtlC = API_NO;
+  endif;
+
+  if pDsMsd.QMHMID = API_IMMED;
+    pAnLvl1 = %triml(pDsMsd.QMHMDT);
+    return 0;
+  endif;
+
+  QUSecF.Excp = *Blanks;
+  Q_MhRtvM(pDsMh100
+           :%size(pDsMh100)
+           :'RTVM0100'
+           :pDsMsd.QMHMID // Message identifier
+           :pDsMsd.QMHMF // Qualified message file name
+           :pDsMsd.QMHMDT // Replacement data
+           :%len(pDsMsd.QMHMDT) // Length of replacement data
+           :API_YES // Replace substitution values
+           :RtnCtlC // Return format control characters
+           :QUSecF);
+  if QUSecF.Excp = 'CPF2407';
+    Q_MhRtvM(pDsMh100
+             :%size(pDsMh100)
+             :'RTVM0100'
+             :pDsMsd.QMHMID // Message identifier
+             :%subst(pDsMsd.QMHMF:1:10) + pDsMsd.QMHSLB // Qualified message file name
+             :pDsMsd.QMHMDT // Replacement data
+             :%len(pDsMsd.QMHMDT) // Length of replacement data
+             :API_YES // Replace substitution values
+             :RtnCtlC // Return format control characters
+             :QUSecExcp);
+  endif;
+
+
+  if pDsMh100.mh100.QMHLMRTN02 > 0;
+    pAnLvl1 = %str(%Addr(pDsMh100) + %size(pDsMh100.mh100)
+                  :pDsMh100.mh100.QMHLMRTN02);
+  endif;
+
+  if pDsMh100.mh100.QMHLHRTN02 > 0;
+    pAnLvl2 = %str(%Addr(pDsMh100)
+                    + %size(pDsMh100.mh100)
+                    + pDsMh100.mh100.QMHLMRTN02
+                  :pDsMh100.mh100.QMHLHRTN02);
+  endif;
+
+  // replace &N, &P, &B with pAnLineSep
+  if RtnCtlC = API_YES;
+    for i=1 by 1 to %elem(pArRpl);
+      pAnLvl1 = %scanrpl(pArRpl(i):pAnLinesep:pAnLvl1);
+      pAnLvl2 = %scanrpl(pArRpl(i):pAnLinesep:pAnLvl2);
+    endfor;
+  endif;
+
+  return 0;
+
+end-proc LogStashGetMsgText;

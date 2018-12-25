@@ -1,0 +1,59 @@
+**free
+/IF NOT DEFINED (AR_LEAWI__)
+
+/DEFINE AR_LEAWI__
+
+//----------------------------------------------------------------            
+// constants                                              
+//----------------------------------------------------------
+//* QleGetExport constant - Export was not found
+dcl-c QLE_EX_NOT_FOUND  0;
+
+//* QleGetExport constant - Export is a procedure
+dcl-c QLE_EX_PROC  1;
+
+//* QleGetExport constant - Export is data
+dcl-c QLE_EX_DATA  2;
+
+//* QleGetExport constant - Export not accessible
+dcl-c QLE_EX_NO_ACCESS  3;
+                                                                                
+ //----------------------------------------------------------------            
+ // Qle_ActBndPgmInfo_t         
+ //----------------------------------------------------------------            
+dcl-ds Qle_ActBndPgmInfo_t qualified template;
+  Bytes_Returned int(10); // Bytes returned (in/out)
+  Bytes_Available int(10); // Bytes available (output)
+  Reserved1 char(8); // Set to binary 0
+  Act_Grp_Mark int(10); // Activation Group Mark
+  Act_Mark int(10); // Activation Mark
+  Reserved2 char(7); // Set to binary 0
+  Flags char(7); // Flags, see QLE_ABP_* defn's
+  Reserved3 pointer; // Set to binary 0
+end-ds;
+
+//---------------------------------------------------------------*
+//  Get Export (QleGetExp) API
+//---------------------------------------------------------------*
+dcl-pr QleGetExp pointer(*proc) extproc(*dclcase);                     
+   ActMark int(10) const;
+   ExpNum  int(10) const;
+   ExpNamLen int(10) const;
+   ExpName char(65535) const options(*varsize);
+   ExpItem pointer(*proc);
+   ExpType int(10);
+   PDsUSec char(65535) options(*varsize) noopt;
+end-pr;             
+
+//---------------------------------------------------------------*
+//  Activate Bound Program (QleActBndPgm) API
+//---------------------------------------------------------------*
+dcl-pr QleActBndPgm int(10) extproc(*dclcase);                     
+  SrvPgm pointer(*proc) const;
+  ActMark int(10)  options(*omit);
+  ActInfo likeds(Qle_ActBndPgmInfo_t) options(*omit);
+  ActInfoLen int(10) const options(*omit);
+  PDsUsec char(65535) options(*varsize:*omit) noopt;
+end-pr;             
+
+/ENDIF

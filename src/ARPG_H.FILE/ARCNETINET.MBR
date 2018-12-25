@@ -1,0 +1,16 @@
+**free
+/IF NOT DEFINED (AR_NETINET__)
+
+/DEFINE AR_NETINET__
+/INCLUDE ARPG_H,ARCTYPES
+
+//---------------------------------------------------------------*
+// typedefs
+//---------------------------------------------------------------*
+dcl-s s_addr uns(10);
+dcl-ds in_addr qualified template;
+  u_long like(s_addr);
+end-ds;
+
+
+/ENDIF

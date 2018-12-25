@@ -1,0 +1,9 @@
+             STRPGMEXP  PGMLVL(*CURRENT) SIGNATURE('_ARSDATE__')
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSDATE - Date and time funkctions                                    */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('DatAdjTs')
+             EXPORT     SYMBOL('DatGetUtcOffset')
+
+             ENDPGMEXP

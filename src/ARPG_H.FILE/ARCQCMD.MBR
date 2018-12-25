@@ -6,7 +6,7 @@
 //---------------------------------------------------------------*
 // Execute Command (QCMDEXC) API
 //---------------------------------------------------------------*
-dcl-pr CmdExc extpgm('QCMDEXC');
+dcl-pr Q_CmdExc extpgm('QCMDEXC');
   command char(65535) const options(*varsize);
   length packed(15:5) const;
   icg char(3) const options(*nopass);
@@ -15,7 +15,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Check Command Syntax (QCMDCHK) API
 //---------------------------------------------------------------*
-dcl-pr CmdChk extpgm('QCMDEXC');
+dcl-pr Q_CmdChk extpgm('QCMDEXC');
   command char(65535) options(*varsize);
   length packed(15:5) const;
   icg char(3) const options(*nopass);
@@ -24,7 +24,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Process Commands (QCAPCMD) API
 //---------------------------------------------------------------*
-dcl-pr CapCmd extpgm('QCAPCMD');
+dcl-pr Q_CapCmd extpgm('QCAPCMD');
   command char(65535) const options(*varsize);
   length int(10) const;
   ocb char(65535) const options(*varsize);
@@ -39,7 +39,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Display Command Line Window (QUSCMDLN) API
 //---------------------------------------------------------------*
-dcl-pr UsCmdLn extpgm('QUSCMDLN');
+dcl-pr Q_UsCmdLn extpgm('QUSCMDLN');
 end-pr;
 
 /ENDIF

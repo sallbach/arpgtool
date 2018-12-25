@@ -6,9 +6,10 @@
 
 //---------------------------------------------------------------*
 // Constants
-(/---------------------------------------------------------------*
+//---------------------------------------------------------------*
 dcl-c MSGMOVALL '*COMP     *DIAG     *ESCAPE   *INFO     ';
 dcl-c MSGMOVALLN 4;
+dcl-c QCPFMSG 'QCPFMSG   *LIBL     ';
 
 dcl-c MSG_CMD    '*CMD';
 dcl-c MSG_COMP   '*COMP';
@@ -25,7 +26,7 @@ dcl-s Msg_Key char(4);
 //---------------------------------------------------------------*
 // Control Job Log Output (QMHCTLJL)
 //---------------------------------------------------------------*
-dcl-pr MhCtlJL extpgm('QMHCTLJL');
+dcl-pr Q_MhCtlJL extpgm('QMHCTLJL');
   outfiles char(65) const;
   format char(8) const;
   msgDilter char(65535) const;
@@ -37,7 +38,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Send Program Message (QMHSNDPM)
 //---------------------------------------------------------------*
-dcl-pr MhSndPM extpgm('QMHSNDPM');
+dcl-pr Q_MhSndPM extpgm('QMHSNDPM');
   PAnMsgId   char(7) const;
   PAnMsgF    char(20) const;
   PAnMsgDta  char(65535) const options(*varsize);
@@ -57,7 +58,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Move Program Messages (QMHMOVPM)
 //---------------------------------------------------------------*
-dcl-pr MhMovPM extpgm('QMHMOVPM');
+dcl-pr Q_MhMovPM extpgm('QMHMOVPM');
   MKey     char(4) const;
   MTyp     char(65535) const options(*varsize);
   MTypN    int(10) const;
@@ -74,7 +75,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Receive Nonprogram Message (QMHRCVM)
 //---------------------------------------------------------------*
-dcl-pr MhRcvM extpgm('QMHRCVM');
+dcl-pr Q_MhRcvM extpgm('QMHRCVM');
    Message char(65535) options(*varsize);
    MLen    int(10) const;
    Form    char(8) const;
@@ -91,7 +92,7 @@ dcl-pr MhRcvM extpgm('QMHRCVM');
 //---------------------------------------------------------------*
 // Send Nonprogram Message (QMHSNDM)
 //---------------------------------------------------------------*
- dcl-pr MhSndM extpgm('QMHSNDM');
+ dcl-pr Q_MhSndM extpgm('QMHSNDM');
   MsgId   char(7) const;
   MsgF    char(20) const;
   MsgDta  char(65535) const options(*varsize);
@@ -108,7 +109,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Receive Program Message (QMHRCVPM)
 //---------------------------------------------------------------*
-dcl-pr MhRcvPM extpgm('QMHRCVPM');
+dcl-pr Q_MhRcvPM extpgm('QMHRCVPM');
   Message char(65535) options(*varsize);
   MLen    int(10) const;
   Form    char(8) const;
@@ -129,7 +130,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Remove Program Messages (QMHRMVPM)
 //---------------------------------------------------------------*
-dcl-pr MhRmvPM extpgm('QMHRMVPM');
+dcl-pr Q_MhRmvPM extpgm('QMHRMVPM');
   CSTackE   char(65535) const options(*varsize);
   CSTackC   int(10) const;
   MKey      char(4) const;
@@ -145,7 +146,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Resend Escape Message (QMHRSNEM)
 //---------------------------------------------------------------*
-dcl-pr MhRsnEM extpgm('QMHRSNEM');
+dcl-pr Q_MhRsnEM extpgm('QMHRSNEM');
   MKey   char(4) const;
   uSec   char(65535) options(*varsize) noopt;
   ToCSE  char(65535) const options(*nopass:*varsize);
@@ -158,7 +159,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Send Break Message (QMHSNDBM)
 //---------------------------------------------------------------*
-dcl-pr MhSndBM extpgm('QMHSNDBM');
+dcl-pr Q_MhSndBM extpgm('QMHSNDBM');
   MsgText   char(65535) const options(*varsize);
   MsgLen    int(10) const;
   MTyp      char(10) const;
@@ -172,7 +173,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Retrieve Message (QMHRTVM)
 //---------------------------------------------------------------*
-dcl-pr MhRtvM extpgm('QMHRTVM');
+dcl-pr Q_MhRtvM extpgm('QMHRTVM');
   Message   char(65535) options(*varsize);
   MLen      int(10) const;
   Form      char(8) const;
@@ -191,7 +192,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Retrieve Request Message (QMHRTVRQ)
 //---------------------------------------------------------------*
-dcl-pr MhRtvRq extpgm('QMHRTVRQ');
+dcl-pr Q_MhRtvRq extpgm('QMHRTVRQ');
   Message char(65535) options(*varsize);
   MLen    int(10) const;
   Form    char(8) const;
@@ -203,7 +204,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Open List of Job Log Messages (QGYOLJBL)
 //---------------------------------------------------------------*
-dcl-pr GyOlJbL extpgm('QGYOLJBL');
+dcl-pr Q_GyOlJbL extpgm('QGYOLJBL');
   Message   char(65535) options(*varsize);
   MLen      int(10) const;
   LstInf    char(65535) options(*varsize);
@@ -216,7 +217,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Close List (QGYCLST)
 //---------------------------------------------------------------*
-dcl-pr GyCLst extpgm('QGYCLST');
+dcl-pr Q_GyCLst extpgm('QGYCLST');
   Hdl char(4) const;
   uSec   char(65535) options(*varsize) noopt;
 end-pr;
@@ -224,7 +225,7 @@ end-pr;
 //---------------------------------------------------------------*
 // List Job Log Messages (QMHLJOBL)
 //---------------------------------------------------------------*
-dcl-pr MhLJobL extpgm('QMHLJOBL');
+dcl-pr Q_MhLJobL extpgm('QMHLJOBL');
   UsrSpc     char(20) const;
   Format     char(8) const;
   MsgSelInf  char(65535) const options(*varsize);
@@ -236,7 +237,7 @@ end-pr;
 //---------------------------------------------------------------*
 // Send Reply Message (QMHSNDRM)
 //---------------------------------------------------------------*
-dcl-pr MhSndRM extpgm('QMHSNDRM');
+dcl-pr Q_MhSndRM extpgm('QMHSNDRM');
   MKey    char(4) const;
   MsgQ    char(20) const;
   RpyTxt  char(65535) const options(*varsize);

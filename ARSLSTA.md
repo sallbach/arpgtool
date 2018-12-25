@@ -1,19 +1,17 @@
 # ARSLSTA - LogStash functions
 
-The logstash functions help you to transfer the complete or parts of a joblog via logstash to elastic search. It's also possible to use any other logging framework with more or less effort. Maybe your only have to implement a new connector or an new formatter if json(-format) is not the right choice. 
+The logstash functions help you to transfer the complete or parts of a joblog via logstash to elastic search. It's also possible to use any other logging framework with more or less effort. Maybe your only have to implement a new connector or a new formatter if json(-format) is not the right choice. 
 
 
 ## The job which should be logged :
-To register a job for monitoring, you have to change your program, so it calls one of the following two options at the beginning of the job :
+To register a job for monitoring, you have to change your program, so it calls the following function at the beginning of the job :
 
-1.  ILE function LogStashStartTask() or
-2.  Command STRLOGSTA
+*	ILE function LogStashStartTask()
 
-Both transfer the complete job log via the API "Control Job Log Output (QMHCTLJL)" to the given (standard) file. You should consider to change your job description (CHGJOBD LOG(level) JOBMSGQMX(2) JOBMSGQFL(*WRAP)) to get the log information faster (JOBMSGQMX(2)) and to select the rightextmbr infds log level (LOG(level)). 
-
+This transfers the complete job log with the API [Control Job Log Output (QMHCTLJL)](https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_73/apis/QMHCTLJL.htm) to the given (standard) file. You should consider to change your job description (CHGJOBD LOG(level) JOBMSGQMX(2) JOBMSGQFL(*PRTWRAP)) to get the log information faster (JOBMSGQMX(2)) and to select the right log level (LOG(level)). 
 If you only want to trace the whole job you are finished now and can continue with the next step.
  
-If your job handles different tasks which should be logged separately, you need start/end messages before/after your tasks. If your program already generates such messages (min. start messages), then your program is ready for logging, you only have to implement an own version of the LogStashXXXXX(). Otherwise you have to change your program and add start messages or use the functions LogStashStartTask()/LogStashEndTask() or the commands STRLOGTASK/ENDLOGTASK. 
+If your job handles different tasks which should be logged separately, you need start/end messages before/after your tasks. If your program already generates such messages (min. start messages), your program is ready for logging. You only have to implement an own version of the LogStashIsStartMsg()/LogStashIsEndMsg(). Otherwise you have to change your program and add own start messages or use the functions LogStashStartTask()/LogStashEndTask(). 
 
 ## Start the logger :
 Now you can start the logger job to monitor the file in which all your jobs write there job log.
@@ -28,7 +26,7 @@ The logger can be started with the command STRLOGGER.
 
     dcl-proc YourPgm;
     
-      LogStashStartLogger(); // change joblog QMHCTLJL 
+      LogStashStart(optinal_LogStash_t); // change joblog QMHCTLJL 
       YourTask(); // run task
       
     end-proc 
@@ -49,7 +47,7 @@ The logger can be started with the command STRLOGGER.
 
 Submit the logger :
 
-    SBMJOB CMD(STRLOGGER URI('socket://logstash-server:1234'));
+    SBMJOB CMD(ARSTRLOGR SERVER(logstash-server) PORT(1234));
     
 Sends messages in the following format :
 
@@ -78,14 +76,13 @@ Sends messages in the following format :
     
 
 ## Interface
-If you have special needs concerning the message reader or the message formatter you can copy the needed module source, re-implement the affected functions and build your own service program, which then can be used by the logger. 
-The following functions can be re-implemented by you :
+If you have special needs concerning the message reader or the message formatter you can copy the needed module source, re-implement the needed functions and build your own service program, which can be used by the logger. 
+The following functions can be re-implemented :
 
-*   first_item
-*	ddd
-*   second_item
- 
-ddd
+*	LogStash_t.writer - LogStashWriteJsonMessage() or LogStashWriteMessage() 
+*	LogStash_t.startmsg - LogStashIsStartMsg()
+*	LogStash_t.endmsg - LogStashIsEndMsg()
+
 
 
 Please check the unit test module ARPG_TEST/T_ARSLSTA too.

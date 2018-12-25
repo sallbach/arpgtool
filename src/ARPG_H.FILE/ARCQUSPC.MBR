@@ -15,7 +15,7 @@ dcl-c USPC_NO_SPACE_ALIGNMENT '0';
 //---------------------------------------------------------------*
 //  Create User Space
 //---------------------------------------------------------------*
-dcl-pr QUsCrtUs extpgm('QUSCRTUS');
+dcl-pr Q_UsCrtUs extpgm('QUSCRTUS');
   UsrSpc char(20) const;
   UsrExa char(10) const;
   UsrSize int(10) const;
@@ -27,67 +27,67 @@ dcl-pr QUsCrtUs extpgm('QUSCRTUS');
   Domain char(10) const options(*nopass);
   TSize int(10) const options(*nopass);
   OptSpc char(1) const options(*nopass);
-end-pr ;
+end-pr;
 
 //---------------------------------------------------------------*
 //  Delete User Space
 //---------------------------------------------------------------*
-dcl-pr QUsDltUs extpgm('QUSDLTUS');
+dcl-pr Q_UsDltUs extpgm('QUSDLTUS');
   UsrSpc char(20) const;
   USec char(65535) options(*varsize) noopt;
-end-pr ;
+end-pr;
 
 //---------------------------------------------------------------*
 //  Retrieve User Space
 //---------------------------------------------------------------*
-dcl-pr QUsRtvUs extpgm('QUSRTVUS');
+dcl-pr Q_UsRtvUs extpgm('QUSRTVUS');
   UsrSpc char(20) const;
   Pos int(10) const;
   Len int(10) const;
   Result char(65535) options(*varsize);
   USec char(65535) options(*varsize:*nopass) noopt;
-end-pr ;
+end-pr;
 
 //---------------------------------------------------------------*
 //  Change User Space
 //---------------------------------------------------------------*
-dcl-pr QUsChgUs extpgm('QUSCHGUS');
+dcl-pr Q_UsChgUs extpgm('QUSCHGUS');
   UsrSpc char(20) const;
   Pos int(10) const;
   Len int(10) const;
   Input char(65535) const options(*varsize);
   FAux char(1) const;
   USec char(65535) options(*varsize:*nopass) noopt;
-end-pr ;
+end-pr;
 
 //---------------------------------------------------------------*
 //  Change User Space Attributes
 //---------------------------------------------------------------*
-dcl-pr QUsCUsAt extpgm('QUSCUSAT');
+dcl-pr Q_UsCUsAt extpgm('QUSCUSAT');
   RLib char(10) const;
   UsrSpc char(20) const;
   Atrib char(65535) const options(*varsize);
   USec char(65535) options(*varsize:*nopass) noopt;
-end-pr ;
+end-pr;
 
 //---------------------------------------------------------------*
 //  Retrieve Pointer to User Space
 //---------------------------------------------------------------*
-dcl-pr QUsPtrUs extpgm('QUSPTRUS');
+dcl-pr Q_UsPtrUs extpgm('QUSPTRUS');
   UsrSpc char(20) const;
   Ptr pointer;
   USec char(65535) options(*varsize:*nopass) noopt;
-end-pr ;
+end-pr;
 
 //---------------------------------------------------------------*/
-/  Retrieve User Space Attributes
+//  Retrieve User Space Attributes
 //---------------------------------------------------------------*
-dcl-pr QUsRUsAt extpgm('QUSRUSAT');
+dcl-pr Q_UsRUsAt extpgm('QUSRUSAT');
   Result char(65535) options(*varsize);
   Len int(10) const;
   Format char(8) const;
   UsrSpc char(20) const;
   USec char(65535) options(*varsize) noopt;
-end-pr ;
+end-pr;
 
 /ENDIF

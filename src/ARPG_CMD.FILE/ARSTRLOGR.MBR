@@ -1,0 +1,26 @@
+             CMD        PROMPT('Start Log Server')                         
+                                                                           
+             PARM       KWD(SERVER) TYPE(*CHAR) LEN(128) MIN(1) +          
+                          VARY(*YES *INT2) INLPMTLEN(32) +                 
+                          PROMPT('Server')                                 
+                                                                           
+             PARM       KWD(PORT) TYPE(*INT4) MIN(1) PROMPT('Server +      
+                          port')                                           
+                                                                           
+             PARM       KWD(LOGFILE) TYPE(Q1) PROMPT('Log file')            
+                                                                           
+             PARM       KWD(SECLVL) TYPE(*INT4) RSTD(*YES) DFT(*YES) +     
+                          SPCVAL((*YES 1) (*NO 0) (*CONCAT 2)) +           
+                          PROMPT('Log Second Level Messages')               
+                                                                           
+             PARM       KWD(DELAY) TYPE(*INT4) DFT(*DEFAULT) RANGE(1 +     
+                          99999) SPCVAL((*DEFAULT 5)) PROMPT('Delay')      
+                                                                           
+             PARM       KWD(CCSID) TYPE(*DEC) LEN(5) DFT(*UTF8) +      
+                          SPCVAL((*UTF8 1208)) PROMPT('Codepage')      
+                                                                       
+ Q1:         QUAL       TYPE(*NAME) LEN(10)                            
+             QUAL       TYPE(*NAME) LEN(10) DFT(*LIBL) +               
+                          SPCVAL((*LIBL) (*CURLIB)) PROMPT('Library')  
+                                    
+ 

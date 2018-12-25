@@ -1,0 +1,114 @@
+**Free
+ctl-opt nomain;
+ctl-opt ccsid(*ucs2:13488);
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// includes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCSQLR
+/COPY ARPG_H,ARCOORR
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCCALR
+/COPY ARPG_H,ARCFCNTL
+/COPY ARPG_H,ARCSTRING
+
+//---------------------------------------------------------------*
+// typedefs
+//---------------------------------------------------------------*
+dcl-ds DsConnection_t qualified align(*full) template;
+  SqPrcEd likeds(DsSqPrcEd_t) inz(*likeds);
+end-ds;
+
+//---------------------------------------------------------------*
+// constants
+//---------------------------------------------------------------*
+dcl-c SQL_NUM 1; 
+
+//---------------------------------------------------------------*
+//  SqlConnection
+//---------------------------------------------------------------*
+//*   
+//*  
+//* 
+//*
+//* @param pAnSystem - Systemname 
+//* @param pAnUser - User ID (optional)
+//* @param pAnPass - Password (optional)
+//*
+//* @return Connection object
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnection export;
+  dcl-pi *N int(10);
+    pAnSystem char(10) const;
+    pAnUser varchar(30) const options(*nopass);
+    pAnPass varchar(128) const options(*nopass);
+  end-pi;
+
+  dcl-s pInConnection int(10);
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+  dcl-ds pDsConnectionInz likeds(DsConnection_t) inz(*likeds); 
+
+  // New Object
+  pInConnection = OoRObjectNew(s#Prog:pPtConnection:%size(DsConnection_t));
+  if pInConnection = -1;
+    return -1;
+  endif;
+  pDsConnection = pDsConnectionInz;
+
+  pDsConnection.SqPrcEd.mainpgm = CalGetCaller(); 
+  pDsConnection.SqPrcEd.packagename = pDsConnection.SqPrcEd.mainpgm;
+  
+  return pInConnection;
+
+end-proc SqlConnection;
+//---------------------------------------------------------------*
+//  SqlConnectionIsActive
+//---------------------------------------------------------------*
+//*   
+//*  
+//* 
+//*
+//* @param pInConnection - 
+//*
+//* @return Connection object
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionIsActive export;
+  dcl-pi *N ind;
+    pInConnection int(10) const; 
+  end-pi;
+
+  return pInConnection = SQL_CONNECTION_LOCAL Or
+           OoRObjectIsValid(s#prog:pInConnection);
+
+end-proc SqlConnectionIsActive;
+//---------------------------------------------------------------*
+//  API Settings
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionGetSettings export;
+  dcl-pi *N likeds(DsSqPrcEd_t);
+    pInConnection int(10) const;
+  end-pi;
+
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return '';
+  endif;
+
+  return pDsConnection.SqPrcEd;
+
+end-proc SqlConnectionGetSettings;

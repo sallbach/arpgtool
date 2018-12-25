@@ -125,6 +125,7 @@ end-pr;
 // XmlNodeEnd
 //---------------------------------------------------------------*
 dcl-pr XmlNodeEnd int(10) extproc(*dclcase);
+  pPtName pointer const options(*string:*nopass);
 end-pr;
 
 //---------------------------------------------------------------*

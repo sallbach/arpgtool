@@ -1,0 +1,16 @@
+**free
+/IF NOT DEFINED (AR_JOBF__)
+
+/DEFINE AR_JOBF__
+/INCLUDE ARPG_H,ARCTYPES
+
+//---------------------------------------------------------------*
+// JobIsRunning
+//---------------------------------------------------------------*
+dcl-pr JobIsRunning ind extproc(*dclcase);
+  pDsJob like(job_t) value;
+  pAnUser char(10) value options(*nopass);
+  pAnJobN char(6) value options(*nopass);
+end-pr;
+
+/ENDIF

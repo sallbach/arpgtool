@@ -4,9 +4,17 @@ ARPG_BUILDB_ALL_EXC CLLE      Build all - build
 ARPG_BUILDB_ALL_LST CLLE      Build all - build list
 ARPG_BUILDB_ARSARRR CLLE      Build ARSARRR
 ARPG_BUILDB_ARSB64R CLLE      Build ARSB64R
+ARPG_BUILDB_ARSCALR CLLE      Build ARSCALR
+ARPG_BUILDB_ARSCMDE CLLE      Build ARSCMDE
+ARPG_BUILDB_ARSDATE CLLE      Build ARSDATE
 ARPG_BUILDB_ARSIFSR CLLE      Build ARSIFSR
-ARPG_BUILDB_ARSJSON CLLE      Build ARSJSON
+ARPG_BUILDB_ARSJOBF CLLE      Build ARSJOBF
+ARPG_BUILDB_ARSJOBF CLLE      Build ARSJOBF
+ARPG_BUILDB_ARSLSTA CLLE      Build ARSLSTA
+ARPG_BUILDB_ARSMBRR CLLE      Build ARSMBRR
+ARPG_BUILDB_ARSOBJR CLLE      Build ARSOBJR
 ARPG_BUILDB_ARSOORR CLLE      Build ARSOORR
+ARPG_BUILDB_ARSSQLR CLLE      Build ARSSQLR
 ARPG_BUILDB_ARSSTRR CLLE      Build ARSSTRR
 ARPG_BUILDB_ARSXMLR CLLE      Build ARSXMLR
 ARPG_BUILDB_CRT_METACLLE      Build meta file
@@ -16,28 +24,52 @@ ARPG_BUILDB_PGMDOC  CLLE      Build PGMDOC
 ARPG_BUILDB_UNITTESTCLLE      Build Unittest
 ARPG_CLLE ARCRTPGMDCCLLE      CrtPgmDoc - Create (Srv-)Pgm documentation
 ARPG_CLLE ARUPDPGMDCCLLE      UpdPgmDoc - Update (Srv-)Pgm documentation
+ARPG_CLLE ARSTRLOGR CLLE      Start LogStash Logger
 ARPG_CMD  ARCRTPGMD CMD       CrtPgmDoc - Create (Srv-)Pgm documentation
 ARPG_CMD  ARUPDPGMD CMD       UpdPgmDoc - Update (Srv-)Pgm documentation
+ARPG_CMD  ARSTRLOGR CMD       Start LogStash Logger                              
+ARPG_DDS  ARFLSTA   TABLE     LogStashJobTable                                   
+ARPG_DDS  ARFLSTA01 INDEX     job/user/jobnum/member                              
+ARPG_DDS  ARFLSTA02 INDEX     status/job/user/jobnum/member                              
+ARPG_DDS  ARFLSTV   TABLE     LogStashVarTable                              
+ARPG_DDS  ARFLSTV01 INDEX     job/user/jobnum/sequence                              
 ARPG_H    ARCALLCTL RPGLE     controle header for all
 ARPG_H    ARCAPRCORERPGLE     APR Utility Functions
-ARPG_H    ARCARRR   RPGLE     OO and storage prototypes
+ARPG_H    ARCARRR   RPGLE     ArrayList prototypes
 ARPG_H    ARCB64R   RPGLE     Base64 prototypes
+ARPG_H    ARCCALR   RPGLE     GetCaller prototypes
+ARPG_H    ARCCMDE   RPGLE     Command execution prototypes
+ARPG_H    ARCDATE   RPGLE     Date and time prototypes
+ARPG_H    ARCDOCR   RPGLE     Program documentation prototypes
 ARPG_H    ARCERRNO  RPGLE     c_errno
 ARPG_H    ARCFCNTL  RPGLE     c_fcntl
 ARPG_H    ARCICONV  RPGLE     c_iconv
 ARPG_H    ARCIFSR   RPGLE     ifs prototypes
-ARPG_H    ARCJSON   RPGLE     json prototypes
+ARPG_H    ARCJMSR   RPGLE     jms prototypes
+ARPG_H    ARCJOBF   RPGLE     job prototypes
+ARPG_H    ARCLEAWI  RPGLE     qle prototypes
+ARPG_H    ARCLSTA   RPGLE     logstash prototypes
+ARPG_H    ARCMBRR   RPGLE     member prototypes
+ARPG_H    ARCMICOMMORPGLE     mi prototypes
+ARPG_H    ARCNETDB  RPGLE     netdb prototypes
+ARPG_H    ARCNETINETRPGLE     netinet prototypes
+ARPG_H    ARCOBJR   RPGLE     object prototypes
 ARPG_H    ARCOORR   RPGLE     oo prototypes
 ARPG_H    ARCQCEE   RPGLE     QCEE
 ARPG_H    ARCQCMD   RPGLE     QCMD
+ARPG_H    ARCQFILE  RPGLE     DB File APIs
 ARPG_H    ARCQJOB   RPGLE     QJOB
 ARPG_H    ARCQLG    RPGLE     QLG
 ARPG_H    ARCQLGUSR RPGLE     QLGUSR
 ARPG_H    ARCQMH    RPGLE     QMH - Message Handling
+ARPG_H    ARCQOBJD  RPGLE     Object description apis
 ARPG_H    ARCQPGMI  RPGLE     Srv-/Pgm information
+ARPG_H    ARCQSQPRC RPGLE     qSqPrcEd
 ARPG_H    ARCQP0LSTDRPGLE     ARCQP0LSTDI
 ARPG_H    ARCQUSEC  RPGLE     qusec
 ARPG_H    ARCQUSPC  RPGLE     qusrspc
+ARPG_H    ARCSOCKET RPGLE     socket
+ARPG_H    ARCSQLR   RPGLE     sql prototypes
 ARPG_H    ARCSTDLIB RPGLE     c_stdlib
 ARPG_H    ARCSTRING RPGLE     c_string
 ARPG_H    ARCSTRR   RPGLE     string prototypes
@@ -46,32 +78,67 @@ ARPG_H    ARCTYPES  RPGLE     c_types
 ARPG_H    ARCUNISTD RPGLE     c_unistd
 ARPG_H    ARCXMLR   RPGLE     xml prototypes
 ARPG_H    ARCYAJL   RPGLE     RPG prototypes for YAJL/YAJLR4 (scottklement)
+ARPG_LNK  ARCARRR   BND       Exports ArrayList
 ARPG_LNK  ARSB64R   BND       Exports JSON
+ARPG_LNK  ARSCALR   BND       Exports Caller
+ARPG_LNK  ARSCMDE   BND       Exports Command execution
+ARPG_LNK  ARSDATE   BND       Exports Date and time
 ARPG_LNK  ARSIFSR   BND       Exports IFS
-ARPG_LNK  ARSJSON   BND       Exports json
+ARPG_LNK  ARSJMSR   BND       Exports jms
+ARPG_LNK  ARSJOBF   BND       Exports job
+ARPG_LNK  ARSLSTA   BND       Exports logstash
+ARPG_LNK  ARSMBRR   BND       Exports member
+ARPG_LNK  ARSOBJR   BND       Exports object
 ARPG_LNK  ARSOORR   BND       Exports OO
+ARPG_LNK  ARSSQLR   BND       Exports SQL
 ARPG_LNK  ARSSTRR   BND       Exports STR
 ARPG_LNK  ARSXMLR   BND       Exports XML
-ARPG_META ARPG_META           aRPGtool - Meta data
-ARPG_RPGLEARSARRR   RPGLE     ArrayList storage functions
+ARPG_META ARPG_META TXT       aRPGtool - Meta data
+ARPG_RPGLEARSARRR   RPGLE     ArrayList functions
 ARPG_RPGLEARSB64R   RPGLE     Base64 functions
+ARPG_RPGLEARSCALR   RPGLE     Get caller
+ARPG_RPGLEARSCMDE   RPGLE     Command execution
+ARPG_RPGLEARSDATE   RPGLE     Date and time funtions
 ARPG_RPGLEARSDOCR   RPGLE     Program documentation
 ARPG_RPGLEARSDOC01  RPGLE     Modul documentation
 ARPG_RPGLEARSDOC02  RPGLE     Procedure documentation
 ARPG_RPGLEARSIFSR   RPGLE     IFS functions (wrapper for open/read/write/seek)
 ARPG_RPGLEARSIFS01  RPGLE     IFS helper functions
+ARPG_RPGLEARSJMSR   RPGLE     JMS functions 
+ARPG_RPGLEARSJOBF   RPGLE     job functions 
 ARPG_RPGLEARSJSON   RPGLE     json functions (YAJL)
+ARPG_RPGLEARSLSTA   RPGLE     logstash functions 
+ARPG_RPGLEARSLST01  RPGLE     logstash logging server 
+ARPG_RPGLEARSLST02  RPGLE     logstash isStart/isStopMesssage 
+ARPG_RPGLEARSLST03  RPGLE     logstash json message 
+ARPG_RPGLEARSLST04  RPGLE     logstash text message 
+ARPG_RPGLEARSMBRR   RPGLE     Member functions 
+ARPG_RPGLEARSOBJR   RPGLE     Object functions 
 ARPG_RPGLEARSOORR   RPGLE     OO functions 
+ARPG_RPGLEARSSQLR   RPGLE     SQL Connection
+ARPG_RPGLEARSSQL01  RPGLE     SQL Prepared Statement             
+ARPG_RPGLEARSSQL02  RPGLE     SQL Result Set    
+ARPG_RPGLEARSSQL03  RPGLE     SQL Statement & Execute    
 ARPG_RPGLEARSSTRR   RPGLE     String functions
+ARPG_RPGLEARSTRLOGR RPGLE     Start Logstash logger
 ARPG_RPGLEARSXMLR   RPGLE     XML writer functions
 ARPG_RPGLEARSXML01  RPGLE     XML helper functions
 ARPG_TEST T_ARSARRR RPGLE     UnitTest ARSARRR
 ARPG_TEST T_ARSB64R RPGLE     UnitTest ARSB64R
+ARPG_TEST T_ARSCALR RPGLE     UnitTest ARSCALR
+ARPG_TEST T_ARSCMDE RPGLE     UnitTest ARSCMDE
+ARPG_TEST T_ARSDATE RPGLE     UnitTest ARSDATE
 ARPG_TEST T_ARSIFSR RPGLE     UnitTest ARSIFSR
-ARPG_TEST T_ARSJSON RPGLE     UnitTest ARSJSON
+ARPG_TEST T_ARSJMSR RPGLE     UnitTest ARSJMSR
+ARPG_TEST T_ARSJOBF RPGLE     UnitTest ARSJOBF
+ARPG_TEST T_ARSLSTA RPGLE     UnitTest ARSLSTA
+ARPG_TEST T_ARSMBRR RPGLE     UnitTest ARSMBRR
+ARPG_TEST T_ARSOBJR RPGLE     UnitTest ARSOBJR
 ARPG_TEST T_ARSOORR RPGLE     UnitTest ARSOORR
+ARPG_TEST T_ARSSQLR RPGLE     UnitTest ARSSQLR
 ARPG_TEST T_ARSSTRR RPGLE     UnitTest ARSSTRR
 ARPG_TEST T_ARSXMLR RPGLE     UnitTest ARSXMLR
 ARPG_TEST T_PGMDOC  CLP       Test PGM doc
 ARPG_UIM  ARCRTPGMD PNLGRP    CrtPgmDoc - Create (Srv-)Pgm documentation
 ARPG_UIM  ARUPDPGMD PNLGRP    UpdPgmDoc - Update (Srv-)Pgm documentation
+ARPG_UIM  ARCSTRLOGRPNLGRP    Start LogStash Logger

@@ -4,24 +4,29 @@ write a xml-file
 
     XmlDocument(CCSID_UTF8);
     XmlPrettyPrint(*on);
+    XmlSetNullOnNull(*on); 
     XmlPi('xml-stylesheet type="text/xsl" href="test.xsl"');
     
     XmlNode('root');
       XmlNode('child1');
         XmlComment('Comment before child11');
-        XmlNode('child11':'data 11');
+        XmlNode('child11':'data 11'); // nodes with value must not be closed with XmlNodeEnd.
           XmlAttribute('atr1':'value 1');
           XmlAttributeNum('atr2':1.23);
           XmlAttribute('atr3':'value 3');
         XmlNode('child12':'data 12');
-      XmlNodeEnd();
+      XmlNodeEnd(); // end of "child1"
       XmlNode('child2':'data 2&3');
       XmlNodeNum('child3':22.333);
       XmlNode('child4':'');
         XmlAttribute('atr1':'value "1"');
         XmlAttribute('atr2':'value 2');
-        XmlAttributeBool('atr3':*on);
-    XmlNodeEnd();
+        XmlAttributeBool('atr3':*on); 
+      // the following node will be ignored because the 3rd 
+      // parameter is set *on and XmlSetNullOnNull is *on.    
+      XmlNode('child_null':'ignored value':*on); 
+      XmlNode('child_null_if_variable_blank':variable:(variable = *Blanks)); 
+    XmlNodeEnd('root'); // end of "root". optional you can give the node name 
     XmlToStmf('/tmp/test.xml');
 
 Result 

@@ -11,7 +11,7 @@
 //---------------------------------------------------------------*
 //  List ILE Program Information (QBNLPGMI) API
 //---------------------------------------------------------------*
-dcl-pr BnLPgmI extpgm('QBNLPGMI');
+dcl-pr Q_BnLPgmI extpgm('QBNLPGMI');
   UsrSpc char(20) const;
   Form char(8) const;
   SPgm char(20) const;
@@ -21,7 +21,7 @@ end-pr;
 //---------------------------------------------------------------*
 //  List Service Program Information (QBNLSPGM) API
 //---------------------------------------------------------------*
-dcl-pr BnLSPgm extpgm('QBNLSPGM');
+dcl-pr Q_BnLSPgm extpgm('QBNLSPGM');
   UsrSpc char(20) const;
   Form char(8) const;
   SPgm char(20) const;
@@ -31,7 +31,7 @@ end-pr;
 //---------------------------------------------------------------*
 //  List Module Information (QBNLMODI) API
 //---------------------------------------------------------------*
-dcl-pr BnLModI extpgm('QBNLMODI');
+dcl-pr Q_BnLModI extpgm('QBNLMODI');
   UsrSpc char(20) const;
   Form char(8) const;
   SMod char(20) const;
@@ -41,7 +41,7 @@ end-pr;
 //---------------------------------------------------------------*
 //  Retrieve Module Information (QBNRMODI) API
 //---------------------------------------------------------------*
-dcl-pr BnRModI extpgm('QBNRMODI');
+dcl-pr Q_BnRModI extpgm('QBNRMODI');
   PDsRcv char(65535) options(*varsize);
   PInLen int(10) const;
   Form char(8) const;

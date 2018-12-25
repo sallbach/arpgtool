@@ -5,6 +5,10 @@ ctl-opt nomain;
 // extern prototypes
 //---------------------------------------------------------------*
 /COPY ARPG_H,ARCIFSR
+<<<<<<< HEAD
+=======
+/COPY ARPG_H,ARCSTRING
+>>>>>>> sql
 
 //---------------------------------------------------------------*
 //  IfsOpenFile
@@ -79,7 +83,11 @@ end-proc IfsCloseFile;
 //*
 //* @param pInHandle - Reference of @link #IfsOpenFile
 //* @param pPtData - A pointer to a buffer containing the data to be written.
+<<<<<<< HEAD
 //* @param pInLen - The size in bytes of the data to be written.
+=======
+//* @param pInLen - The size in bytes of the data to be written (optional).
+>>>>>>> sql
 //*
 //* @return >0 - bytes written
 //* @return -1 - failed
@@ -94,6 +102,7 @@ dcl-proc IfsWriteFile export;
   dcl-pi *N int(10);
     pInHandle int(10) value;
     pPtData   pointer value options(*string);
+<<<<<<< HEAD
     pInLen    like(size_t) value;
   end-pi;
 
@@ -183,4 +192,103 @@ dcl-proc IfsLSeek export;
 
   return lseek(pInHandle:pInOffc:pInPos);
 
+=======
+    pInLen    like(size_t) value options(*nopass);
+  end-pi;
+
+  dcl-s pInLen_ like(size_t) inz(0);
+  
+  if %parms() >= %parmnum(pInLen);
+    pInLen_ = pInLen;
+  else;  
+    pInLen_ = strlen(pPtData);
+  endif;  
+
+  return write_(pInHandle:pPtData:pInLen_);
+
+end-proc IfsWriteFile;
+//---------------------------------------------------------------*
+//  IfsReadFile
+//---------------------------------------------------------------*
+//* Read IFS File (todo)
+//*
+//* @param pInHandle - Reference of @link #IfsOpenFile
+//* @param pPtData - A pointer to a buffer in which the bytes read are placed.
+//* @param pInLen - The number of bytes to be read.
+//*
+//* @return >0 - bytes read
+//* @return -1 - failed
+//*
+//* @see write()
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc IfsReadFile export;
+  dcl-pi *N int(10);
+    pInHandle int(10) value;
+    pPtData   pointer value;
+    pInLen    like(size_t) value;
+  end-pi;
+
+  return read_(pInHandle:pPtData:pInLen);
+
+end-proc IfsReadFile;
+//---------------------------------------------------------------*
+// IfsReadLine
+//---------------------------------------------------------------*
+//* Read line of IFS File (todo)
+//*
+//* @param pInHandle - Reference of @link #IfsOpenFile
+//* @param pPtData - A pointer to a buffer in which the bytes read are placed.
+//* @param pInLen - The number of bytes to be read.
+//* @param pBoNl - return the NL-Char (*on/*ff) (optional).
+//*
+//* @return >0 - bytes read
+//* @return -1 - failed
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc IfsReadLine export;
+  dcl-pi *N int(10);
+    pInHandle int(10) value;
+    pPtData   pointer value;
+    pInLen    like(size_t) value;
+    pBoNl     ind options(*nopass);
+  end-pi;
+
+  return -1;
+
+end-proc IfsReadLine;
+//---------------------------------------------------------------*
+// IfsLSeek
+//---------------------------------------------------------------*
+//* Seek IFS File (todo)
+//*
+//* @param pInHandle - Reference of @link #IfsOpenFile
+//* @param pInOffc - The amount (positive or negative) the byte
+//*                  offset is to be changed
+//* @param pInPos - One of the following symbols :
+//*                 @const SEEK_SET, @const SEEK_CUR, @const SEEK_END
+//*
+//* @return >0 - position
+//* @return -1 - failed
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc IfsLSeek export;
+  dcl-pi *N int(10);
+    pInHandle int(10)     value;
+    pInOffc   like(off_t) value;
+    pInPos    int(10)     value;
+  end-pi;
+
+  return lseek(pInHandle:pInOffc:pInPos);
+
+>>>>>>> sql
 end-proc IfsLSeek;
