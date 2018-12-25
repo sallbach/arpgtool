@@ -21,10 +21,7 @@ dcl-ds DsNode_t qualified align; // no template to use it for *inz
   inName   like(size_t)  inz(0);
   ptData   pointer       inz(*Null);
   inData   like(size_t)  inz(0);
-<<<<<<< HEAD
-=======
   inDataS  like(size_t)  inz(0); // allocated size
->>>>>>> sql
   inCcsid  int(10)       inz(CCSID_JOB);
   ptAttrs  pointer       inz(*Null); // Addr(dim(inAttrs))
   inAttrs  int(10)       inz(0);
@@ -122,10 +119,7 @@ dcl-c PRETTY_NL   x'25';
 /RESTORE CCSID(*CHAR)
 
 dcl-c START_HEAP  1048576; // 1M
-<<<<<<< HEAD
-=======
 dcl-c B64_BLOCK_SIZE 1048576; // 1M
->>>>>>> sql
 
 dcl-c DFT_HEADER  *on;
 dcl-c DFT_PRETTY  *off;
@@ -511,15 +505,6 @@ dcl-proc XmlNodeB64writer;
     pInLen     int(10) value;
   end-pi;
 
-<<<<<<< HEAD
-  if gDsAtrNode.ptData = *Null;
-    CeeGetHeap(gInHeap
-              :gDsAtrNode.inData + pInLen:gDsAtrNode.ptData:*Omit);
-  else;
-    gDsAtrNode.ptData = %realloc(gDsAtrNode.ptData
-                                :gDsAtrNode.inData + pInLen);
-  endif;
-=======
   if gDsAtrNode.ptData = *Null;                                               
     gDsAtrNode.inDataS = B64_BLOCK_SIZE;                                     
     if B64_BLOCK_SIZE < pInLen;                                              
@@ -537,7 +522,6 @@ dcl-proc XmlNodeB64writer;
     gDsAtrNode.ptData = %realloc(gDsAtrNode.ptData:gDsAtrNode.inDataS);    
   endif;                                                                   
   
->>>>>>> sql
   memcpy(gDsAtrNode.ptData + gDsAtrNode.inData
         :pPtData
         :pInLen);
@@ -552,11 +536,8 @@ end-proc XmlNodeB64writer;
 //---------------------------------------------------------------*
 //* Close current Node.
 //*
-<<<<<<< HEAD
-=======
 //* @param pPtName - Node name for readability (optional) 
 //*
->>>>>>> sql
 //* @return 0 - success, else -1.
 //*
 //* @diag messageCode to be defined
@@ -565,10 +546,7 @@ end-proc XmlNodeB64writer;
 //---------------------------------------------------------------*
 dcl-proc XmlNodeEnd export;
   dcl-pi *N int(10);
-<<<<<<< HEAD
-=======
     pPtName pointer const options(*string:*nopass);
->>>>>>> sql
   end-pi;
 
   dcl-s pPtParent pointer;
@@ -577,8 +555,6 @@ dcl-proc XmlNodeEnd export;
     return -1;
   endif;
 
-<<<<<<< HEAD
-=======
   // Optional test node end
   if %parms() >= %parmnum(pPtName) And  
         strcmp(gDsCurNode.ptName:pPtName) <> 0; 
@@ -586,7 +562,6 @@ dcl-proc XmlNodeEnd export;
     return -1;
   endif;  
 
->>>>>>> sql
   // Don't print current(previous to this call) node if empty ?
   if gPtAtrNode <> *Null And
        gPtAtrNode <> gPtCurNode And

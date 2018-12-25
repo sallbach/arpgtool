@@ -99,21 +99,13 @@ dcl-proc test_Xml_Attr export;
         XmlAttributeNum('atr2':1.23);
         XmlAttribute('atr3':'value 3xxx');
       XmlNode('child1.2':'data 1.2');
-<<<<<<< HEAD
-    XmlNodeEnd();
-=======
     XmlNodeEnd('child1');
->>>>>>> sql
     XmlNode('child2':'data 2&3');
     XmlNodeNum('child3':22.333);
     XmlNode('child4':'');
       XmlAttribute('atr1':'value "1xxx"');
       XmlAttribute('atr2':'value 2xxx');
-<<<<<<< HEAD
-  XmlNodeEnd();
-=======
   XmlNodeEnd('root');
->>>>>>> sql
   pPtString = XmlToString();
 
   aEqual('<?xml version="1.0" encoding="IBM037" ?>' + LF
