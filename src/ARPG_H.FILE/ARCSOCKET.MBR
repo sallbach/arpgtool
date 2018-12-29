@@ -6,6 +6,167 @@
 /INCLUDE ARPG_H,ARCNETINET
 
 //---------------------------------------------------------------*
+// costants
+//---------------------------------------------------------------*
+dcl-c IPVERSION         4;
+dcl-c AF_INET           2;
+
+dcl-c SOCK_STREAM       1;
+dcl-c SOCK_DGRAM        2;
+dcl-c SOCK_RAW		    3;
+
+dcl-c IPPROTO_IP        0;
+dcl-c IPPROTO_TCP       6;
+dcl-c IPPROTO_UDP       17;
+dcl-c IPPROTO_RAW       255;
+dcl-c IPPROTO_ICMP      1;
+dcl-c SOL_SOCKET        -1;
+
+dcl-c IP_OPTIONS        5;
+dcl-c IP_TOS            10;
+dcl-c IP_TTL            15;
+dcl-c IP_RECVLCLIFADDR  99;
+
+dcl-c TCP_MAXSEG        5;
+dcl-c TCP_NODELAY       10;
+
+dcl-c SO_BROADCAST      5;
+dcl-c SO_DEBUG          10;
+dcl-c SO_DONTROUTE      15;
+dcl-c SO_ERROR          20;
+dcl-c SO_KEEPALIVE      25;
+dcl-c SO_LINGER         30;
+dcl-c SO_OOBINLINE      35;
+dcl-c SO_RCVBUF         40;
+dcl-c SO_RCVLOWAT       45;
+dcl-c SO_RCVTIMEO       50;
+dcl-c SO_REUSEADDR      55;
+dcl-c SO_SNDBUF         60;
+dcl-c SO_SNDLOWAT       65;
+dcl-c SO_SNDTIMEO       70;
+dcl-c SO_TYPE           75;
+dcl-c SO_USELOOPBACK    80;
+
+dcl-c IPTOS_NORMAL      x'00';
+dcl-c IPTOS_MIN         x'02';
+dcl-c IPTOS_RELIABLE    x'04';
+dcl-c IPTOS_THRUPUT     x'08';
+dcl-c IPTOS_LOWDELAY    x'10';
+
+dcl-c IPTOS_NET         x'E0';
+dcl-c IPTOS_INET        x'C0';
+dcl-c IPTOS_CRIT        x'A0';
+dcl-c IPTOS_FOVR        x'80';
+dcl-c IPTOS_FLAS        x'60';
+dcl-c IPTOS_IMME        x'40';
+dcl-c IPTOS_PTY         x'20';
+dcl-c IPTOS_ROUT        x'10';
+
+dcl-c MSG_DONTROUTE     1;
+dcl-c MSG_OOB           4;
+dcl-c MSG_PEEK          8;
+
+dcl-c INADDR_ANY        0;
+dcl-c INADDR_BROADCAST  4294967295;
+dcl-c INADDR_LOOPBACK   2130706433;
+dcl-c INADDR_NONE       4294967295;
+
+dcl-c ICMP_ECHOR        x'00';
+dcl-c ICMP_UNREA        x'03';
+dcl-c ICMP_SRCQ         x'04';
+dcl-c ICMP_REDIR        x'05';
+dcl-c ICMP_ECHO         x'08';
+dcl-c ICMP_TIMX         x'0B';
+dcl-c ICMP_PARM         x'0C';
+dcl-c ICMP_TSTP         x'0D';
+dcl-c ICMP_TSTPR        x'0E';
+dcl-c ICMP_IREQ         x'0F';
+dcl-c ICMP_IREQR        x'10';
+dcl-c ICMP_MASK         x'11';
+dcl-c ICMP_MASKR        x'12';
+
+dcl-c UNR_NET           x'00';
+dcl-c UNR_HOST          x'01';
+dcl-c UNR_PROTO         x'02';
+dcl-c UNR_PORT          x'03';
+dcl-c UNR_FRAG          x'04';
+dcl-c UNR_SRCF          x'05';
+
+dcl-c TIMX_INTRA        x'00';
+dcl-c TIMX_REASS        x'01';
+
+dcl-c REDIR_NET         x'00';
+dcl-c REDIR_HOST        x'01';
+dcl-c REDIR_TOSN        x'02';
+dcl-c REDIR_TOSH        x'03';
+
+dcl-ds sockaddr_t template;
+  SA_Family uns(5);
+  SA_Data   char(14);
+end-ds;
+
+dcl-ds sockaddr_in_t template;
+  sin_Family int(5);
+  sin_Port   uns(5);
+  sin_addr   uns(10);
+  sin_zero   char(8);
+end-ds;
+
+dcl-ds ip_t template;
+  ip_v_hl  char(1);
+  ip_tos$  char(1);
+  ip_len   int(5);
+  ip_id    uns(5);
+  ip_off   int(5);
+  ip_ttl$  char(1);
+  ip_p     char(1);
+  ip_sum   uns(5);
+  ip_src   uns(10);
+  ip_dst   uns(10);
+end-ds;
+
+dcl-ds udphdr_t template;
+  uh_sport uns(5);
+  uh_dport uns(5);
+  uh_ulen  int(5);
+  uh_sum   uns(5);
+end-ds;
+
+dcl-ds icmp_t template;
+  icmp_type      char(1);
+  icmp_code      char(1);
+  icmp_cksum     uns(5);
+  icmp_hun       char(4);
+    ih_gwaddr    uns(10)  overlay(icmp_hun:1);
+    ih_pptr      char(1)  overlay(icmp_hun:1);
+    ih_idseq     char(4)  overlay(icmp_hun:1);
+      icd_id     uns(5)   overlay(ih_idseq:1);
+      icd_seq    uns(5)   overlay(ih_idseq:3);
+    ih_void      int(5)   overlay(icmp_hun:1);
+  icmp_dun       char(20);
+    id_ts        char(12) overlay(icmp_dun:1);
+      its_otime  uns(10)  overlay(id_ts:1);
+      its_rtime  uns(10)  overlay(id_ts:5);
+      its_ttime  uns(10)  overlay(id_ts:9);
+    id_ip        char(20) overlay(icmp_dun:1);
+      idi_ip     char(20) overlay(id_ip:1);
+    id_mask      uns(10)  overlay(icmp_dun:1);
+    id_data      char(1)  overlay(icmp_dun:1);
+end-ds;
+
+
+dcl-ds timeval_t template;
+  tv_sec   int(10);
+  tv_usec  int(10);
+end-ds;
+
+
+dcl-ds linger_t template;
+  l_onoff  int(10);
+  l_linger int(10);
+end-ds;
+
+//---------------------------------------------------------------*
 // connect
 //---------------------------------------------------------------*
 dcl-pr connect int(10) extproc(*dclcase);
@@ -15,10 +176,170 @@ dcl-pr connect int(10) extproc(*dclcase);
 end-pr;
 
 //---------------------------------------------------------------*
+// inet_addr
+//---------------------------------------------------------------*
+dcl-pr inet_addr uns(10) extproc(*dclcase);
+  char_addr pointer value options(*string);
+end-pr;
+
+//---------------------------------------------------------------*
 // inet_ntoa
 //---------------------------------------------------------------*
 dcl-pr inet_ntoa pointer extproc(*dclcase);
   internet_addr likeds(in_addr) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// socket
+//---------------------------------------------------------------*
+dcl-pr socket int(10) extproc(*dclcase);
+  AddrFamily int(10) value;
+  SocketType int(10) value;
+  Protocol   int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// setsockopt
+//---------------------------------------------------------------*
+dcl-pr setsockopt int(10) extproc(*dclcase);
+  SocketDesc int(10) value;
+  Opt_Level  int(10) value;
+  Opt_Name   int(10) value;
+  Opt_Value  pointer value;
+  Opt_Len    int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// getsockopt
+//---------------------------------------------------------------*
+dcl-pr getsockopt int(10) extproc(*dclcase);
+  SocketDesc int(10) value;
+  Opt_Level  int(10) value;
+  Opt_Name   int(10) value;
+  Opt_Value  pointer value;
+  Opt_Len    int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// getsockname
+//---------------------------------------------------------------*
+dcl-pr getsockname int(10) extproc(*dclcase);
+  SocketDesc  int(10) value;
+  p_sockaddr  pointer value;
+  AddrLength  pointer value;
+end-pr;
+
+//---------------------------------------------------------------*
+// getpeername
+//---------------------------------------------------------------*
+dcl-pr getpeername int(10) extproc(*dclcase);
+  SocketDesc  int(10) value;
+  p_sockaddr  pointer value;
+  AddrLength  int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// bind
+//---------------------------------------------------------------*
+dcl-pr bind int(10) extproc(*dclcase);
+  SocketDesc  int(10) value;
+  p_Address   pointer value;
+  AddrLength  int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// listen
+//---------------------------------------------------------------*
+dcl-pr listen int(10) extproc(*dclcase);
+  SocketDesc  int(10) value;
+  Back_Log    int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// accept
+//---------------------------------------------------------------*
+dcl-pr accept int(10) extproc(*dclcase);
+  SocketDesc  int(10) value;
+  p_Address   pointer value;
+  AddrLength  int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// sendto
+//---------------------------------------------------------------*
+dcl-pr sendto int(10) extproc(*dclcase);
+  SocketDesc  int(10) value;
+  p_Buffer    pointer value;
+  BufferLen   int(10) value;
+  Flags       int(10) value;
+  DestAddr    pointer value;
+  AddrLen     int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// recvfrom
+//---------------------------------------------------------------*
+dcl-pr recvfrom int(10) extproc(*dclcase);
+  SocketDesc  int(10) value;
+  p_Buffer    pointer value;
+  BufferLen   int(10) value;
+  Flags       int(10) value;
+  FromAddr    pointer value;
+  AddrLen     int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// shutdown
+//---------------------------------------------------------------*
+dcl-pr shutdown int(10) extproc(*dclcase);
+  SocketDesc  int(10) value;
+  How         int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// select
+//---------------------------------------------------------------*
+dcl-pr c_select int(10) extproc('select');
+  max_desc    int(10) value;
+  read_set    pointer value;
+  write_set   pointer value;
+  except_set  pointer value;
+  wait_Time   pointer value;
+end-pr;
+
+//---------------------------------------------------------------*
+// givedescriptor
+//---------------------------------------------------------------*
+dcl-pr givedescriptor int(10) extproc(*dclcase);
+  SocketDesc  int(10) value;
+  Target_Job  pointer value;
+end-pr;
+
+//---------------------------------------------------------------*
+// takedescriptor
+//---------------------------------------------------------------*
+dcl-pr takedescriptor int(10) extproc(*dclcase);
+  Source_Job  pointer value;
+end-pr;
+
+//---------------------------------------------------------------*
+// send
+//---------------------------------------------------------------*
+dcl-pr send int(10) extproc(*dclcase);
+  fildes      int(10) value;
+  buffer      pointer value options(*string);
+  bufferlen   int(10) value;
+  flags       int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+// recv
+//---------------------------------------------------------------*
+dcl-pr recv int(10) extproc(*dclcase);
+  fildes      int(10) value;
+  buffer      pointer value;
+  bufferlen   int(10) value;
+  flags       int(10) value;
 end-pr;
 
 /ENDIF

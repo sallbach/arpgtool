@@ -1,5 +1,4 @@
 **Free
-main(ArStrLogrr);
 /COPY ARPG_H,ARCALLCTL
 //---------------------------------------------------------------*
 // extern prototypes
@@ -10,14 +9,12 @@ main(ArStrLogrr);
 /COPY ARPG_H,ARCYAJL
 /COPY ARPG_H,ARCQMH
 /COPY ARPG_H,ARCNETDB
-
-dcl-s gAnServer varchar(128);
-dcl-s gInPort int(10);
+/COPY ARPG_H,ARCSOCKET
+/COPY ARPG_H,ARCQFILE
 
 //---------------------------------------------------------------*
 // ArStrLogrr
 //---------------------------------------------------------------*
-dcl-proc ArStrLogrr;
   dcl-pi ArStrLogrr;
 	gAnServer varchar(128) const;
 	gInPort int(10) const; 
@@ -36,14 +33,10 @@ dcl-proc ArStrLogrr;
   pDsSettings.server  = gInDelay;
   pDsSettings.ccsid   = gInCcsid;
 
-  gAnServer = pAnServer;
-  gInPort   = PInPort;
+  LogStashStartLogger(%Paddr(Connection):pDsSettings);
 
-  LogStashStartLogger(%Paddr(Connection):pDsSettings)
+  *inlr = *on;
 
-  return;
-
-end-proc ArStrLogrr;
 //---------------------------------------------------------------*
 // Connection
 //---------------------------------------------------------------*
@@ -53,14 +46,19 @@ dcl-proc Connection;
 
   dcl-s pInSocket int(10);
   dcl-s pInIP uns(10);
-  dcl-s pInAddrLen uns(10);
-  dcl-s pPtConnectTo pointer;
+ 
+  dcl-s pPtHostent pointer;
+  dcl-ds pDsHostent likeds(hostent_t) based(pPthostent);
+  dcl-s pPtAddr pointer based(pDsHostent.h_addr_list);
+  dcl-s pUlAddr uns(10) based(pPtAddr);
+
+  dcl-ds pDsSockaddr likeds(sockaddr_in_t);
 
   pInIP = inet_Addr(%trim(gAnServer));
   if pInIP = INADDR_NONE;
-    p_hostent = getHostByName(%trim(gAnServer));
-    if p_hostent <> *Null;
-      pInIP = h_addr;
+    pPtHostent = getHostByName(%trim(gAnServer));
+    if pPthostent <> *Null;
+      pInIP = pUlAddr;
     endif;
   endif;
 
@@ -71,23 +69,14 @@ dcl-proc Connection;
   // create socket
   pInSocket = socket(AF_INET:SOCK_STREAM:IPPROTO_IP);
 
-  // connect socket
-  pInAddrLen = %size(sockaddr);
-
-  // allocate memory to store the socket adress into
-  pPtConnectTo = %alloc(pInAddrLen);
-
-  // Point the socket address structure at the newly allocated
-  p_sockaddr = pPtConnectTo;
-
   // Populate the sockaddr_in structure
-  sin_family = AF_INET;
-  sin_addr = pInIP;
-  sin_port = pInPort;
-  sin_zero = *allx'00';
+  pDsSockaddr.sin_family = AF_INET;
+  pDsSockaddr.sin_addr = pInIP;
+  pDsSockaddr.sin_port = gInPort;
+  pDsSockaddr.sin_zero = *allx'00';
 
   // connect to a server
-  if connect(pInSocket : pPtConnectTo : pInAddrLen) < 0 ;
+  if connect(pInSocket : %addr(pDsSockaddr) : %size(pDsSockaddr)) < 0 ;
     return -1; // error connect failed
   endif;
 

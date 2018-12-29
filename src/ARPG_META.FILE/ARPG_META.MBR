@@ -120,7 +120,7 @@ ARPG_RPGLEARSSQL01  RPGLE     SQL Prepared Statement
 ARPG_RPGLEARSSQL02  RPGLE     SQL Result Set    
 ARPG_RPGLEARSSQL03  RPGLE     SQL Statement & Execute    
 ARPG_RPGLEARSSTRR   RPGLE     String functions
-ARPG_RPGLEARSTRLOGR RPGLE     Start Logstash logger
+ARPG_RPGLEARSTRLOGRRRPGLE     Start Logstash logger
 ARPG_RPGLEARSXMLR   RPGLE     XML writer functions
 ARPG_RPGLEARSXML01  RPGLE     XML helper functions
 ARPG_TEST T_ARSARRR RPGLE     UnitTest ARSARRR

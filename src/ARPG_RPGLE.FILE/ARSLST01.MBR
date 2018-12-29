@@ -84,7 +84,7 @@ dcl-proc LogStashStartLogger export;
   dcl-ds pDsSettings_ likeds(LogStash_t) inz(*likeds);
 
   if gBoFirst;
-    CeeRegActGrpExit(%PAddr('LogStashFinalize'):*Omit);
+    CeeRegActGrpExit(%PAddr(LogStashFinalize):*Omit);
     gBoFirst = *off;
   endif;
 

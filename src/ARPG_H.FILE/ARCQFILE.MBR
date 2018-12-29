@@ -5,6 +5,11 @@
 
 /INCLUDE ARPG_H,ARCQUSEC
 
+dcl-ds file_t template;
+  lib  char(10);
+  name char(10);
+end-ds;  
+
 //---------------------------------------------------------------*
 //  InfDs - File Feedback
 //---------------------------------------------------------------*

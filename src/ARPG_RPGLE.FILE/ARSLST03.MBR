@@ -54,8 +54,10 @@ dcl-proc LogStashWriteJsonMessage export;
   dcl-s pAnLvl2 varchar(65535);
   dcl-s pAnIp varchar(50) inz('') static;
 
-  dcl-s pPtHostEnt pointer;
-  dcl-ds pDsHostEnt likeds(hostent) based(pPtHostEnt);
+  dcl-s pPtHostent pointer;
+  dcl-ds pDsHostent likeds(hostent_t) based(pPthostent);
+  dcl-s pPtAddr pointer based(pDsHostent.h_addr_list);
+  dcl-s pUlAddr uns(10) based(pPtAddr);
 
   dcl-s pPtInetAddr pointer;
   dcl-s pPtIn_addr pointer based(pPtInetAddr);

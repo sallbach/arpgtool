@@ -133,7 +133,7 @@ dcl-c NI_MASK         x'0000003F';
 //---------------------------------------------------------------
 // Structures
 //---------------------------------------------------------------
-dcl-ds netdb_control_block qualified align template;
+dcl-ds netdb_control_block_t qualified align template;
   open_flag int(10); // Stay open flag
   f0 pointer; // Qword alignment
   filep0 char(260); // File control block
@@ -146,7 +146,7 @@ dcl-ds netdb_control_block qualified align template;
   reserved2 char(150); // reserved space
 end-ds;                                     
 
-dcl-ds hostent qualified align template;
+dcl-ds hostent_t qualified align template;
   h_name pointer; // host name
   h_aliases pointer; // host aliases
   h_addrtype int(10); // address family of ad
@@ -154,19 +154,19 @@ dcl-ds hostent qualified align template;
   h_addr_list pointer; // host addresses
 end-ds;                                     
 
-dcl-ds servent qualified align template;
+dcl-ds servent_t qualified align template;
   s_name pointer; //service name
   s_aliases pointer; // service aliases
   s_port int(10); // port to use for
   s_proto pointer; // protocol name to use
 end-ds;                                     
 
-dcl-ds servent_data qualified align template;
+dcl-ds servent_data_t qualified align template;
   s_name char(33); // service name
   s_proto char(33); // protocal name length
   s_aliases_arrayp pointer dim(5); // s_aliases_array elem
   s_aliases_array char(33) dim(4); // service alias array
-  serve_control_blk likeds(netdb_control_block);
+  serve_control_blk likeds(netdb_control_block_t);
 end-ds;                                     
 
 //---------------------------------------------------------------
@@ -182,6 +182,15 @@ end-pr;
 //---------------------------------------------------------------
 dcl-pr gethostbyname pointer extproc(*dclcase);
   host_name pointer value options(*string);
+end-pr;
+
+//---------------------------------------------------------------
+// gethostbyaddr()--Get Host Information for Host Address
+//---------------------------------------------------------------
+dcl-pr gethostbyaddr pointer extproc(*dclcase);
+  IP_Address uns(10);
+  Addr_Len   int(10) value;
+  Addr_Fam int(10) value;
 end-pr;
 
 /ENDIF
