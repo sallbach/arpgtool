@@ -39,21 +39,37 @@ BUILD:       CRTRPGMOD  MODULE(&LIBOBJ/ARSLSTA) +
              CRTRPGMOD  MODULE(&LIBOBJ/ARSLST04) +
                           SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBG) +
                           OPTIMIZE(&OPTIMIZE)
-             CRTSRVPGM  SRVPGM(&LIBOBJ/ARSLSTA) +
-                          MODULE(&LIBOBJ/ARSLSTA +
-                          &LIBOBJ/ARSLST01 +
-                          &LIBOBJ/ARSLST02 +
-                          &LIBOBJ/ARSLST03 +
-                          &LIBOBJ/ARSLST04) +
-                          EXPORT(*SRCFILE) +
-                          SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Logstash +
-                          functions') BNDSRVPGM((ARSSTRR) (ARSMBRR) +
-                          (ARSCMDE) (ARSJOBF) (ARSOBJR) (ARSXMLR) +
-                          (ARSDATE) (ARSIFSR) (YAJLR4)) +
-                          OPTION(&RSLVREF)
+
+             IF         COND(&RSLVREF = '*UNRSLVREF') THEN(DO)
+               CRTSRVPGM  SRVPGM(&LIBOBJ/ARSLSTA) +
+                            MODULE(&LIBOBJ/ARSLSTA +
+                            &LIBOBJ/ARSLST01 +
+                            &LIBOBJ/ARSLST02 +
+                            &LIBOBJ/ARSLST03 +
+                            &LIBOBJ/ARSLST04) +
+                            EXPORT(*SRCFILE) +
+                            SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Logstash +
+                            functions') +
+                            OPTION(&RSLVREF)
+             ENDDO
+             ELSE       CMD(DO)
+               CRTSRVPGM  SRVPGM(&LIBOBJ/ARSLSTA) +
+                            MODULE(&LIBOBJ/ARSLSTA +
+                            &LIBOBJ/ARSLST01 +
+                            &LIBOBJ/ARSLST02 +
+                            &LIBOBJ/ARSLST03 +
+                            &LIBOBJ/ARSLST04) +
+                            EXPORT(*SRCFILE) +
+                            SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Logstash +
+                            functions') BNDSRVPGM((ARSSTRR) (ARSMBRR) +
+                            (ARSCMDE) (ARSJOBF) (ARSOBJR) (ARSXMLR) +
+                            (ARSDATE) (ARSIFSR) (YAJLR4)) +
+                            OPTION(&RSLVREF)
+             ENDDO
+                            
 
 /* Create ARSTRLOGR */
-             CRTRPGMOD  MODULE(&LIBOBJ/ARSTRLOGR) +
+             CRTCLMOD  MODULE(&LIBOBJ/ARSTRLOGR) +
                           SRCFILE(&LIBSRC/ARPG_CLLE) DBGVIEW(&DBG) +
                           OPTIMIZE(&OPTIMIZE)
              CRTRPGMOD  MODULE(&LIBOBJ/ARSTRLOGRR) +

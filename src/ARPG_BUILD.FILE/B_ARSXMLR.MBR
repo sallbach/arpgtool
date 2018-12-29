@@ -6,12 +6,23 @@
              CRTRPGMOD  MODULE(&LIBOBJ/ARSXML01) +
                           SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBG) +
                           OPTIMIZE(&OPTIMIZE)
-             CRTSRVPGM  SRVPGM(&LIBOBJ/ARSXMLR) +
-                          MODULE(&LIBOBJ/ARSXMLR &LIBOBJ/ARSXML01) +
-                          SRCFILE(&LIBSRC/ARPG_LNK) TEXT('XML +
-                          writer functions') BNDSRVPGM((ARSSTRR) +
-                          (ARSIFSR) (ARSB64R) (QHTTPSVR/QZSRAPR)) +
-                          OPTION(&RSLVREF)
+                          
+             IF         COND(&RSLVREF = '*UNRSLVREF') THEN(DO)
+               CRTSRVPGM  SRVPGM(&LIBOBJ/ARSXMLR) +
+                            MODULE(&LIBOBJ/ARSXMLR &LIBOBJ/ARSXML01) +
+                            SRCFILE(&LIBSRC/ARPG_LNK) TEXT('XML +
+                            writer functions')  +
+                            OPTION(&RSLVREF)
+             ENDDO
+             ELSE       CMD(DO)
+               CRTSRVPGM  SRVPGM(&LIBOBJ/ARSXMLR) +
+                            MODULE(&LIBOBJ/ARSXMLR &LIBOBJ/ARSXML01) +
+                            SRCFILE(&LIBSRC/ARPG_LNK) TEXT('XML +
+                            writer functions') BNDSRVPGM((ARSSTRR) +
+                            (ARSIFSR) (ARSB64R) (QHTTPSVR/QZSRAPR)) +
+                            OPTION(&RSLVREF)
+             ENDDO
+                            
 
 /* Only build testcases if RPGUnit exists */
              IF         COND(&RSLVREF = '*UNRSLVREF') THEN(GOTO CMDLBL(END))

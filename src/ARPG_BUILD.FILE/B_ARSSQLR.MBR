@@ -12,14 +12,27 @@
              CRTRPGMOD  MODULE(&LIBOBJ/ARSSQL03) +
                           SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBG) +
                           OPTIMIZE(&OPTIMIZE)
-             CRTSRVPGM  SRVPGM(&LIBOBJ/ARSSQLR) +                  
-                          MODULE(&LIBOBJ/ARSSQLR +
-                                 &LIBOBJ/ARSSQL01 +                         
-                                 &LIBOBJ/ARSSQL02 +                         
-                                 &LIBOBJ/ARSSQL03) +                         
-                          SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Sql +    
-                          functions') BNDSRVPGM((ARSOORR) (ARSCALR)) +       
-                          OPTION(&RSLVREF)                         
+
+             IF         COND(&RSLVREF = '*UNRSLVREF') THEN(DO)
+               CRTSRVPGM  SRVPGM(&LIBOBJ/ARSSQLR) +                  
+                            MODULE(&LIBOBJ/ARSSQLR +
+                                   &LIBOBJ/ARSSQL01 +                         
+                                   &LIBOBJ/ARSSQL02 +                         
+                                   &LIBOBJ/ARSSQL03) +                         
+                            SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Sql +    
+                            functions')  +       
+                            OPTION(&RSLVREF)                         
+             ENDDO
+             ELSE       CMD(DO)
+               CRTSRVPGM  SRVPGM(&LIBOBJ/ARSSQLR) +                  
+                            MODULE(&LIBOBJ/ARSSQLR +
+                                   &LIBOBJ/ARSSQL01 +                         
+                                   &LIBOBJ/ARSSQL02 +                         
+                                   &LIBOBJ/ARSSQL03) +                         
+                            SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Sql +    
+                            functions') BNDSRVPGM((ARSOORR) (ARSCALR)) +       
+                            OPTION(&RSLVREF)                         
+             ENDDO
                           
 /* Only build testcases if RPGUnit exists */
              IF         COND(&RSLVREF = '*UNRSLVREF') THEN(GOTO CMDLBL(END))
