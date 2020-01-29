@@ -77,9 +77,9 @@ dcl-proc setUp export;
 
 end-proc setUp;
 //---------------------------------------------------------------*
-// test_Sql_Statement
+// test_Sql_PreparedStatement
 //---------------------------------------------------------------*
-dcl-proc test_Sql_Statement export;
+dcl-proc test_Sql_PreparedStatement export;
 
   dcl-s PInConnection int(10);
   dcl-s pInPreparedSt int(10);
@@ -89,11 +89,11 @@ dcl-proc test_Sql_Statement export;
   dcl-c TEST_COLS 10;
   dcl-c TEST_ROWS 15;
 
-  PInConnection = SqlConnection('');
+  PInConnection = SqlConnection();
   assert(PInConnection > 0:'Connection fail');
 
   iEqual(0
-        :SqlExecute(PInConnection
+        :SqlConnectionExecuteUpdate(PInConnection
                    :'Create Or Replace Table Qtemp/TSTARSSQLF ( ' +
 	               ' F_CHAR FOR COLUMN S_CHAR1 CHAR (64 ) CCSID 37 ' + 
 	               ',F_VARCHAR FOR COLUMN S_VCHAR1 VARCHAR (64 ) CCSID 37 ' +
@@ -109,7 +109,7 @@ dcl-proc test_Sql_Statement export;
           );    
   
   iEqual(0
-        :SqlExecute(PInConnection
+        :SqlConnectionExecuteUpdate(PInConnection
                    :'Label on Column Qtemp/TSTARSSQLF ( ' +
 	               ' F_CHAR is ''lbl_f_char'' ' + 
 	               ',F_VARCHAR is ''lbl_f_varchar'' ' +
@@ -125,7 +125,7 @@ dcl-proc test_Sql_Statement export;
           );    
 
   iEqual(0
-        :SqlExecute(PInConnection
+        :SqlConnectionExecuteUpdate(PInConnection
                    :'Label on Column Qtemp/TSTARSSQLF ( ' +
 	               ' F_CHAR text is ''txt_f_char'' ' + 
 	               ',F_VARCHAR text is ''txt_f_varchar'' ' +
@@ -141,19 +141,21 @@ dcl-proc test_Sql_Statement export;
           );    
           
               
-  i = SqlExecute(PInConnection
+  i = SqlConnectionExecuteUpdate(PInConnection
                 :'Delete From Qtemp/TSTARSSQLF');
   assert(i=0 or i=100:'Delete Qtemp/TSTARSSQLF fail');    
   
+  // TODO insert NULL and BLOB values
+  
   // Insert data
-  pInPreparedSt = SqlPreparedStatement(PInConnection
+  pInPreparedSt = SqlConnectionPrepareStatement(PInConnection
                     :'Insert into Qtemp/TSTARSSQLF -
                        (F_CHAR, F_VARCHAR, F_INT, F_BIG, F_SMALL, - 
                         F_PACK, F_NUM, F_DATE, F_TIME, F_TIMESTAMP) -
                        Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) -
                      '
                     );
-  assert(pInPreparedSt > 0:'Prepare insert fail');
+  assert(pInPreparedSt > 0:'Prepared insert fail');
     
   for i=1 by 1 to TEST_ROWS;                  
     iEqual(0:SqlPreparedStatementClearParameters(pInPreparedSt));                 
@@ -175,7 +177,7 @@ dcl-proc test_Sql_Statement export;
   iEqual(0:SqlPreparedStatementFree(pInPreparedSt));                            
 
   // Read data
-  pInPreparedSt = SqlPreparedStatement(PInConnection
+  pInPreparedSt = SqlConnectionPrepareStatement(PInConnection
                                       :'Select * From Qtemp/TSTARSSQLF -
                                         Where F_CHAR like ? And F_INT > ? - 
                                        ');
@@ -189,117 +191,109 @@ dcl-proc test_Sql_Statement export;
   // read
   i = 0;
   pInResultSet = SqlPreparedStatementExecuteQuery(pInPreparedSt);
-  iEqual(TEST_COLS:SqlRsGetColumnCount(pInResultSet));
-  dow SqlRsNext(pInResultSet);
+  iEqual(TEST_COLS:SqlResultSetGetColumnCount(pInResultSet));
+  dow SqlResultSetNext(pInResultSet);
     i+= 1;
     
     aEqual('char ' + %char(i)
-          :SqlRsGetString(pInResultSet:1));                 
+          :SqlResultSetGetString(pInResultSet:1));                 
     aEqual('varchar ' + %char(i)
-          :SqlRsGetString(pInResultSet:2));                 
+          :SqlResultSetGetString(pInResultSet:2));                 
     iEqual(i
-          :SqlRsGetLong(pInResultSet:3));                 
+          :SqlResultSetGetLong(pInResultSet:3));                 
     iEqual(i+10
-          :SqlRsGetLong(pInResultSet:4));                 
+          :SqlResultSetGetLong(pInResultSet:4));                 
     iEqual(i+20
-          :SqlRsGetLong(pInResultSet:5));                 
+          :SqlResultSetGetLong(pInResultSet:5));                 
     iEqual(i+30
-          :SqlRsGetDecimal(pInResultSet:6));                 
+          :SqlResultSetGetDecimal(pInResultSet:6));                 
     iEqual(i+40
-          :SqlRsGetDecimal(pInResultSet:7));                 
+          :SqlResultSetGetDecimal(pInResultSet:7));                 
     aEqual(%char(d'2018-10-01' + %days(i))
-          :%char(SqlRsGetDate(pInResultSet:8)));                 
+          :%char(SqlResultSetGetDate(pInResultSet:8)));                 
     aEqual(%char(t'01.00.00' + %minutes(i))
-          :%char(SqlRsGetTime(pInResultSet:9)));                 
+          :%char(SqlResultSetGetTime(pInResultSet:9)));                 
     aEqual(%char(z'2018-10-01-01.00.00.000000' + %days(i) + %minutes(i))
-          :%char(SqlRsGetTimeStamp(pInResultSet:10)));
+          :%char(SqlResultSetGetTimeStamp(pInResultSet:10)));
   enddo;
   
   iEqual(TEST_ROWS:i);
-  // -- !? iEqual(0:SqlRsClose(pInResultSet));
-  iEqual(0:SqlPreparedStatementFree(pInPreparedSt));                            
+  // -- !? iEqual(0:SqlResultSetClose(pInResultSet));
+  iEqual(0:SqlPreparedStatementFree(pInPreparedSt));
+  iEqual(0:SqlConnectionClose(PInConnection));                            
                
-end-proc test_Sql_Statement;
+end-proc test_Sql_PreparedStatement;
 //---------------------------------------------------------------*
-// test_Sql_PreparedStatement
+// test_Sql_Statement
 //---------------------------------------------------------------*
-//dcl-proc test_Sql_PreparedStatement export;
+dcl-proc test_Sql_Lob export;
 
-//  dcl-s pInPreparedSt int(10);
-//  dcl-s pInResultSet int(10);
+  dcl-s PInConnection int(10);
+  dcl-s pInResultSet int(10);
+  dcl-s i int(10);
+  dcl-s PAnStr varchar(1024);
+  dcl-s pInClob int(10);
+  dcl-s pInLength int(10);
 
-//  dcl-s F_CHAR char(1024);
-//  dcl-s F_CHAR_1208 ucs2(1024);
-//  dcl-s F_VARCHAR varchar(1024);
-//  dcl-s F_VARCHAR_1208 varucs2(1024);  
-//  dcl-s F_GRAPHIC ucs2(1024);
-//  dcl-s F_VARGRAPHIC varucs2(1024); 
-//               //   dcl-s F_CLOB, - 
-//               //  dcl-s F_BLOB, - 
-//  dcl-s F_INT int(10);
-//  dcl-s F_BIG int(20);
-//  dcl-s F_SMALL int(5);
-//  dcl-s F_PACK packed(30:11);
-//  dcl-s F_NUM zoned(30:11);
-//  dcl-s F_DATE date;
-//  dcl-s F_TIME time; 
-//  dcl-s F_TIMESTAMP timestamp;
-//  dcl-s i int(10);
-//  dcl-s PInConnection int(10);
+  PInConnection = SqlConnection();
+  assert(PInConnection > 0:'Connection fail');
+  SqlConnectionSetPackage(PInConnection:'T_ARSSQLRC':'QTEMP');
+  SqlConnectionSetCommitControl(PInConnection:SQL_COMMIT_CONTROL_CHG);
 
-//  PInConnection = SqlConnection('');
+  pInResultSet = SqlConnectionExecuteQuery(PInConnection:
+    'select ''Däne'' fld1varchar, -                            
+       cast(''Däne'' as dbclob(4)) fld2dbclob, -          
+       cast(''Däne'' as clob(4)) fld3clob, -           
+       cast(''Däne'' as clob(4) ccsid 1208) fld4clob1208, - 
+       cast(''Däne'' as blob(4)) fld5blob -
+     from qsqptabl');                                     
 
-  // select * from SYSIXADV
-  //pInPreparedSt = SqlPreparedStatement('Select * from SYSFEATURE');   
-  //pInPreparedSt = SqlPreparedStatement('Select -
-  //             F_CHAR, -
-  //             F_VARCHAR, -             
-  //             F_INT, - 
-  //             F_BIG, - 
-  //             F_SMALL, - 
-  //             F_PACK, - 
-  //             F_NUM, - 
-  //             F_DATE, -     
-  //             F_TIME, - 
-  //             F_TIMESTAMP from TSTARSSQLF');
-//  F_VARCHAR = 'Select * from SYSFEATURE -
-//                WHERE FEATURE_ID like ? and FEATURE_NAME like ?'; 
-//  pInPreparedSt = SqlPreparedStatement(PInConnection:F_VARCHAR);
-//  SqlPreparedStatementSetString(pInPreparedSt:'%2%');
-//  SqlPreparedStatementSetString(pInPreparedSt:'%table%');
- 
-//  pInResultSet = SqlPreparedStatementExecuteQuery(pInPreparedSt);
-//  dow SqlRsNext(pInResultSet);
-
-//    for i=1 by 1 to SqlRsGetColumnCount(pInResultSet);
-//      F_CHAR = SqlRsGetString(pInResultSet:i);
-//    endfor;
-
-//  enddo;
-//  SqlRsClose(pInResultSet);
-//  SqlPreparedStatementFree(pInPreparedSt);
-
-  // Test Update
-//  F_VARCHAR = 'INSERT INTO SALLBACH2/TSTARSSQLF (F1) VALUES(?)';    
-//  pInPreparedSt = SqlPreparedStatement(PInConnection:F_VARCHAR);
-                    
-//  SqlPreparedStatementSetDecimal(pInPreparedSt:10);                 
-//  SqlPreparedStatementExecuteUpdate(pInPreparedSt);
+  dow SqlResultSetNext(pInResultSet);
+    pAnStr = SqlResultSetGetString(pInResultSet:1);
+    pAnStr = SqlResultSetGetString(pInResultSet:2);
+    
+    pInClob = SqlResultSetGetClob(pInResultSet:3);
+    pInLength = SqlClobLength(pInClob);
+    pAnStr = SqlClobGetSubString(pInClob:1:pInLength);
+    
+    pAnStr = SqlResultSetGetString(pInResultSet:4);
+    pAnStr = SqlResultSetGetString(pInResultSet:5);
+  enddo;  
   
-//  SqlPreparedStatementClearParameters(pInPreparedSt);                 
-//  SqlPreparedStatementSetDecimal(pInPreparedSt:11);                 
-//  SqlPreparedStatementExecuteUpdate(pInPreparedSt);
-                   
-//  SqlPreparedStatementFree(pInPreparedSt);                            
+  //iEqual(0:SqlPreparedStatementFree(pInPreparedSt));
+  iEqual(0:SqlConnectionClose(PInConnection));                            
 
-  // execute again
-  //pInResultSet = SqlPreparedStatementExecuteQuery(pInPreparedSt);
-  //dow SqlRsNext(pInResultSet);
- 
-  //enddo;
-  //SqlRsClose(pInResultSet);    	
+end-proc;
+//---------------------------------------------------------------*
+// test_Sql_Statement
+//---------------------------------------------------------------*
+dcl-proc test_Sql_Xml export;
 
-  // close and free all resources 
-  //SqlPreparedStatementFree(pInPreparedSt);
+  dcl-s PInConnection int(10);
+  dcl-s pInResultSet int(10);
+  dcl-s i int(10);
+  dcl-s PAnStr varchar(1024);
 
-//end-proc test_Sql_PreparedStatement;
+  PInConnection = SqlConnection();
+  assert(PInConnection > 0:'Connection fail');
+
+  pInResultSet = SqlConnectionExecuteQuery(PInConnection:
+    'select ''field 1'' as "Long_Field_Name_Field1", - 
+            xmlserialize( -                             
+              xmldocument( -                           
+                xmlelement(name "root", ''däten'') -    
+                        ) -                           
+                        as clob(1024)) as xmldoc, -    
+            ''field 2'' as "Long_Field_Name_Field2" - 
+     from sysfuncs');                                     
+
+  dow SqlResultSetNext(pInResultSet);
+    PAnStr = SqlResultSetGetString(pInResultSet:1);
+    PAnStr = SqlResultSetGetString(pInResultSet:2);
+    PAnStr = SqlResultSetGetString(pInResultSet:3);
+  enddo;  
+  
+  //iEqual(0:SqlPreparedStatementFree(pInPreparedSt));
+  iEqual(0:SqlConnectionClose(PInConnection));                            
+
+end-proc;

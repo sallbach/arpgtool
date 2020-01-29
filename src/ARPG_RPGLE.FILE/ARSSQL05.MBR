@@ -24,7 +24,7 @@ ctl-opt ccsid(*ucs2:13488);
 //---------------------------------------------------------------*
 
 //---------------------------------------------------------------*
-//  SqlBlobNew - protected
+//  SqlDbClobNew - protected
 //---------------------------------------------------------------*
 //* Creates a SQL resource locator.  
 //*
@@ -34,7 +34,7 @@ ctl-opt ccsid(*ucs2:13488);
 //*
 //* @Author S.Allbach
 //---------------------------------------------------------------*
-dcl-proc SqlBlobNew export;
+dcl-proc SqlDbClobNew export;
   dcl-pi *N int(10);
     pDsSqPrcEd likeds(DsSqPrcEd_t) const;
     pInSqlLoc uns(10) const;
@@ -43,11 +43,11 @@ dcl-proc SqlBlobNew export;
   
   return 0;      
        
-end-proc SqlBlobNew;
+end-proc SqlDbClobNew;
 //---------------------------------------------------------------*
-//  SqlBlobFree 
+//  SqlDbClobFree 
 //---------------------------------------------------------------*
-//* This method frees the Blob object and releases the resources that it holds.  
+//* This method frees the DbClob object and releases the resources that it holds.  
 //*
 //* @return 0
 //*
@@ -55,7 +55,7 @@ end-proc SqlBlobNew;
 //*
 //* @Author S.Allbach
 //---------------------------------------------------------------*
-dcl-proc SqlBlobFree export;
+dcl-proc SqlDbClobFree export;
   dcl-pi *N int(10);
     pInBlob int(10) const;
   end-pi;
@@ -65,4 +65,4 @@ dcl-proc SqlBlobFree export;
   
   return 0;      
        
-end-proc SqlBlobFree;
+end-proc SqlDbClobFree;

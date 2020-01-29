@@ -5,13 +5,31 @@
      /*-----------------------------------------------------------------------*/
              EXPORT     SYMBOL('SqlConnection')
              EXPORT     SYMBOL('SqlConnectionIsActive')
+             EXPORT     SYMBOL('SqlConnectionPrepareStatement')         
+             EXPORT     SYMBOL('SqlConnectionSetPackage')
+             EXPORT     SYMBOL('SqlConnectionUsePerformanceArea')
+             EXPORT     SYMBOL('SqlConnectionSetOpenWithHold')
+             EXPORT     SYMBOL('SqlConnectionSetStatementCcsid')
+             EXPORT     SYMBOL('SqlConnectionAllowBlocking')
+             EXPORT     SYMBOL('SqlConnectionAllowCopyOfData')
+             EXPORT     SYMBOL('SqlConnectionSetCommitControl')
+             EXPORT     SYMBOL('SqlConnectionSetNamingOption')
+             EXPORT     SYMBOL('SqlConnectionSetSortSequence')
+             EXPORT     SYMBOL('SqlConnectionClose')
+             EXPORT     SYMBOL('SqlConnectionExecuteQuery')
+             EXPORT     SYMBOL('SqlConnectionExecuteUpdate')
+             EXPORT     SYMBOL('SqlConnectionCreateBlob')
+             EXPORT     SYMBOL('SqlConnectionCreateClob')
+             EXPORT     SYMBOL('SqlConnectionCreateDbClob')
+             EXPORT     SYMBOL('SqlConnectionCreateSqlXml')
              
      /*-----------------------------------------------------------------------*/
      /* ARSSQL01 - Prepared Statement                                         */
      /*-----------------------------------------------------------------------*/
-             EXPORT     SYMBOL('SqlPreparedStatement')         
              EXPORT     SYMBOL('SqlPreparedStatementExecuteQuery')
              EXPORT     SYMBOL('SqlPreparedStatementExecuteUpdate')
+             EXPORT     SYMBOL('SqlPreparedStatementSetCursorScrollable')
+             EXPORT     SYMBOL('SqlPreparedStatementLobAsString')
              EXPORT     SYMBOL('SqlPreparedStatementClearParameters')
              EXPORT     SYMBOL('SqlPreparedStatementSetString')  
              EXPORT     SYMBOL('SqlPreparedStatementSetStringUcs')
@@ -26,34 +44,65 @@
      /*-----------------------------------------------------------------------*/
      /* ARSSQL02 - ResultSet                                                  */
      /*-----------------------------------------------------------------------*/
-             EXPORT     SYMBOL('SqlRsNext')                 
-             EXPORT     SYMBOL('SqlRsClose')                 
-             EXPORT     SYMBOL('SqlRsGetString')  
-             EXPORT     SYMBOL('SqlRsGetStringUcs')
-             EXPORT     SYMBOL('SqlRsGetDecimal')
-             EXPORT     SYMBOL('SqlRsGetDouble')
-             EXPORT     SYMBOL('SqlRsGetDate')
-             EXPORT     SYMBOL('SqlRsGetTime')
-             EXPORT     SYMBOL('SqlRsGetTimeStamp')
-             EXPORT     SYMBOL('SqlRsGetLong')  
-             EXPORT     SYMBOL('SqlRsGetHex')
-             EXPORT     SYMBOL('SqlRsIsNull')
-             EXPORT     SYMBOL('SqlRsHasError')
+             EXPORT     SYMBOL('SqlResultSetNext')                 
+             EXPORT     SYMBOL('SqlResultSetPrior')                 
+             EXPORT     SYMBOL('SqlResultSetAbsolut')                 
+             EXPORT     SYMBOL('SqlResultSetRelative')                 
+             EXPORT     SYMBOL('SqlResultSetFirst')                 
+             EXPORT     SYMBOL('SqlResultSetLast')                 
+             EXPORT     SYMBOL('SqlResultSetAfterLast')                 
+             EXPORT     SYMBOL('SqlResultSetBeforeFirst')                 
+             EXPORT     SYMBOL('SqlResultSetRefreshRow')                 
+             EXPORT     SYMBOL('SqlResultSetClose') 
+                             
+             EXPORT     SYMBOL('SqlResultSetGetString')  
+             EXPORT     SYMBOL('SqlResultSetGetStringUcs')
+             EXPORT     SYMBOL('SqlResultSetGetDecimal')
+             EXPORT     SYMBOL('SqlResultSetGetDouble')
+             EXPORT     SYMBOL('SqlResultSetGetDate')
+             EXPORT     SYMBOL('SqlResultSetGetTime')
+             EXPORT     SYMBOL('SqlResultSetGetTimeStamp')
+             EXPORT     SYMBOL('SqlResultSetGetLong')  
+             EXPORT     SYMBOL('SqlResultSetGetHex')
+             EXPORT     SYMBOL('SqlResultSetGetBlob')
+             EXPORT     SYMBOL('SqlResultSetGetClob')
+             EXPORT     SYMBOL('SqlResultSetGetDbClob')
+             EXPORT     SYMBOL('SqlResultSetGetSqlXml')
+             EXPORT     SYMBOL('SqlResultSetIsNull')
+             EXPORT     SYMBOL('SqlResultSetHasError')
              
-             EXPORT     SYMBOL('SqlRsFindColumn') 
-             EXPORT     SYMBOL('SqlRsGetColumnName')
-             EXPORT     SYMBOL('SqlRsGetColumnCount')
-             EXPORT     SYMBOL('SqlRsGetSysColumnName')
-             EXPORT     SYMBOL('SqlRsGetLongColumnName')
-             EXPORT     SYMBOL('SqlRsGetColumnPrefix')
-             EXPORT     SYMBOL('SqlRsGetColumnType')
-             EXPORT     SYMBOL('SqlRsGetPrecision')
-             EXPORT     SYMBOL('SqlRsGetScale')
+             EXPORT     SYMBOL('SqlResultSetFindColumn') 
+             EXPORT     SYMBOL('SqlResultSetGetColumnName')
+             EXPORT     SYMBOL('SqlResultSetGetColumnCount')
+             EXPORT     SYMBOL('SqlResultSetGetSysColumnName')
+             EXPORT     SYMBOL('SqlResultSetGetLongColumnName')
+             EXPORT     SYMBOL('SqlResultSetGetColumnPrefix')
+             EXPORT     SYMBOL('SqlResultSetGetColumnType')
+             EXPORT     SYMBOL('SqlResultSetGetPrecision')
+             EXPORT     SYMBOL('SqlResultSetGetScale')
 
      /*-----------------------------------------------------------------------*/
-     /* ARSSQL03 - Dynamic SQL Access                                         */
+     /* ARSSQL03 - Blob                                                       */
      /*-----------------------------------------------------------------------*/
-             EXPORT     SYMBOL('SqlStatement')
-             EXPORT     SYMBOL('SqlExecute')
+             EXPORT     SYMBOL('SqlBlobFree')                 
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSSQL04 - Clob                                                       */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('SqlClobLength')                 
+             EXPORT     SYMBOL('SqlClobPosition')                 
+             EXPORT     SYMBOL('SqlClobGetSubstring')                 
+             EXPORT     SYMBOL('SqlClobWriteToFile')                 
+             EXPORT     SYMBOL('SqlClobFree')                 
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSSQL05 - DbClob                                                     */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('SqlDbClobFree')                 
+
+     /*-----------------------------------------------------------------------*/
+     /* ARSSQL06 - SqlXml                                                     */
+     /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('SqlSqlXmlFree')                 
 
              ENDPGMEXP

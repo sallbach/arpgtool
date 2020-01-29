@@ -8,8 +8,6 @@
 //---------------------------------------------------------------*
 //  constants
 //---------------------------------------------------------------*
-dcl-c SQL_CONNECTION_LOCAL -2;
-
 dcl-c SQL_CODE_EOF 100;
 dcl-c SQL_CODE_ALREADY_EXISTS -601;
 
@@ -50,6 +48,8 @@ dcl-c SQL_TYPE_XML 988;
 dcl-c SQL_TYPE_DECFLOAT 996;  
 dcl-c SQL_TYPE_XML_LOCATOR 2452;  
    
+dcl-c SQL_DEFAULT_XML_SIZE 1024; // todo  
+   
 //---------------------------------------------------------------*
 //  typedefs
 //---------------------------------------------------------------*
@@ -60,7 +60,7 @@ dcl-s sqlstm_t char(32765) template;
 //  SqlConnection
 //---------------------------------------------------------------*
 dcl-pr SqlConnection int(10) extproc(*dclcase);
-  pAnSystem char(10) const;
+  pAnSystem varchar(64) const options(*nopass);
   pAnUser varchar(30) const options(*nopass);
   pAnPass varchar(128) const options(*nopass);
 end-pr;
@@ -71,29 +71,166 @@ end-pr;
 dcl-pr SqlConnectionIsActive ind extproc(*dclcase);
   pInConnection int(10) const;
 end-pr;
-       
+
 //---------------------------------------------------------------*
-//  SqlStatement
+//  SqlConnectionUsePerformanceArea
 //---------------------------------------------------------------*
-dcl-pr SqlStatement int(10) extproc(*dclcase);
+dcl-pr SqlConnectionUsePerformanceArea int(10) extproc(*dclcase);
   pInConnection int(10) const;
-  pAnSqlStm like(sqlstmvar_t) const;
+  pBoOn ind const;
 end-pr;
        
 //---------------------------------------------------------------*
-//  SqlExecute
+//  SqlConnectionSetOpenWithHold
 //---------------------------------------------------------------*
-dcl-pr SqlExecute int(10) extproc(*dclcase);
+dcl-pr SqlConnectionSetOpenWithHold int(10) extproc(*dclcase);
   pInConnection int(10) const;
-  pAnSqlStm like(sqlstmvar_t) const;
+  pBoOn ind const;
 end-pr;
        
 //---------------------------------------------------------------*
-//  SqlPreparedStatement
+//  SqlConnectionSetStatementCcsid
 //---------------------------------------------------------------*
-dcl-pr SqlPreparedStatement int(10) extproc(*dclcase);
+dcl-pr SqlConnectionSetStatementCcsid int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+  pInCcsid int(10) const;
+end-pr;
+      
+//---------------------------------------------------------------*
+//  SqlConnectionAllowBlocking
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionAllowBlocking int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+  pAnOption char(1) const;
+end-pr;
+      
+//---------------------------------------------------------------*
+//  SqlConnectionAllowCopyOfData
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionAllowCopyOfData int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+  pAnOption char(1) const;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlConnectionSetCommitControl
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionSetCommitControl int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+  pAnOption char(1) const;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlConnectionSetNamingOption
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionSetNamingOption int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+  pBoSql ind const;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlConnectionSetSortSequence
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionSetSortSequence int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+  pAnTable char(10) const;
+  pAnLib   char(10) const options(*nopass:*omit);
+end-pr;
+       
+//---------------------------------------------------------------*
+//  SqlConnectionPrepareStatement
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionPrepareStatement int(10) extproc(*dclcase);
   pInConnection int(10) const;
   pAnSqlStm like(sqlstmvar_t) const;
+  pAnStmName varchar(18) const options(*nopass:*omit);
+end-pr;
+       
+//---------------------------------------------------------------*
+//  SqlConnectionSetPackage
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionSetPackage int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+  pAnPackage char(10) const;
+  pAnPackageLib char(10) const options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlConnectionClose
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionClose int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+end-pr;
+       
+//---------------------------------------------------------------*
+//  SqlConnectionExecuteQuery
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionExecuteQuery int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+  pAnSqlStm like(sqlstmvar_t) const;
+  pAnStmName varchar(18) const options(*nopass:*omit);
+end-pr;
+       
+//---------------------------------------------------------------*
+//  SqlConnectionExecuteUpdate
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionExecuteUpdate int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+  pAnSqlStm like(sqlstmvar_t) const;
+  pAnStmName varchar(18) const options(*nopass:*omit);
+end-pr;
+       
+//---------------------------------------------------------------*
+//  SqlConnectionCreateBlob
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionCreateBlob int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+end-pr;      
+
+//---------------------------------------------------------------*
+//  SqlConnectionCreateClob
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionCreateClob int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+end-pr;      
+
+//---------------------------------------------------------------*
+//  SqlConnectionCreateDbClob
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionCreateDbClob int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+end-pr;      
+
+//---------------------------------------------------------------*
+//  SqlConnectionCreateSqlXml
+//---------------------------------------------------------------*
+dcl-pr SqlConnectionCreateSqlXml int(10) extproc(*dclcase);
+  pInConnection int(10) const;
+end-pr;      
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementNew - for internal use only
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementNew int(10) extproc(*dclcase);
+  pDsSqPrcEd likeds(DsSqPrcEd_t) const;
+  pAnSqlStm like(sqlstmvar_t) const;
+  pAnStmName varchar(18) const;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetCursorScrollable
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetCursorScrollable int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pBoScrollable ind const;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementLobAsString
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementLobAsString int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pBoOn ind const;
 end-pr;
 
 //---------------------------------------------------------------*
@@ -189,206 +326,397 @@ dcl-pr SqlPreparedStatementFree int(10) extproc(*dclcase);
 end-pr;
 
 //---------------------------------------------------------------*   
-//  SqlRsNext                                                        
+//  SqlResultSetNext                                                        
 //---------------------------------------------------------------*   
-dcl-pr SqlRsNext ind extproc(*dclcase);                              
+dcl-pr SqlResultSetNext ind extproc(*dclcase);                              
   pInResultSet int(10) const;                                        
 end-pr;                                                              
                                                                      
 //---------------------------------------------------------------*   
-//  SqlRsClose                                                       
+//  SqlResultSetPrior                                                        
 //---------------------------------------------------------------*   
-dcl-pr SqlRsClose int(10) extproc(*dclcase);                         
+dcl-pr SqlResultSetPrior ind extproc(*dclcase);                              
+  pInResultSet int(10) const;                                        
+end-pr;                                                              
+                                                                     
+//---------------------------------------------------------------*   
+//  SqlResultSetAbsolut                                                        
+//---------------------------------------------------------------*   
+dcl-pr SqlResultSetAbsolut ind extproc(*dclcase);                              
+  pInResultSet int(10) const; 
+  pInRows int(10) const;                                       
+end-pr;                                                              
+                                                                     
+//---------------------------------------------------------------*   
+//  SqlResultSetRelative                                                        
+//---------------------------------------------------------------*   
+dcl-pr SqlResultSetRelative ind extproc(*dclcase);                              
+  pInResultSet int(10) const; 
+  pInRows int(10) const;                                       
+end-pr;                                                              
+                                                                     
+//---------------------------------------------------------------*   
+//  SqlResultSetRefreshRow                                                        
+//---------------------------------------------------------------*   
+dcl-pr SqlResultSetRefreshRow ind extproc(*dclcase);                              
+  pInResultSet int(10) const; 
+end-pr;                                                              
+                                                                     
+//---------------------------------------------------------------*   
+//  SqlResultSetFirst                                                        
+//---------------------------------------------------------------*   
+dcl-pr SqlResultSetFirst ind extproc(*dclcase);                              
+  pInResultSet int(10) const;                                        
+end-pr;                                                              
+                       
+//---------------------------------------------------------------*   
+//  SqlResultSetLast                                                        
+//---------------------------------------------------------------*   
+dcl-pr SqlResultSetLast ind extproc(*dclcase);                              
+  pInResultSet int(10) const;                                        
+end-pr;                                                              
+                                                                     
+//---------------------------------------------------------------*   
+//  SqlResultSetBeforeFirst                                                        
+//---------------------------------------------------------------*   
+dcl-pr SqlResultSetBeforeFirst ind extproc(*dclcase);                              
+  pInResultSet int(10) const;                                        
+end-pr;                                                              
+                                                                     
+//---------------------------------------------------------------*   
+//  SqlResultSetAfterLast                                                        
+//---------------------------------------------------------------*   
+dcl-pr SqlResultSetAfterLast ind extproc(*dclcase);                              
+  pInResultSet int(10) const;                                        
+end-pr;                                                              
+                                                                     
+                                                                     
+//---------------------------------------------------------------*   
+//  SqlResultSetClose                                                       
+//---------------------------------------------------------------*   
+dcl-pr SqlResultSetClose int(10) extproc(*dclcase);                         
   pInResultSet int(10) const;                                        
 end-pr;                                                              
 
 
 //---------------------------------------------------------------*
-//  SqlRsGetString
+//  SqlResultSetGetString
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetString varchar(32767) extproc(*dclcase);
+dcl-pr SqlResultSetGetString varchar(32767) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
   pBoNullId ind options(*nopass);
 end-pr;
        
 //---------------------------------------------------------------*
-//  SqlRsGetStringUcs
+//  SqlResultSetGetStringUcs
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetStringUcs varucs2(16383) extproc(*dclcase);
+dcl-pr SqlResultSetGetStringUcs varucs2(16383) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
   pBoNullId ind options(*nopass);
 end-pr;
        
 //---------------------------------------------------------------*
-//  @todo SqlRsGetBlob/Clob/Xml - Var and File !?
+//  SqlResultSetGetDecimal
 //---------------------------------------------------------------*
-       
-//---------------------------------------------------------------*
-//  SqlRsGetDecimal
-//---------------------------------------------------------------*
-dcl-pr SqlRsGetDecimal packed(31:11) extproc(*dclcase);
+dcl-pr SqlResultSetGetDecimal packed(31:11) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
   pBoNullId ind options(*nopass);
 end-pr;
        
 //---------------------------------------------------------------*
-//  SqlRsGetDouble
+//  SqlResultSetGetDouble
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetDouble float(8) extproc(*dclcase);
+dcl-pr SqlResultSetGetDouble float(8) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
   pBoNullId ind options(*nopass);
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetDate
+//  SqlResultSetGetDate
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetDate date extproc(*dclcase);
+dcl-pr SqlResultSetGetDate date extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
   pBoNullId ind options(*nopass);
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetTime
+//  SqlResultSetGetTime
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetTime time extproc(*dclcase);
+dcl-pr SqlResultSetGetTime time extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
   pBoNullId ind options(*nopass);
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetTimeStamp
+//  SqlResultSetGetTimeStamp
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetTimeStamp timestamp extproc(*dclcase);
+dcl-pr SqlResultSetGetTimeStamp timestamp extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
   pBoNullId ind options(*nopass);
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetLong
+//  SqlResultSetGetLong
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetLong int(20) extproc(*dclcase);
+dcl-pr SqlResultSetGetLong int(20) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
   pBoNullId ind options(*nopass);
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetHex
+//  SqlResultSetGetHex
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetHex varchar(32767) extproc(*dclcase);
+dcl-pr SqlResultSetGetHex varchar(32767) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
   pBoNullId ind options(*nopass);
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsIsNull
+//  SqlResultSetIsNull
 //---------------------------------------------------------------*
-dcl-pr SqlRsIsNull ind extproc(*dclcase);
+dcl-pr SqlResultSetIsNull ind extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsHasError
+//  SqlResultSetHasError
 //---------------------------------------------------------------*
-dcl-pr SqlRsHasError ind extproc(*dclcase);
+dcl-pr SqlResultSetHasError ind extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsFindColumn
+//  SqlResultSetFindColumn
 //---------------------------------------------------------------*
-dcl-pr SqlRsFindColumn int(10) extproc(*dclcase);
+dcl-pr SqlResultSetFindColumn int(10) extproc(*dclcase);
   pInResultSet int(10) const;
   pAnColName varchar(256) const;
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetColumnCount
+//  SqlResultSetGetColumnCount
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetColumnCount int(10) extproc(*dclcase);
+dcl-pr SqlResultSetGetColumnCount int(10) extproc(*dclcase);
   pInResultSet int(10) const;
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetColumnName
+//  SqlResultSetGetColumnName
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetColumnName varchar(256) extproc(*dclcase);
+dcl-pr SqlResultSetGetColumnName varchar(256) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetSysColumnName
+//  SqlResultSetGetSysColumnName
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetSysColumnName varchar(10) extproc(*dclcase);
+dcl-pr SqlResultSetGetSysColumnName varchar(10) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetLongColumnName
+//  SqlResultSetGetLongColumnName
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetLongColumnName varchar(256) extproc(*dclcase);
+dcl-pr SqlResultSetGetLongColumnName varchar(256) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetColumnPrefix
+//  SqlResultSetGetColumnPrefix
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetColumnPrefix char(1) extproc(*dclcase);
+dcl-pr SqlResultSetGetColumnPrefix char(1) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetColumnType
+//  SqlResultSetGetColumnType
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetColumnType int(10) extproc(*dclcase);
+dcl-pr SqlResultSetGetColumnType int(10) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetPrecision
+//  SqlResultSetGetPrecision
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetPrecision int(10) extproc(*dclcase);
+dcl-pr SqlResultSetGetPrecision int(10) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
 end-pr;
 
 //---------------------------------------------------------------*
-//  SqlRsGetScale
+//  SqlResultSetGetScale
 //---------------------------------------------------------------*
-dcl-pr SqlRsGetScale int(10) extproc(*dclcase);
+dcl-pr SqlResultSetGetScale int(10) extproc(*dclcase);
   pInResultSet int(10) const;
   pInColIndex int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlResultSetGetBlob
+//---------------------------------------------------------------*
+dcl-pr SqlResultSetGetBlob int(10) extproc(*dclcase);
+  pInResultSet int(10) const;
+  pInColIndex int(10) const;
+  pBoNullId ind options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlResultSetGetClob
+//---------------------------------------------------------------*
+dcl-pr SqlResultSetGetClob int(10) extproc(*dclcase);
+  pInResultSet int(10) const;
+  pInColIndex int(10) const;
+  pBoNullId ind options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlResultSetGetDbClob
+//---------------------------------------------------------------*
+dcl-pr SqlResultSetGetDbClob int(10) extproc(*dclcase);
+  pInResultSet int(10) const;
+  pInColIndex int(10) const;
+  pBoNullId ind options(*nopass);
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlResultSetGetSqlXml
+//---------------------------------------------------------------*
+dcl-pr SqlResultSetGetSqlXml int(10) extproc(*dclcase);
+  pInResultSet int(10) const;
+  pInColIndex int(10) const;
+  pBoNullId ind options(*nopass);
 end-pr;
 
 //---------------------------------------------------------------*   
-//  SqlConnectionGetSettings - for internal use only !                                                       
+//  SqlResultSetNew - for internal use only !                                                       
 //---------------------------------------------------------------*   
-dcl-pr SqlConnectionGetSettings likeds(DsSqPrcEd_t) extproc(*dclcase);
-  pInConnection int(10) const;
-end-pr;
-
-//---------------------------------------------------------------*   
-//  SqlRsNew - for internal use only !                                                       
-//---------------------------------------------------------------*   
-dcl-pr SqlRsNew int(10) extproc(*dclcase);
+dcl-pr SqlResultSetNew int(10) extproc(*dclcase);
   pDsSqPrcEd likeds(DsSqPrcEd_t) const;
   pPtOpenDa pointer;
   pPtDescribeDa pointer;
+  pBoLobAsString ind const; 
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlResultSetSetRelatedStatement - for internal use only !                                                       
+//---------------------------------------------------------------*   
+dcl-pr SqlResultSetSetRelatedStatement int(10) extproc(*dclcase);
+  pInResultSet int(10) const;
+  pInPrepStm int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlBlobNew - for internal use only !                                                       
+//---------------------------------------------------------------*   
+dcl-pr SqlBlobNew int(10) extproc(*dclcase);
+  pDsSqPrcEd likeds(DsSqPrcEd_t) const;
+  pInLobLocator uns(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlBlobFree
+//---------------------------------------------------------------*   
+dcl-pr SqlBlobFree int(10) extproc(*dclcase);
+  pInBlob int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlClobNew - for internal use only !                                                       
+//---------------------------------------------------------------*   
+dcl-pr SqlClobNew int(10) extproc(*dclcase);
+  pDsSqPrcEd likeds(DsSqPrcEd_t) const;
+  pInLobLocator uns(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlClobFree
+//---------------------------------------------------------------*   
+dcl-pr SqlClobFree int(10) extproc(*dclcase);
+  pInClob int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlClobLength
+//---------------------------------------------------------------*   
+dcl-pr SqlClobLength int(10) extproc(*dclcase);
+  pInClob int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlClobGetSubstring
+//---------------------------------------------------------------*   
+dcl-pr SqlClobGetSubstring varchar(32765) extproc(*dclcase);
+  pInClob int(10) const;
+  pInPos  int(10) const;
+  pInlength int(5) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlClobPosition
+//---------------------------------------------------------------*   
+dcl-pr SqlClobPosition int(10) extproc(*dclcase);
+  pInClob int(10) const;
+  pAnSearchstr varchar(32765) const;
+  pInStart     int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlClobWriteToFile
+//---------------------------------------------------------------*   
+dcl-pr SqlClobWriteToFile int(10) extproc(*dclcase);
+  pInClob int(10) const;
+  pAnFileName varchar(255) const;
+end-pr;
+
+
+
+
+
+//---------------------------------------------------------------*   
+//  SqlDbClobNew - for internal use only !                                                       
+//---------------------------------------------------------------*   
+dcl-pr SqlDbClobNew int(10) extproc(*dclcase);
+  pDsSqPrcEd likeds(DsSqPrcEd_t) const;
+  pInLobLocator uns(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlDbClobFree
+//---------------------------------------------------------------*   
+dcl-pr SqlDbClobFree int(10) extproc(*dclcase);
+  pInDbClob int(10) const;
+end-pr;
+
+
+//---------------------------------------------------------------*   
+//  SqlSqlXmlNew - for internal use only !                                                       
+//---------------------------------------------------------------*   
+dcl-pr SqlSqlXmlNew int(10) extproc(*dclcase);
+  pDsSqPrcEd likeds(DsSqPrcEd_t) const;
+  pInLobLocator uns(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlSqlXmlFree
+//---------------------------------------------------------------*   
+dcl-pr SqlSqlXmlFree int(10) extproc(*dclcase);
+  pInXml int(10) const;
 end-pr;
 
 /ENDIF

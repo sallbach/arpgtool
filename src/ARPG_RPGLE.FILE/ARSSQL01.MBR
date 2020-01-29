@@ -21,21 +21,22 @@ dcl-ds DsPrepStm_t qualified align(*full) template;
   ptDescribeDa pointer; // SqlDa
   ptOpenDa pointer; // SqlDa
   inOpenDaSize int(10);
+  boLobAsString ind inz(*off);
 end-ds;
 
 //---------------------------------------------------------------*
 // constants
 //---------------------------------------------------------------*
-dcl-c SQL_NUM 1; 
+dcl-c SQL_NUM 1; // see AR_QSQPRC_SQLCA__
 
 //---------------------------------------------------------------*
-//  SqlPreparedStatement
+//  SqlPreparedStatementNew
 //---------------------------------------------------------------*
 //* A SQL statement is precompiled and stored in a PreparedStatement  
 //* object. This object can then be used to efficiently execute this 
 //* statement multiple times.
 //*
-//* @param pInConnection - Connection object or @const SQL_CONNECTION_LOCAL
+//* @param pDsSqPrcEd - Connection settings
 //* @param pAnSqlStm - A SQL statement.
 //* @param pInCcsid - CCSID of SQL statement.
 //*
@@ -45,10 +46,11 @@ dcl-c SQL_NUM 1;
 //*
 //* @Author S.Allbach
 //---------------------------------------------------------------*
-dcl-proc SqlPreparedStatement export;
+dcl-proc SqlPreparedStatementNew export;
   dcl-pi *N int(10);
-    pInConnection int(10) const;
+    pDsSqPrcEd likeds(DsSqPrcEd_t) const;
     pAnSqlStm like(sqlstmvar_t) const;
+    pAnStmName varchar(18) const;
   end-pi;
 
   dcl-s pInPrepStm int(10);
@@ -61,12 +63,8 @@ dcl-proc SqlPreparedStatement export;
   dcl-s pPtDescribeDa pointer;
   dcl-ds pDsDescribeDa likeds(SqlDa) based(pPtDescribeDa);
 
-  dcl-ds pDsSqPrcEd likeds(DsSqPrcEd_t);
+  dcl-ds pDsSqPrcEdInt likeds(DsSqPrcEd_t);
   dcl-s SqlVarOccur int(10);
-
-  if not SqlConnectionIsActive(pInConnection);
-    return -1;
-  endif;
 
   // New Object
   pInPrepStm = OoRObjectNew(s#Prog:pPtPrepStm:%size(DsPrepStm_t));
@@ -75,8 +73,11 @@ dcl-proc SqlPreparedStatement export;
   endif;
 
   clear pDsPrepStm;
-  pDsPrepStm.SqPrcEd = SqlConnectionGetSettings(pInConnection);
+  pDsPrepStm.SqPrcEd = pDsSqPrcEd;
   pDsPrepStm.SqPrcEd.stmname = 'ARSSTM_' + %char(pInPrepStm);
+  if pAnStmName <> *Blanks;
+    pDsPrepStm.SqPrcEd.stmname = pAnStmName;
+  endif;
    
   // Inz OpenDa (SQLDA)
   SqlPreparedStatementClearParameters(pInPrepStm);
@@ -90,11 +91,11 @@ dcl-proc SqlPreparedStatement export;
   pDsPrepStm.SqPrcEd.SqlStm = pAnSqlStm;
 
   // Create SQL Package
-  pDsSqPrcEd = pDsPrepStm.SqPrcEd;
-  pDsSqPrcEd.mainpgm = '*ENDACTGRP'; // Main program name.
-  pDsSqPrcEd.function = SQL_FUNCTION_BUILD_PACKAGE;
+  pDsSqPrcEdInt = pDsPrepStm.SqPrcEd;
+  pDsSqPrcEdInt.mainpgm = '*ENDACTGRP'; // Main program name.
+  pDsSqPrcEdInt.function = SQL_FUNCTION_BUILD_PACKAGE;
   
-  Q_SqPrcEd(SqlCa:SqlDa:'SQLP0400':pDsSqPrcEd:QUSecExcp);
+  Q_SqPrcEd(SqlCa:SqlDa:'SQLP0400':pDsSqPrcEdInt:QUSecExcp);
 
   if SqlCode <> 0 And SqlCode <> SQL_CODE_ALREADY_EXISTS;
     // todo message
@@ -140,7 +141,80 @@ dcl-proc SqlPreparedStatement export;
   
   return pInPrepStm;
 
-end-proc SqlPreparedStatement;
+end-proc SqlPreparedStatementNew;
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetCursorScrollable
+//---------------------------------------------------------------*
+//* Makes the next opened cursor scrollable.
+//*
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
+//* @param pBoScrollable - *on - scrollable 
+//*
+//* @return 0 - change successful else -1. 
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlPreparedStatementSetCursorScrollable export;
+  dcl-pi *N int(10);
+    pInPrepStm int(10) const;
+    pBoScrollable ind const;
+  end-pi;
+
+  dcl-s pPtPrepStm pointer inz(*Null);
+  dcl-ds pDsPrepStm likeds(DsPrepStm_t) based(pPtPrepStm); 
+
+  // Statement
+  pPtPrepStm = OoRObjectGet(s#prog:pInPrepStm);
+  if pPtPrepStm = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  pDsPrepStm.SqPrcEd.scroll = SQL_CURSOR_SCROLLABLE_NO;
+  if pBoScrollable;
+    pDsPrepStm.SqPrcEd.scroll = SQL_CURSOR_SCROLLABLE_YES;
+  endif;
+  
+  return 0;
+
+end-proc SqlPreparedStatementSetCursorScrollable;
+//---------------------------------------------------------------*
+//  SqlPreparedStatementLobAsString
+//---------------------------------------------------------------*
+//* Makes the next opened cursor scrollable.
+//*
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
+//* @param pBoOn - *on - LOB only as string with max 32kb 
+//*
+//* @return 0 - change successful else -1. 
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlPreparedStatementLobAsString export;
+  dcl-pi *N int(10);
+    pInPrepStm int(10) const;
+    pBoOn ind const;
+  end-pi;
+
+  dcl-s pPtPrepStm pointer inz(*Null);
+  dcl-ds pDsPrepStm likeds(DsPrepStm_t) based(pPtPrepStm); 
+
+  // Statement
+  pPtPrepStm = OoRObjectGet(s#prog:pInPrepStm);
+  if pPtPrepStm = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  pDsPrepStm.boLobAsString = pBoOn;
+  
+  return 0;
+
+end-proc SqlPreparedStatementLobAsString;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementExecuteQuery
 //---------------------------------------------------------------*
@@ -171,9 +245,10 @@ dcl-proc SqlPreparedStatementExecuteQuery export;
     return -1;
   endif;
 
-  pInResultSet = SqlRsNew(pDsPrepStm.SqPrcEd
-                         :pDsPrepStm.ptOpenDa
-                         :pDsPrepStm.ptDescribeDa);
+  pInResultSet = SqlResultSetNew(pDsPrepStm.SqPrcEd
+                                :pDsPrepStm.ptOpenDa
+                                :pDsPrepStm.ptDescribeDa
+                                :pDsPrepStm.boLobAsString);
   if pInResultSet = -1;
     // todo message
     return -1;
@@ -396,6 +471,8 @@ dcl-proc SqlPreparedStatementSetStringUcs export;
     return -1;
   endif;
 
+  // TODO
+
   return 0;
 
 end-proc SqlPreparedStatementSetStringUcs;
@@ -593,6 +670,8 @@ dcl-proc SqlPreparedStatementFree export;
     // todo message
     return -1;
   endif;
+
+  // TODO free ResultSets 
 
   SqlPreparedStatementClearParameters(pInPrepStm);
   dealloc(ne) pDsPrepStm.ptOpenDa;

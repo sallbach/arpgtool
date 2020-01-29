@@ -9,16 +9,28 @@
              CRTRPGMOD  MODULE(&LIBOBJ/ARSSQL02) +
                           SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBG) +
                           OPTIMIZE(&OPTIMIZE)
-             CRTRPGMOD  MODULE(&LIBOBJ/ARSSQL03) +
-                          SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBG) +
-                          OPTIMIZE(&OPTIMIZE)
+             CRTSQLRPGI  OBJ(&LIBOBJ/ARSSQL03) +
+                           SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBGSQL) +
+                           OBJTYPE(*MODULE)
+             CRTSQLRPGI  OBJ(&LIBOBJ/ARSSQL04) +
+                           SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBGSQL) +
+                           OBJTYPE(*MODULE)
+             CRTSQLRPGI  OBJ(&LIBOBJ/ARSSQL05) +
+                           SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBGSQL) +
+                           OBJTYPE(*MODULE)
+             CRTSQLRPGI  OBJ(&LIBOBJ/ARSSQL06) +
+                           SRCFILE(&LIBSRC/ARPG_RPGLE) DBGVIEW(&DBGSQL) +
+                           OBJTYPE(*MODULE)
 
              IF         COND(&RSLVREF = '*UNRSLVREF') THEN(DO)
                CRTSRVPGM  SRVPGM(&LIBOBJ/ARSSQLR) +                  
                             MODULE(&LIBOBJ/ARSSQLR +
                                    &LIBOBJ/ARSSQL01 +                         
                                    &LIBOBJ/ARSSQL02 +                         
-                                   &LIBOBJ/ARSSQL03) +                         
+                                   &LIBOBJ/ARSSQL03 +                         
+                                   &LIBOBJ/ARSSQL04 +                         
+                                   &LIBOBJ/ARSSQL05 +                         
+                                   &LIBOBJ/ARSSQL06) +                         
                             SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Sql +    
                             functions')  +       
                             OPTION(&RSLVREF)                         
@@ -28,7 +40,10 @@
                             MODULE(&LIBOBJ/ARSSQLR +
                                    &LIBOBJ/ARSSQL01 +                         
                                    &LIBOBJ/ARSSQL02 +                         
-                                   &LIBOBJ/ARSSQL03) +                         
+                                   &LIBOBJ/ARSSQL03 +                         
+                                   &LIBOBJ/ARSSQL04 +                         
+                                   &LIBOBJ/ARSSQL05 +                         
+                                   &LIBOBJ/ARSSQL06) +                         
                             SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Sql +    
                             functions') BNDSRVPGM((ARSOORR) (ARSCALR)) +       
                             OPTION(&RSLVREF)                         

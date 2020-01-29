@@ -23,16 +23,16 @@ end-ds;
 //---------------------------------------------------------------*
 // constants
 //---------------------------------------------------------------*
-dcl-c SQL_NUM 1; 
 
 //---------------------------------------------------------------*
 //  SqlConnection
 //---------------------------------------------------------------*
-//*   
-//*  
-//* 
+//* Open a new connection to the database.  
 //*
-//* @param pAnSystem - Systemname 
+//* Currently it's only a configuration object and it connects  
+//* only with the local database.
+//*
+//* @param pAnSystem - System name (optional - default API_LOCAL)
 //* @param pAnUser - User ID (optional)
 //* @param pAnPass - Password (optional)
 //*
@@ -44,7 +44,7 @@ dcl-c SQL_NUM 1;
 //---------------------------------------------------------------*
 dcl-proc SqlConnection export;
   dcl-pi *N int(10);
-    pAnSystem char(10) const;
+    pAnSystem varchar(64) const options(*nopass);
     pAnUser varchar(30) const options(*nopass);
     pAnPass varchar(128) const options(*nopass);
   end-pi;
@@ -70,13 +70,12 @@ end-proc SqlConnection;
 //---------------------------------------------------------------*
 //  SqlConnectionIsActive
 //---------------------------------------------------------------*
-//*   
-//*  
-//* 
+//* Check if connection is active.  
 //*
-//* @param pInConnection - 
+//* @param pInConnection - Connection object @link #SqlConnection
 //*
-//* @return Connection object
+//* @return *on - connection is active. 
+//* @return *off - connection object is invalid. 
 //*
 //* @diag messageCode to be defined
 //*
@@ -87,15 +86,540 @@ dcl-proc SqlConnectionIsActive export;
     pInConnection int(10) const; 
   end-pi;
 
-  return pInConnection = SQL_CONNECTION_LOCAL Or
-           OoRObjectIsValid(s#prog:pInConnection);
+  return OoRObjectIsValid(s#prog:pInConnection);
 
 end-proc SqlConnectionIsActive;
 //---------------------------------------------------------------*
-//  API Settings
+//  SqlConnectionSetPackage
 //---------------------------------------------------------------*
-dcl-proc SqlConnectionGetSettings export;
-  dcl-pi *N likeds(DsSqPrcEd_t);
+//* Changes the SQL Package that will be used for new statements.  
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pAnPackage - Package name or @const API_DEFAULT.
+//* @param pAnPackageLib - Library of the Package (optinal / Default QTEMP).
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionSetPackage export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pAnPackage char(10) const;
+    pAnPackageLib char(10) const options(*nopass);
+  end-pi;
+
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  pDsConnection.SqPrcEd.packagename = pDsConnection.SqPrcEd.mainpgm;
+  pDsConnection.SqPrcEd.packagelib = 'QTEMP';
+
+  if pAnPackage <> API_DEFAULT And pAnPackage <> *Blanks;
+    pDsConnection.SqPrcEd.packagename = pAnPackage;
+  endif;  
+  
+  if %parms() >= %parmnum(pAnPackageLib) And pAnPackageLib <> *Blanks;
+    pDsConnection.SqPrcEd.packagelib = pAnPackageLib;
+  endif;  
+  
+  return 0;
+
+end-proc SqlConnectionSetPackage;
+//---------------------------------------------------------------*
+//  SqlConnectionUsePerformanceArea
+//---------------------------------------------------------------*
+//* Turn performance area on or off.  
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pBoOn - *on or *off
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionUsePerformanceArea export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pBoOn ind const;
+  end-pi;
+
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  pDsConnection.SqPrcEd.useperf = SQL_PERFORMANCE_AREA_NO;
+
+  if pBoOn;
+    pDsConnection.SqPrcEd.useperf = SQL_PERFORMANCE_AREA_YES;
+  endif;
+    
+  return 0;
+
+end-proc SqlConnectionUsePerformanceArea;
+//---------------------------------------------------------------*
+//  SqlConnectionSetOpenWithHold
+//---------------------------------------------------------------*
+//* Whether the WITH HOLD SQL option should be applied to the next 
+//* opened statements  
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pBoOn - *on or *off
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionSetOpenWithHold export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pBoOn ind const;
+  end-pi;
+
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  pDsConnection.SqPrcEd.withhold = SQL_WITHOUT_HOLD;
+
+  if pBoOn;
+    pDsConnection.SqPrcEd.withhold = SQL_WITH_HOLD;
+  endif;
+    
+  return 0;
+
+end-proc SqlConnectionSetOpenWithHold;
+//---------------------------------------------------------------*
+//  SqlConnectionSetStatementCcsid
+//---------------------------------------------------------------*
+//* Set CCSID of Sql statements. 
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pInCcsid - CCSID of Sql statements - Default CCSID_JOB
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionSetStatementCcsid export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pInCcsid int(10) const;
+  end-pi;
+
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  if pInCcsid < 0 Or pInCcsid > 65535;
+    // todo message
+    return -1;
+  endif;  
+
+  pDsConnection.SqPrcEd.stmccsid = pInCcsid;
+
+  return 0;
+
+end-proc SqlConnectionSetStatementCcsid;
+//---------------------------------------------------------------*
+//  SqlConnectionAllowBlocking
+//---------------------------------------------------------------*
+//* Whether the database manager can use record blocking, and the 
+//* extent to which blocking can be used for read-only cursors.
+//* <p>
+//* <B>Possible options:</B></br>
+//* <DL>
+//*    <DT>*READ - @const SQL_ALLOW_BLOCKING_READ</DT>
+//*      <DD>Records are blocked for read-only retrieval of data for 
+//*          cursors the following conditions are met:</br>
+//*          - @const SQL_COMMIT_CONTROL_NONE is specified for the commitment  
+//*            control field, which indicates that commitment control is not used.</br>
+//*          - The cursor is declared with a FOR FETCH ONLY clause or  
+//*            there are no dynamic statements that could run a positioned 
+//*            UPDATE or DELETE statement for the cursor.</br>
+//*      </DD> 
+//*    <DT>*NONE - @const SQL_ALLOW_BLOCKING_NONE</DT>
+//*      <DD>Rows are not blocked for retrieval of data for cursors.  
+//*          If you specify @const SQL_ALLOW_BLOCKING_NONE, the following occurs:</br>
+//*          - Guarantees that the data retrieved is current.</br>
+//*          - May reduce the amount of time required to retrieve 
+//*            the first row of data for a query.</br>
+//*          - Stops the database manager from retrieving a block of 
+//*          - data rows that is not used by the program when only 
+//*          - the first few rows of a query are retrieved before the 
+//*            query is closed.</br>
+//*          - Can degrade the overall performance of a query that 
+//*            retrieves a large number of rows.</br>
+//*      </DD> 
+//*    <DT>*ALLREAD - @const SQL_ALLOW_BLOCKING_ALLREAD</DT>
+//*      <DD>Rows are blocked for read-only cursors if @const SQL_COMMIT_CONTROL_NONE 
+//*          or @const SQL_COMMIT_CONTROL_CHG is specified 
+//*          on the commitment control field. All cursors in a program that 
+//*          are not explicitly able to be updated are opened for read-only 
+//*          processing even though EXECUTE or EXECUTE IMMEDIATE statements 
+//*          may be in the program. </br>
+//*          If you specify @const SQL_ALLOW_BLOCKING_ALLREAD, the following occurs:</br>
+//*          - Allows record blocking under commitment control level  
+//*            @const SQL_COMMIT_CONTROL_CHG in addition to the blocking allowed for 
+//*            @const SQL_ALLOW_BLOCKING_READ.</br>
+//*          - Can improve the performance of almost all read-only   
+//*            cursors in programs, but limits queries in the following ways:</br> 
+//*            - A ROLLBACK statement or ROLLBACK HOLD SQL statement does 
+//*              not reposition a read-only cursor when 
+//*              @const SQL_ALLOW_BLOCKING_ALLREAD is specified.
+//*            - Dynamic running of a positioned UPDATE or DELETE statement  
+//*              (for example, using EXECUTE IMMEDIATE) cannot be used to update 
+//*              a row in a cursor unless the DECLARE statement for the cursor 
+//*              includes the FOR UPDATE clause.
+//*      </DD> 
+//* </DL>
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pAnOption - Blocking option
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionAllowBlocking export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pAnOption char(1) const;
+  end-pi;
+
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  if pAnOption <> SQL_ALLOW_BLOCKING_READ and
+       pAnOption <> SQL_ALLOW_BLOCKING_NONE and
+       pAnOption <> SQL_ALLOW_BLOCKING_ALLREAD;
+    // todo message
+    return -1;
+  endif;  
+
+  pDsConnection.SqPrcEd.allowblk = pAnOption;
+
+  return 0;
+
+end-proc SqlConnectionAllowBlocking;
+//---------------------------------------------------------------*
+//  SqlConnectionAllowCopyOfData
+//---------------------------------------------------------------*
+//* Whether a copy of the data can be used in a SELECT statement. 
+//* <p>
+//* <B>Possible options:</B></br>
+//* <DL>
+//*    <DT>@const SQL_ALLOW_COPY_OF_DATA_AUTO</DT>
+//*      <DD>copy of the data is used only when necessary.
+//*      </DD> 
+//*    <DT>@const SQL_ALLOW_COPY_OF_DATA_SYSTEM</DT>
+//*      <DD>The system determines whether to use the data retrieved
+//*          directly from the database or to use a copy of the data. 
+//*          The decision is based on which method provides the best performance. 
+//*          If commitment control level is 
+//*          @const SQL_COMMIT_CONTROL_CHG or @const SQL_COMMIT_CONTROL_CS 
+//*          and the Allow Blocking field is not @const SQL_ALLOW_BLOCKING_ALLREAD,
+//*          or if the commitment control level 
+//*          is @const SQL_COMMIT_CONTROL_ALL or R, 
+//*          then a copy of the data is used only when it is 
+//*          necessary to run the query.
+//*      </DD> 
+//*    <DT>@const SQL_ALLOW_COPY_OF_DATA_NO</DT>
+//*      <DD>A copy of the data is not allowed. If a temporary copy 
+//*          of the data is required to perform the query, an error message is returned.
+//*      </DD> 
+//* </DL>
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pAnOption - Copy option
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionAllowCopyOfData export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pAnOption char(1) const;
+  end-pi;
+
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  if pAnOption <> SQL_ALLOW_COPY_OF_DATA_AUTO and
+       pAnOption <> SQL_ALLOW_COPY_OF_DATA_SYSTEM and
+       pAnOption <> SQL_ALLOW_COPY_OF_DATA_NO;
+    // todo message
+    return -1;
+  endif;  
+
+  pDsConnection.SqPrcEd.allowcpy = pAnOption;
+
+  return 0;
+
+end-proc SqlConnectionAllowCopyOfData;
+//---------------------------------------------------------------*
+//  SqlConnectionSetCommitControl
+//---------------------------------------------------------------*
+//* The commit level to be used. 
+//* <p>
+//* <B>Possible options:</B></br>
+//* <DL>
+//*    <DT>@const SQL_COMMIT_CONTROL_CHG</DT>
+//*      <DD>Every record read for update (for a file opened under commitment
+//*          control) is locked.  If a record is changed, added, or deleted, 
+//*          that record remains locked until the transaction is committed or
+//*          rolled back.  Records that are accessed for update operations   
+//*          but are released without being changed are unlocked.            
+//*      </DD> 
+//*    <DT>@const SQL_COMMIT_CONTROL_CS</DT>
+//*      <DD>Every record accessed for files opened under commitment control
+//*          is locked.  A record that is read, but not changed or deleted, 
+//*          is unlocked when a different record is read.  Records that are 
+//*          changed, added, or deleted are locked until the transaction is 
+//*          committed or rolled back.                                      
+//*      </DD> 
+//*    <DT>@const SQL_COMMIT_CONTROL_ALL</DT>
+//*      <DD>Every record accessed for files opened under commitment control 
+//*          is locked until the transaction is committed or rolled back.     
+//*      </DD> 
+//*    <DT>@const SQL_COMMIT_CONTROL_NONE</DT>
+//*      <DD>No commit control 
+//*      </DD> 
+//* </DL>
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pAnOption - Copy option
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionSetCommitControl export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pAnOption char(1) const;
+  end-pi;
+
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  if pAnOption <> SQL_COMMIT_CONTROL_CHG and
+       pAnOption <> SQL_COMMIT_CONTROL_CS and
+       pAnOption <> SQL_COMMIT_CONTROL_ALL and
+       pAnOption <> SQL_COMMIT_CONTROL_NONE;
+    // todo message
+    return -1;
+  endif;  
+
+  pDsConnection.SqPrcEd.commitctl = pAnOption;
+
+  return 0;
+
+end-proc SqlConnectionSetCommitControl;
+//---------------------------------------------------------------*
+//  SqlConnectionSetNamingOption
+//---------------------------------------------------------------*
+//* The naming convention used for naming objects in SQL statements. 
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pBoSql - *on - collection/table syntax</br>
+//*                 *off - library/file syntax
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionSetNamingOption export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pBoSql ind const;
+  end-pi;
+
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  pDsConnection.SqPrcEd.naming = SQL_NAMING_SYS;
+
+  if pBoSql;
+    pDsConnection.SqPrcEd.naming = SQL_NAMING_SQL;
+  endif;
+
+  return 0;
+
+end-proc SqlConnectionSetNamingOption;
+//---------------------------------------------------------------*
+//  SqlConnectionSetSortSequence
+//---------------------------------------------------------------*
+//* The sort sequence table name to be used for string comparisons 
+//* in SQL statements. 
+//* <p>
+//* <B>Possible options for parameter pAnTable:</B></br>
+//* <DL>
+//*    <DT>@const SQL_SORT_TABLE_JOB</DT>
+//*      <DD>The sort sequence value for the job is retrieved when 
+//*          the package is created.            
+//*      </DD> 
+//*    <DT>@const SQL_SORT_TABLE_JOBRUN</DT>
+//*      <DD>The sort sequence value for the job is retrieved when 
+//*          the program is run.                                      
+//*      </DD> 
+//*    <DT>@const SQL_SORT_TABLE_LANGIDUNQ</DT>
+//*      <DD>The unique-weight sort table for the language that is 
+//*          specified on the language identifier field is used.     
+//*      </DD> 
+//*    <DT>@const SQL_SORT_TABLE_LANGIDSHR</DT>
+//*      <DD>The shared-weight sort table for the language that is 
+//*          specified on the language identifier field is used. 
+//*      </DD> 
+//*    <DT>@const SQL_SORT_TABLE_HEX</DT>
+//*      <DD>A sort sequence table is not used. The hexadecimal values 
+//*          of the characters are used to determine the sort sequence. 
+//*      </DD> 
+//*    <DT>table-name</DT>
+//*      <DD>The name of the sort sequence table to be used
+//*      </DD> 
+//* </DL>
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pAnTable - Sort sequence table name.
+//* @param pAnLib - Sort sequence library name. (optional)
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionSetSortSequence export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pAnTable char(10) const;
+    pAnLib   char(10) const options(*nopass:*omit);
+  end-pi;
+
+  dcl-s PAnLib_ char(10) inz(*Blanks);
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  if (%parms() >= %parmnum(pAnLib) or %parms() = -1 and %addr(pAnLib) <> *Null) And 
+        pAnLib <> *Blanks; 
+    pAnLib_ = pAnLib;
+  endif;  
+
+  if %subst(pAnTable:1:1) = '*' And
+       pAnTable <> SQL_SORT_TABLE_JOB And
+       pAnTable <> SQL_SORT_TABLE_JOBRUN And
+       pAnTable <> SQL_SORT_TABLE_LANGIDUNQ And
+       pAnTable <> SQL_SORT_TABLE_LANGIDSHR And
+       pAnTable <> SQL_SORT_TABLE_HEX;
+    // todo message
+    return -1; 
+  endif;
+
+  if %subst(pAnTable:1:1) = '*';
+    pAnLib_ = *Blanks;
+  elseif pAnLib_ = *Blanks;
+    pAnLib_ = API_LIBL;
+  endif;  
+
+  pDsConnection.SqPrcEd.sorttab = pAnTable;
+  pDsConnection.SqPrcEd.sortlib = pAnLib_;
+
+  return 0;
+
+end-proc SqlConnectionSetSortSequence;
+//---------------------------------------------------------------*
+//  SqlConnectionClose
+//---------------------------------------------------------------*
+//* Close the SQL connection.  
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionClose export;
+  dcl-pi *N int(10);
     pInConnection int(10) const;
   end-pi;
 
@@ -106,9 +630,240 @@ dcl-proc SqlConnectionGetSettings export;
   pPtConnection = OoRObjectGet(s#prog:pInConnection);
   if pPtConnection = *Null;
     // todo message
-    return '';
+    return -1;
   endif;
 
-  return pDsConnection.SqPrcEd;
+  // TODO free PreparedStatements ??? 
 
-end-proc SqlConnectionGetSettings;
+  return OoRObjectFree(s#Prog:pInConnection);
+
+end-proc SqlConnectionClose;
+//---------------------------------------------------------------*
+//  SqlConnectionPrepareStatement
+//---------------------------------------------------------------*
+//* A SQL statement is pre-compiled and stored in a PreparedStatement  
+//* object. This object can then be used to efficiently execute this 
+//* statement multiple times.
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pAnSqlStm - A SQL statement.
+//* @param pInCcsid - CCSID of SQL statement (optional).
+//*
+//* @return A new prepared statement object
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionPrepareStatement export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pAnSqlStm like(sqlstmvar_t) const;
+    pAnStmName varchar(18) const options(*nopass:*omit);
+  end-pi;
+
+  dcl-s pAnStmName_ varchar(18) inz('');
+  dcl-s pPtConnection pointer inz(*Null);
+  dcl-ds pDsConnection likeds(DsConnection_t) based(pPtConnection); 
+
+  // Connection
+  pPtConnection = OoRObjectGet(s#prog:pInConnection);
+  if pPtConnection = *Null;
+    // todo message
+    return -1;
+  endif;
+
+  if (%parms() >= %parmnum(pAnStmName) or %parms() = -1 and %addr(pAnStmName) <> *Null) And 
+        pAnStmName <> *Blanks; 
+    pAnStmName_ = pAnStmName;
+  endif;  
+
+  return SqlPreparedStatementNew(pDsConnection.SqPrcEd:pAnSqlStm:pAnStmName_);
+
+end-proc SqlConnectionPrepareStatement;
+//---------------------------------------------------------------*
+//  SqlConnectionExecuteQuery
+//---------------------------------------------------------------*
+//* Executes the given SQL statement, which returns a single ResultSet object.  
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pAnSqlStm - an SQL statement to be sent to the database, 
+//*                    typically a static SQL SELECT statement
+//* 
+//* @return A result set - success else -1 
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionExecuteQuery export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pAnSqlStm like(sqlstmvar_t) const;
+    pAnStmName varchar(18) const options(*nopass:*omit);
+  end-pi;
+
+  dcl-s pAnStmName_ varchar(18) inz('');
+  dcl-s pInPrepStm int(10);
+  dcl-s pInResultSet int(10);
+
+  if (%parms() >= %parmnum(pAnStmName) or %parms() = -1 and %addr(pAnStmName) <> *Null) And 
+        pAnStmName <> *Blanks; 
+    pAnStmName_ = pAnStmName;
+  endif;  
+
+  pInPrepStm = SqlConnectionPrepareStatement(PInConnection:pAnSqlStm:pAnStmName_);
+  if pInPrepStm = -1;
+     // todo message and move
+    return -1;
+  endif;
+
+  pInResultSet = SqlPreparedStatementExecuteQuery(pInPrepStm);
+  if pInResultSet < 0;
+     // todo message and move
+     SqlPreparedStatementFree(pInPrepStm);
+  endif;  
+
+  // so the user can close the statement with the result set
+  SqlResultSetSetRelatedStatement(pInResultSet:pInPrepStm);
+
+  return pInResultSet;
+
+end-proc SqlConnectionExecuteQuery;
+//---------------------------------------------------------------*
+//  SqlConnectionExecuteUpdate
+//---------------------------------------------------------------*
+//* Executes the given SQL statement, which may be an INSERT, UPDATE, 
+//* or DELETE statement or an SQL statement that returns nothing.
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* @param pAnSqlStm - an SQL Data Manipulation Language (DML) statement, 
+//*                    such as INSERT, UPDATE or DELETE; or an SQL statement 
+//*                    that returns nothing
+//* 
+//* @return 0 - success else SqlCode
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionExecuteUpdate export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+    pAnSqlStm like(sqlstmvar_t) const;
+    pAnStmName varchar(18) const options(*nopass:*omit);
+  end-pi;
+
+  dcl-s pAnStmName_ varchar(18) inz('');
+  dcl-s pInPrepStm int(10);
+  dcl-s pInSqlCode int(10);
+
+  if (%parms() >= %parmnum(pAnStmName) or %parms() = -1 and %addr(pAnStmName) <> *Null) And 
+        pAnStmName <> *Blanks; 
+    pAnStmName_ = pAnStmName;
+  endif;  
+
+  pInPrepStm = SqlConnectionPrepareStatement(PInConnection:pAnSqlStm:pAnStmName_);
+  if pInPrepStm = -1;
+     // todo message and move
+    return -1;
+  endif;
+
+  pInSqlCode = SqlPreparedStatementExecuteUpdate(pInPrepStm);
+  if PInSqlCode < 0;
+     // todo message and move
+  endif;  
+
+  SqlPreparedStatementFree(pInPrepStm);
+
+  return pInSqlCode;
+
+end-proc SqlConnectionExecuteUpdate;
+//---------------------------------------------------------------*
+//  SqlConnectionCreateBlob
+//---------------------------------------------------------------*
+//* Constructs an Blob object @link ARSSQLR.ARSSQL03
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* 
+//* @return >0 - Blob Object
+//* @return -1 - Error
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionCreateBlob export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+  end-pi;
+
+  return -1;
+  
+end-proc SqlConnectionCreateBlob;
+//---------------------------------------------------------------*
+//  SqlConnectionCreateClob
+//---------------------------------------------------------------*
+//* Constructs an Clob object @link ARSSQLR.ARSSQL04
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* 
+//* @return >0 - Blob Object
+//* @return -1 - Error
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionCreateClob export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+  end-pi;
+
+  return -1;
+  
+end-proc SqlConnectionCreateClob;
+//---------------------------------------------------------------*
+//  SqlConnectionCreateDbClob
+//---------------------------------------------------------------*
+//* Constructs an DbClob object @link ARSSQLR.ARSSQL05
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* 
+//* @return >0 - Blob Object
+//* @return -1 - Error
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionCreateDbClob export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+  end-pi;
+
+  return -1;
+  
+end-proc SqlConnectionCreateDbClob;
+//---------------------------------------------------------------*
+//  SqlConnectionCreateSqlXml
+//---------------------------------------------------------------*
+//* Constructs an SqlXml object @link ARSSQLR.ARSSQL06
+//*
+//* @param pInConnection - Connection object @link #SqlConnection
+//* 
+//* @return >0 - Blob Object
+//* @return -1 - Error
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlConnectionCreateSqlXml export;
+  dcl-pi *N int(10);
+    pInConnection int(10) const;
+  end-pi;
+
+  return -1;
+  
+end-proc SqlConnectionCreateSqlXml;

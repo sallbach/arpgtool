@@ -58,8 +58,8 @@ DCL-DS SQLDA;
   SQLD INT(5) INZ;                        
   SQL_VAR CHAR(80) DIM(SQL_NUM);      
    *N POINTER OVERLAY(SQL_VAR:17);    
-   *N POINTER OVERLAY(SQL_VAR:33);                  
-END-DS SQLDA;                                       
+   *N POINTER OVERLAY(SQL_VAR:33);
+END-DS SQLDA;                            
 DCL-DS SQLVAR;                                      
   SQLTYPE INT(5);                                   
   SQLLEN INT(5);                                    
@@ -81,8 +81,21 @@ DCL-DS SQLVAR2;
   SQLDATAL POINTER;   
   SQLTNAMELN INT(5);  
   SQLTNAME CHAR(30);  
-END-DS SQLVAR2;       
-/RESTORE CCSID(*CHAR)    
+END-DS SQLVAR2;    
+/RESTORE CCSID(*CHAR)
+
+DCL-S BLOBLOCATOR UNS(10);
+DCL-DS BLOBFILE;                                
+  BLOBFILE_NL UNS(10);                          
+  BLOBFILE_DL UNS(10);                          
+  BLOBFILE_FO UNS(10);                          
+  BLOBFILE_NAME CHAR(255) CCSID(*JOBRUNMIX);    
+END-DS BLOBFILE;  
+    
+DCL-C SQFRD CONST(2);           
+DCL-C SQFCRT CONST(8);          
+DCL-C SQFOVR CONST(16);         
+DCL-C SQFAPP CONST(32);             
 /ENDIF
 
 dcl-ds DsSqPrcEd_t qualified template; // SQLP0400
@@ -116,7 +129,7 @@ dcl-ds DsSqPrcEd_t qualified template; // SQLP0400
   closefile char(10) inz;   
   closelib char(10) inz;    
   reopen char(1) inz;       
-  useperf char(1) inz;      
+  useperf char(1) inz(SQL_PERFORMANCE_AREA_NO);      
   reval char(1) inz;        
   maxscale uns(5) inz(11);     
   maxprec char(1) inz(SQL_MAX_PRECISION_31);      

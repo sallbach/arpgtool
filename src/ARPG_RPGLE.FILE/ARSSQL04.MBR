@@ -1,0 +1,295 @@
+**Free
+ctl-opt nomain;
+ctl-opt ccsid(*ucs2:13488);
+/COPY ARPG_H,ARCALLCTL
+//---------------------------------------------------------------*
+// includes
+//---------------------------------------------------------------*
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCSQLR
+/COPY ARPG_H,ARCOORR
+/COPY ARPG_H,ARCSYSR
+/COPY ARPG_H,ARCFCNTL
+
+//---------------------------------------------------------------*
+// typedefs
+//---------------------------------------------------------------*
+
+//---------------------------------------------------------------*
+// constants
+//---------------------------------------------------------------*
+
+//---------------------------------------------------------------*
+// global
+//---------------------------------------------------------------*
+dcl-ds DsClob_t qualified align(*full) template;
+  SqPrcEd likeds(DsSqPrcEd_t);
+  ClobLocator uns(10);
+end-ds;
+
+//---------------------------------------------------------------*
+//  SqlClobNew - protected
+//---------------------------------------------------------------*
+//* Creates a SQL resource locator.  
+//*
+//* @return SQL resource locator
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlClobNew export;
+  dcl-pi *N int(10);
+    pDsSqPrcEd likeds(DsSqPrcEd_t) const;
+    pInSqlLoc uns(10) const;
+  end-pi;
+
+  dcl-s pInClob int(10);
+  dcl-s pPtClob pointer inz(*Null);
+  dcl-ds pDsClob likeds(DsClob_t) based(pPtClob); 
+
+  dcl-s ClobLocator sqltype(clob_locator);
+
+  // New Object
+  pInClob = OoRObjectNew(s#Prog:pPtClob:%size(DsClob_t));
+  if pInClob = -1;
+    return -1;
+  endif;
+
+  clear pDsClob;
+  pDsClob.SqPrcEd = pDsSqPrcEd;
+  pDsClob.ClobLocator = pInSqlLoc;
+  
+  return pInClob;      
+       
+end-proc SqlClobNew;
+//---------------------------------------------------------------*
+//  SqlClobLength 
+//---------------------------------------------------------------*
+//* Retrieves the number of characters in the CLOB value 
+//* designated by this Clob object.  
+//*
+//* @param pInClob - Reference of the CLOB object
+//*
+//* @return length of the CLOB in characters
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlClobLength export;
+  dcl-pi *N int(10);
+    pInClob int(10) const;
+  end-pi;
+
+  dcl-s pPtClob pointer inz(*Null);
+  dcl-ds pDsClob likeds(DsClob_t) based(pPtClob); 
+
+  dcl-s pInLength int(10);
+  dcl-s ClobLocator sqltype(clob_locator);
+
+  pPtClob = OoRObjectGet(s#prog:pInClob);
+  if pPtClob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  ClobLocator = pDsClob.ClobLocator;
+
+  exec sql values (length(:ClobLocator)) into :pInLength;
+  if SqlCode <> 0;
+    return 0;
+  endif;  
+  
+  return pInLength;      
+       
+end-proc SqlClobLength;
+//---------------------------------------------------------------*
+//  SqlClobGetSubstring 
+//---------------------------------------------------------------*
+//* Retrieves a copy of the specified substring in the CLOB value 
+//* designated by this Clob object. The substring begins at position 
+//* pos and has up to length consecutive characters.  
+//*
+//* @param pInClob - Reference of the CLOB object
+//* @param pInPos - the first character of the substring to be extracted. 
+//*                 The first character is at position 1
+//* @param pInlength - the number of consecutive characters to be copied; 
+//*                    the value for length must be 0 or greater
+//*
+//* @return a String that is the specified substring in the CLOB 
+//*         value designated by this Clob object          
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlClobGetSubstring export;
+  dcl-pi *N varchar(32765);
+    pInClob int(10) const;
+    pInPos  int(10) const;
+    pInlength int(5) const;
+  end-pi;
+
+  dcl-s pPtClob pointer inz(*Null);
+  dcl-ds pDsClob likeds(DsClob_t) based(pPtClob); 
+
+  dcl-s pAnSubstr char(32765);
+  dcl-s ClobLocator sqltype(clob_locator);
+
+  pPtClob = OoRObjectGet(s#prog:pInClob);
+  if pPtClob = *Null;
+    // TODO message
+    return '';
+  endif;
+
+  ClobLocator = pDsClob.ClobLocator;
+
+  exec sql values (substr(:ClobLocator, :pInPos, :pInlength)) into :pAnSubstr;
+  if SqlCode <> 0;
+    return '';
+  endif;  
+  
+  return %subst(pAnSubstr:1:pInlength);      
+       
+end-proc SqlClobGetSubstring;
+//---------------------------------------------------------------*
+//  SqlClobPosition 
+//---------------------------------------------------------------*
+//* Writes the CLOB data to a file.
+//*
+//* @param pInClob - Reference of the CLOB object
+//* @param pAnFileName - file name
+//*
+//* @return 0 file created 
+//* @return -1 - error         
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlClobPosition export;
+  dcl-pi *N int(10);
+    pInClob int(10) const;
+    pAnSearchstr varchar(32765) const;
+    pInStart     int(10) const;
+  end-pi;
+
+  dcl-s pPtClob pointer inz(*Null);
+  dcl-ds pDsClob likeds(DsClob_t) based(pPtClob); 
+
+  dcl-s pAnSearchchar char(32765);
+  dcl-s pInSearchLen int(10);
+  dcl-s pInPosition int(10);
+  dcl-s ClobLocator sqltype(clob_locator);
+
+  pPtClob = OoRObjectGet(s#prog:pInClob);
+  if pPtClob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  ClobLocator = pDsClob.ClobLocator;
+  pAnSearchchar = pAnSearchstr;
+  pInSearchLen  = %len(pAnSearchstr);
+  
+  exec sql values (posstr(:ClobLocator
+                         , substr(:pAnSearchchar, 1, :pInSearchLen)
+                         )
+                  ) into :pInPosition;
+                          
+  if SqlCode <> 0;
+    return -1;
+  endif;  
+  
+  return pInPosition;      
+       
+end-proc SqlClobPosition;
+//---------------------------------------------------------------*
+//  SqlClobWriteToFile
+//---------------------------------------------------------------*
+//* Retrieves the character position at which the specified substring 
+//* searchstr appears in the SQL CLOB value represented by this Clob object.  
+//*
+//* @param pInClob - Reference of the CLOB object
+//* @param searchstr - the substring for which to search
+//* @param pInStart - the position at which to begin searching
+//*
+//* @return > 0 the position at which the substring appears 
+//* @return 0 - if it is not present  
+//* @return -1 - error         
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlClobWriteToFile export;
+  dcl-pi *N int(10);       
+    pInClob int(10) const;
+    pAnFileName varchar(255) const;
+  end-pi;
+
+  dcl-s pPtClob pointer inz(*Null);
+  dcl-ds pDsClob likeds(DsClob_t) based(pPtClob); 
+
+  dcl-s SqlFile sqltype(clob_file);
+  dcl-s ClobLocator sqltype(clob_locator);
+
+  pPtClob = OoRObjectGet(s#prog:pInClob);
+  if pPtClob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  ClobLocator = pDsClob.ClobLocator;
+  
+  SqlFile_name = pAnFileName;
+  SqlFile_nl = %len(SqlFile);
+  SqlFile_fo = SQFOVR;
+  
+  exec sql values (:ClobLocator) into :SqlFile;
+                          
+  if SqlCode <> 0;
+    return -1;
+  endif;  
+  
+  return 0;      
+
+end-proc SqlClobWriteToFile;
+//---------------------------------------------------------------*
+//  SqlClobFree 
+//---------------------------------------------------------------*
+//* This method frees the Clob object and releases the resources that it holds.  
+//*
+//* @param pInClob - Reference of the CLOB object
+//*
+//* @return 0
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlClobFree export;
+  dcl-pi *N int(10);
+    pInClob int(10) const;
+  end-pi;
+
+  dcl-s pPtClob pointer inz(*Null);
+  dcl-ds pDsClob likeds(DsClob_t) based(pPtClob); 
+
+  dcl-s ClobLocator sqltype(clob_locator);
+
+  pPtClob = OoRObjectGet(s#prog:pInClob);
+  if pPtClob = *Null;
+    return -1;
+  endif;
+
+  ClobLocator = pDsClob.ClobLocator;
+
+  exec sql free locator :ClobLocator;
+
+  OoRObjectFree(s#prog:pInClob);
+  
+  return 0;      
+       
+end-proc SqlClobFree;
