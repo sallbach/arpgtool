@@ -406,15 +406,49 @@ dcl-proc SqlPreparedStatementSetParameter;
   pDsOpenDa.SQLDABC = %size(SqlDa) + %size(SQL_VAR) * (pDsOpenDa.SQLN-1);
   pPtSqlVar = %Addr(pDsOpenDa.Sql_Var(1)) + %size(SQLVAR) * (pDsOpenDa.SQLN-1); 
   clear pDsSqlVar;
-  pDsSqlVar.SqlType = PInType;
+  pDsSqlVar.SqlType = PInType + 1; // nullable
   pDsSqlVar.SqlLen = PInLen;
-  pDsSqlVar.SqlData = %alloc(PInBytes);
-  memcpy(pDsSqlVar.SqlData:pPtData:PInBytes);
-  //pDsSqlVar.SqlInd;    ???
+  pDsSqlVar.SqlInd = -1;
+  if pPtData <> *Null And PInBytes > 0;
+    pDsSqlVar.SqlData = %alloc(PInBytes);
+    memcpy(pDsSqlVar.SqlData:pPtData:PInBytes);
+    pDsSqlVar.SqlInd = 0;
+  endif;
 
   return 0;
 
 end-proc SqlPreparedStatementSetParameter;
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetNull
+//---------------------------------------------------------------*
+//* Sets the designated parameter to SQL NULL.
+//*
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
+//* @param pInSqlType - the SQL type code defined starting with @const SQL_TYPE_DATE
+//*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlPreparedStatementSetNull export;
+  dcl-pi *N int(10);
+    pInPrepStm int(10) const;
+    pInSqlType int(10) value;
+  end-pi;
+
+  // TODO check types ?
+
+  SqlPreparedStatementSetParameter(pInPrepStm
+                                  :pInSqlType
+                                  :*Null
+                                  :0
+                                  :0);
+
+  return 0;
+
+end-proc SqlPreparedStatementSetNull;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementSetString
 //---------------------------------------------------------------*
@@ -644,6 +678,154 @@ dcl-proc SqlPreparedStatementSetLong export;
   return 0;
 
 end-proc SqlPreparedStatementSetLong;
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetBlob
+//---------------------------------------------------------------*
+//* Set Blob parameter. 
+//*
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
+//* @param pInBlob - Blob object @link ARSSQLR.ARSSQL03
+((*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlSqlPreparedStatementSetBlob export;
+  dcl-pi *N int(10);
+    pInPrepStm int(10) const;
+    pInBlob int(20) value;
+  end-pi;
+
+  dcl-s pSqlBlobLocator uns(10);
+
+  pSqlBlobLocator = SqlBlobGetSqlLocator(pInBlob);
+  if pInSqlBlobLocator = -1;
+    // TODO message
+    return -1;
+  endif;
+  
+  SqlPreparedStatementSetParameter(pInPrepStm
+                                  :SQL_TYPE_BLOB_LOCATOR
+                                  :%Addr(pSqlBlobLocator)
+                                  :%size(pSqlBlobLocator)
+                                  :%size(pSqlBlobLocator)); 
+
+  return 0;
+
+end-proc SqlPreparedStatementSetBlob;
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetClob
+//---------------------------------------------------------------*
+//* Set Clob parameter. 
+//*
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
+//* @param pInClob - Clob object @link ARSSQLR.ARSSQL04
+((*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlSqlPreparedStatementSetClob export;
+  dcl-pi *N int(10);
+    pInPrepStm int(10) const;
+    pInClob int(20) value;
+  end-pi;
+
+  dcl-s pSqlClobLocator uns(10);
+
+  pSqlClobLocator = SqlClobGetSqlLocator(pInClob);
+  if pInSqlClobLocator = -1;
+    // TODO message
+    return -1;
+  endif;
+
+  SqlPreparedStatementSetParameter(pInPrepStm
+                                  :SQL_TYPE_CLOB_LOCATOR
+                                  :%Addr(pSqlClobLocator)
+                                  :%size(pSqlClobLocator)
+                                  :%size(pSqlClobLocator)); 
+
+  return 0;
+
+end-proc SqlPreparedStatementSetClob;
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetClob
+//---------------------------------------------------------------*
+//* Set DbClob parameter. 
+//*
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
+//* @param pInDbClob - DbClob object @link ARSSQLR.ARSSQL05
+((*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlSqlPreparedStatementSetDbClob export;
+  dcl-pi *N int(10);
+    pInPrepStm int(10) const;
+    pInDbClob int(20) value;
+  end-pi;
+
+  dcl-s pSqlDbClobLocator uns(10);
+
+  pSqlDbClobLocator = SqlDbClobGetSqlLocator(pInDbClob);
+  if pInSqlDbClobLocator = -1;
+    // TODO message
+    return -1;
+  endif;
+
+  SqlPreparedStatementSetParameter(pInPrepStm
+                                  :SQL_TYPE_DBCLOB_LOCATOR
+                                  :%Addr(pSqlDbClobLocator)
+                                  :%size(pSqlDbClobLocator)
+                                  :%size(pSqlDbClobLocator)); 
+
+  return 0;
+
+end-proc SqlPreparedStatementSetDbClob;
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetSqlXml
+//---------------------------------------------------------------*
+//* Set SqlXml parameter. 
+//*
+//* @param pInPrepStm - An object @link #SqlPreparedStatement
+//* @param pInSqlXml - SqlXml object @link ARSSQLR.ARSSQL06
+((*
+//* @return 0 - success else -1
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlSqlPreparedStatementSetSqlXml export;
+  dcl-pi *N int(10);
+    pInPrepStm int(10) const;
+    pInSqlXml int(20) value;
+  end-pi;
+
+  dcl-s pSqlXmlLocator uns(10);
+
+  pSqlXmlLocator = SqlSqlXmlGetSqlLocator(pInDbClob);
+  if pSqlXmlLocator = -1;
+    // TODO message
+    return -1;
+  endif;
+
+  SqlPreparedStatementSetParameter(pInPrepStm
+                                  :SQL_TYPE_XML_LOCATOR
+                                  :%Addr(pSqlXmlLocator)
+                                  :%size(pSqlXmlLocator)
+                                  :%size(pSqlXmlLocator)); 
+
+  return 0;
+
+end-proc SqlPreparedStatementSetSqlXml;
 //---------------------------------------------------------------*
 //  SqlPreparedStatementFree
 //---------------------------------------------------------------*

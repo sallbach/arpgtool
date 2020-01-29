@@ -39,6 +39,10 @@
              EXPORT     SYMBOL('SqlPreparedStatementSetTime')
              EXPORT     SYMBOL('SqlPreparedStatementSetTimeStamp')
              EXPORT     SYMBOL('SqlPreparedStatementSetLong')  
+             EXPORT     SYMBOL('SqlPreparedStatementSetBlob')  
+             EXPORT     SYMBOL('SqlPreparedStatementSetClob')  
+             EXPORT     SYMBOL('SqlPreparedStatementSetDbClob')  
+             EXPORT     SYMBOL('SqlPreparedStatementSetSqlXml')  
              EXPORT     SYMBOL('SqlPreparedStatementFree')
 
      /*-----------------------------------------------------------------------*/
@@ -84,6 +88,11 @@
      /*-----------------------------------------------------------------------*/
      /* ARSSQL03 - Blob                                                       */
      /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('SqlBlobLength')                 
+             EXPORT     SYMBOL('SqlBlobPosition')                 
+             EXPORT     SYMBOL('SqlBlobGetBytes')                 
+             EXPORT     SYMBOL('SqlBlobWriteToFile')         
+             EXPORT     SYMBOL('SqlBlobGetSqlLocator')        
              EXPORT     SYMBOL('SqlBlobFree')                 
 
      /*-----------------------------------------------------------------------*/
@@ -92,17 +101,24 @@
              EXPORT     SYMBOL('SqlClobLength')                 
              EXPORT     SYMBOL('SqlClobPosition')                 
              EXPORT     SYMBOL('SqlClobGetSubstring')                 
-             EXPORT     SYMBOL('SqlClobWriteToFile')                 
+             EXPORT     SYMBOL('SqlClobWriteToFile')         
+             EXPORT     SYMBOL('SqlClobGetSqlLocator')        
              EXPORT     SYMBOL('SqlClobFree')                 
 
      /*-----------------------------------------------------------------------*/
      /* ARSSQL05 - DbClob                                                     */
      /*-----------------------------------------------------------------------*/
-             EXPORT     SYMBOL('SqlDbClobFree')                 
+             EXPORT     SYMBOL('SqlDbBlobLength')                 
+             EXPORT     SYMBOL('SqlDbBlobPosition')                 
+             EXPORT     SYMBOL('SqlDbBlobGetString')                 
+             EXPORT     SYMBOL('SqlDbBlobWriteToFile')         
+             EXPORT     SYMBOL('SqlDbBlobGetSqlLocator')        
+             EXPORT     SYMBOL('SqlDbBlobFree')                 
 
      /*-----------------------------------------------------------------------*/
      /* ARSSQL06 - SqlXml                                                     */
      /*-----------------------------------------------------------------------*/
+             EXPORT     SYMBOL('SqlSqlXmlGetSqlLocator')        
              EXPORT     SYMBOL('SqlSqlXmlFree')                 
 
              ENDPGMEXP

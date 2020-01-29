@@ -25,6 +25,7 @@ ctl-opt ccsid(*ucs2:13488);
 dcl-ds DsClob_t qualified align(*full) template;
   SqPrcEd likeds(DsSqPrcEd_t);
   ClobLocator uns(10);
+  ccsid int(10);
 end-ds;
 
 //---------------------------------------------------------------*
@@ -156,13 +157,17 @@ end-proc SqlClobGetSubstring;
 //---------------------------------------------------------------*
 //  SqlClobPosition 
 //---------------------------------------------------------------*
-//* Writes the CLOB data to a file.
+//* Retrieves the character position at which the specified substring 
+//* searchstr appears in the SQL CLOB value represented by this Clob 
+//* object. The search begins at position start.
 //*
 //* @param pInClob - Reference of the CLOB object
-//* @param pAnFileName - file name
+//* @param pAnSearchstr - the substring for which to search
+//* @param pInStart - the position at which to begin searching.
+//*                   the first position is 1
 //*
-//* @return 0 file created 
-//* @return -1 - error         
+//* @return the position at which the Clob object appears or  
+//* @return -1 if it is not present; the first position is 1         
 //*
 //* @diag messageCode to be defined
 //*
@@ -208,8 +213,7 @@ end-proc SqlClobPosition;
 //---------------------------------------------------------------*
 //  SqlClobWriteToFile
 //---------------------------------------------------------------*
-//* Retrieves the character position at which the specified substring 
-//* searchstr appears in the SQL CLOB value represented by this Clob object.  
+//* Writes the SQL CLOB value to a file.  
 //*
 //* @param pInClob - Reference of the CLOB object
 //* @param searchstr - the substring for which to search
@@ -226,7 +230,7 @@ end-proc SqlClobPosition;
 dcl-proc SqlClobWriteToFile export;
   dcl-pi *N int(10);       
     pInClob int(10) const;
-    pAnFileName varchar(255) const;
+    pAnFileName varchar(1024) const;
   end-pi;
 
   dcl-s pPtClob pointer inz(*Null);
@@ -253,9 +257,45 @@ dcl-proc SqlClobWriteToFile export;
     return -1;
   endif;  
   
+  IfsSetFileCcsid()pAnFileName:pDsClob.Ccsid); 
+  
   return 0;      
 
 end-proc SqlClobWriteToFile;
+//---------------------------------------------------------------*
+//  SqlClobGetSqlLocator
+//---------------------------------------------------------------*
+//* Returns the SQL CLOB locator. 
+//*
+//* @param pInClob - Reference of the CLOB object
+//*
+//* @return > 0 Clob locator 
+//* @return -1 - error         
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlClobGetSqlLocator export;
+  dcl-pi *N uns(10);       
+    pInClob int(10) const;
+    pAnFileName varchar(1024) const;
+  end-pi;
+
+  dcl-s pPtClob pointer inz(*Null);
+  dcl-ds pDsClob likeds(DsClob_t) based(pPtClob); 
+
+  dcl-s ClobLocator sqltype(clob_locator);
+
+  pPtClob = OoRObjectGet(s#prog:pInClob);
+  if pPtClob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  return pDsClob.ClobLocator;
+  
+end-proc SqlClobGetSqlLocator;
 //---------------------------------------------------------------*
 //  SqlClobFree 
 //---------------------------------------------------------------*

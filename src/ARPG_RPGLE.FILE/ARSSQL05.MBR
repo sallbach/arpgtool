@@ -22,6 +22,11 @@ ctl-opt ccsid(*ucs2:13488);
 //---------------------------------------------------------------*
 // global
 //---------------------------------------------------------------*
+dcl-ds DsDbClob_t qualified align(*full) template;
+  SqPrcEd likeds(DsSqPrcEd_t);
+  DbClobLocator uns(10);
+  ccsid int(10);
+end-ds;
 
 //---------------------------------------------------------------*
 //  SqlDbClobNew - protected
@@ -40,14 +45,263 @@ dcl-proc SqlDbClobNew export;
     pInSqlLoc uns(10) const;
   end-pi;
 
+  dcl-s pInDbClob int(10);
+  dcl-s pPtDbClob pointer inz(*Null);
+  dcl-ds pDsDbClob likeds(DsDbClob_t) based(pPtDbClob); 
+
+  dcl-s DbClobLocator sqltype(DbClob_locator);
+
+  // New Object
+  pInDbClob = OoRObjectNew(s#Prog:pPtDbClob:%size(DsDbClob_t));
+  if pInDbClob = -1;
+    return -1;
+  endif;
+
+  clear pDsDbClob;
+  pDsDbClob.SqPrcEd = pDsSqPrcEd;
+  pDsDbClob.DbClobLocator = pInSqlLoc;
   
-  return 0;      
+  return pInDbClob;      
        
 end-proc SqlDbClobNew;
+//---------------------------------------------------------------*
+//  SqlDbClobLength 
+//---------------------------------------------------------------*
+//* Retrieves the number of characters in the DbClob value 
+//* designated by this DbClob object.  
+//*
+//* @param pInDbClob - Reference of the DbClob object
+//*
+//* @return length of the DbClob in characters
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlDbClobLength export;
+  dcl-pi *N int(10);
+    pInDbClob int(10) const;
+  end-pi;
+
+  dcl-s pPtDbClob pointer inz(*Null);
+  dcl-ds pDsDbClob likeds(DsDbClob_t) based(pPtDbClob); 
+
+  dcl-s pInLength int(10);
+  dcl-s DbClobLocator sqltype(DbClob_locator);
+
+  pPtDbClob = OoRObjectGet(s#prog:pInDbClob);
+  if pPtDbClob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  DbClobLocator = pDsDbClob.DbClobLocator;
+
+  exec sql values (length(:DbClobLocator)) into :pInLength;
+  if SqlCode <> 0;
+    return 0;
+  endif;  
+  
+  return pInLength;      
+       
+end-proc SqlDbClobLength;
+//---------------------------------------------------------------*
+//  SqlDbClobGetSubstring 
+//---------------------------------------------------------------*
+//* Retrieves a copy of the specified substring in the DbClob value 
+//* designated by this DbClob object. The substring begins at position 
+//* pos and has up to length consecutive characters.  
+//*
+//* @param pInDbClob - Reference of the DbClob object
+//* @param pInPos - the first character of the substring to be extracted. 
+//*                 The first character is at position 1
+//* @param pInlength - the number of consecutive characters to be copied; 
+//*                    the value for length must be 0 or greater
+//*
+//* @return a String that is the specified substring in the DbClob 
+//*         value designated by this DbClob object          
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlDbClobGetSubstring export;
+  dcl-pi *N varchar(32765);
+    pInDbClob int(10) const;
+    pInPos  int(10) const;
+    pInlength int(5) const;
+  end-pi;
+
+  dcl-s pPtDbClob pointer inz(*Null);
+  dcl-ds pDsDbClob likeds(DsDbClob_t) based(pPtDbClob); 
+
+  dcl-s pAnSubstr char(32765);
+  dcl-s DbClobLocator sqltype(DbClob_locator);
+
+  pPtDbClob = OoRObjectGet(s#prog:pInDbClob);
+  if pPtDbClob = *Null;
+    // TODO message
+    return '';
+  endif;
+
+  DbClobLocator = pDsDbClob.DbClobLocator;
+
+  exec sql values (substr(:DbClobLocator, :pInPos, :pInlength)) into :pAnSubstr;
+  if SqlCode <> 0;
+    return '';
+  endif;  
+  
+  return %subst(pAnSubstr:1:pInlength);      
+       
+end-proc SqlDbClobGetSubstring;
+//---------------------------------------------------------------*
+//  SqlDbClobPosition 
+//---------------------------------------------------------------*
+//* Retrieves the character position at which the specified substring 
+//* searchstr appears in the SQL DbClob value represented by this DbClob 
+//* object. The search begins at position start.
+//*
+//* @param pInDbClob - Reference of the DbClob object
+//* @param pAnSearchstr - the substring for which to search
+//* @param pInStart - the position at which to begin searching.
+//*                   the first position is 1
+//*
+//* @return the position at which the DbClob object appears or  
+//* @return -1 if it is not present; the first position is 1         
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlDbClobPosition export;
+  dcl-pi *N int(10);
+    pInDbClob int(10) const;
+    pAnSearchstr varchar(32765) const;
+    pInStart     int(10) const;
+  end-pi;
+
+  dcl-s pPtDbClob pointer inz(*Null);
+  dcl-ds pDsDbClob likeds(DsDbClob_t) based(pPtDbClob); 
+
+  dcl-s pAnSearchchar char(32765);
+  dcl-s pInSearchLen int(10);
+  dcl-s pInPosition int(10);
+  dcl-s DbClobLocator sqltype(DbClob_locator);
+
+  pPtDbClob = OoRObjectGet(s#prog:pInDbClob);
+  if pPtDbClob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  DbClobLocator = pDsDbClob.DbClobLocator;
+  pAnSearchchar = pAnSearchstr;
+  pInSearchLen  = %len(pAnSearchstr);
+  
+  exec sql values (posstr(:DbClobLocator
+                         , substr(:pAnSearchchar, 1, :pInSearchLen)
+                         )
+                  ) into :pInPosition;
+                          
+  if SqlCode <> 0;
+    return -1;
+  endif;  
+  
+  return pInPosition;      
+       
+end-proc SqlDbClobPosition;
+//---------------------------------------------------------------*
+//  SqlDbClobWriteToFile
+//---------------------------------------------------------------*
+//* Writes the SQL DbClob value to a file.  
+//*
+//* @param pInDbClob - Reference of the DbClob object
+//* @param searchstr - the substring for which to search
+//* @param pInStart - the position at which to begin searching
+//*
+//* @return > 0 the position at which the substring appears 
+//* @return 0 - if it is not present  
+//* @return -1 - error         
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlDbClobWriteToFile export;
+  dcl-pi *N int(10);       
+    pInDbClob int(10) const;
+    pAnFileName varchar(1024) const;
+  end-pi;
+
+  dcl-s pPtDbClob pointer inz(*Null);
+  dcl-ds pDsDbClob likeds(DsDbClob_t) based(pPtDbClob); 
+
+  dcl-s SqlFile sqltype(DbClob_file);
+  dcl-s DbClobLocator sqltype(DbClob_locator);
+
+  pPtDbClob = OoRObjectGet(s#prog:pInDbClob);
+  if pPtDbClob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  DbClobLocator = pDsDbClob.DbClobLocator;
+  
+  SqlFile_name = pAnFileName;
+  SqlFile_nl = %len(SqlFile);
+  SqlFile_fo = SQFOVR;
+  
+  exec sql values (:DbClobLocator) into :SqlFile;
+                          
+  if SqlCode <> 0;
+    return -1;
+  endif;  
+  
+  IfsSetFileCcsid()pAnFileName:pDsDbClob.Ccsid); 
+  
+  return 0;      
+
+end-proc SqlDbClobWriteToFile;
+//---------------------------------------------------------------*
+//  SqlDbClobGetSqlLocator
+//---------------------------------------------------------------*
+//* Returns the SQL DbClob locator. 
+//*
+//* @param pInDbClob - Reference of the DbClob object
+//*
+//* @return > 0 DbClob locator 
+//* @return -1 - error         
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlDbClobGetSqlLocator export;
+  dcl-pi *N uns(10);       
+    pInDbClob int(10) const;
+    pAnFileName varchar(1024) const;
+  end-pi;
+
+  dcl-s pPtDbClob pointer inz(*Null);
+  dcl-ds pDsDbClob likeds(DsDbClob_t) based(pPtDbClob); 
+
+  dcl-s DbClobLocator sqltype(DbClob_locator);
+
+  pPtDbClob = OoRObjectGet(s#prog:pInDbClob);
+  if pPtDbClob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  return pDsDbClob.DbClobLocator;
+  
+end-proc SqlDbClobGetSqlLocator;
 //---------------------------------------------------------------*
 //  SqlDbClobFree 
 //---------------------------------------------------------------*
 //* This method frees the DbClob object and releases the resources that it holds.  
+//*
+//* @param pInDbClob - Reference of the DbClob object
 //*
 //* @return 0
 //*
@@ -57,11 +311,24 @@ end-proc SqlDbClobNew;
 //---------------------------------------------------------------*
 dcl-proc SqlDbClobFree export;
   dcl-pi *N int(10);
-    pInBlob int(10) const;
+    pInDbClob int(10) const;
   end-pi;
 
-  ///dcl-s bloblocator sqltype(blob_locator);
-  ///exec sql free locator :bloblocator;
+  dcl-s pPtDbClob pointer inz(*Null);
+  dcl-ds pDsDbClob likeds(DsDbClob_t) based(pPtDbClob); 
+
+  dcl-s DbClobLocator sqltype(DbClob_locator);
+
+  pPtDbClob = OoRObjectGet(s#prog:pInDbClob);
+  if pPtDbClob = *Null;
+    return -1;
+  endif;
+
+  DbClobLocator = pDsDbClob.DbClobLocator;
+
+  exec sql free locator :DbClobLocator;
+
+  OoRObjectFree(s#prog:pInDbClob);
   
   return 0;      
        

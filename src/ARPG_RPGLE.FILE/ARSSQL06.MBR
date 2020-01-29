@@ -22,6 +22,11 @@ ctl-opt ccsid(*ucs2:13488);
 //---------------------------------------------------------------*
 // global
 //---------------------------------------------------------------*
+dcl-ds DsSqlXml_t qualified align(*full) template;
+  SqPrcEd likeds(DsSqPrcEd_t);
+  SqlXmlLocator uns(10);
+  ccsid int(10);
+end-ds;
 
 //---------------------------------------------------------------*
 //  SqlSqlXmlNew - protected
@@ -40,14 +45,64 @@ dcl-proc SqlSqlXmlNew export;
     pInSqlLoc uns(10) const;
   end-pi;
 
+  dcl-s pInSqlXml int(10);
+  dcl-s pPtSqlXml pointer inz(*Null);
+  dcl-ds pDsSqlXml likeds(DsSqlXml_t) based(pPtSqlXml); 
+
+  dcl-s SqlXmlLocator sqltype(xml_locator);
+
+  // New Object
+  pInSqlXml = OoRObjectNew(s#Prog:pPtSqlXml:%size(DsSqlXml_t));
+  if pInSqlXml = -1;
+    return -1;
+  endif;
+
+  clear pDsSqlXml;
+  pDsSqlXml.SqPrcEd = pDsSqPrcEd;
+  pDsSqlXml.SqlXmlLocator = pInSqlLoc;
   
-  return 0;      
+  return pInSqlXml;      
        
-end-proc SqlSqlXmlNew;
+end-proc SqlSqlXmlbNew;
+//---------------------------------------------------------------*
+//  SqlSqlXmlGetSqlLocator
+//---------------------------------------------------------------*
+//* Returns the SqlXml locator. 
+//*
+//* @param pInSqlXml - Reference of the SqlXml object
+//*
+//* @return > 0 SqlXml locator 
+//* @return -1 - error         
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlSqlXmlGetSqlLocator export;
+  dcl-pi *N uns(10);       
+    pInSqlXml int(10) const;
+  end-pi;
+
+  dcl-ds pDsSqlXml likeds(DsSqlXml_t) based(pPtSqlXml); 
+
+  dcl-s SqlFile sqltype(SqlXml_file);
+  dcl-s SqlXmlLocator sqltype(xml_locator);
+
+  pPtSqlXml = OoRObjectGet(s#prog:pInSqlXml);
+  if pPtSqlXml = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  return pDsSqlXml.SqlXmlLocator;
+  
+end-proc SqlSqlXmlGetSqlLocator;
 //---------------------------------------------------------------*
 //  SqlSqlXmlFree 
 //---------------------------------------------------------------*
-//* This method frees the Blob object and releases the resources that it holds.  
+//* This method frees the SqlXml object and releases the resources that it holds.  
+//*
+//* @param pInSqlXml - Reference of the SqlXml object
 //*
 //* @return 0
 //*
@@ -57,11 +112,24 @@ end-proc SqlSqlXmlNew;
 //---------------------------------------------------------------*
 dcl-proc SqlSqlXmlFree export;
   dcl-pi *N int(10);
-    pInBlob int(10) const;
+    pInSqlXml int(10) const;
   end-pi;
 
-  ///dcl-s bloblocator sqltype(blob_locator);
-  ///exec sql free locator :bloblocator;
+  dcl-s pPtSqlXml pointer inz(*Null);
+  dcl-ds pDsSqlXml likeds(DsSqlXml_t) based(pPtSqlXml); 
+
+  dcl-s SqlXmlLocator sqltype(xml_locator);
+
+  pPtSqlXml = OoRObjectGet(s#prog:pInSqlXml);
+  if pPtSqlXml = *Null;
+    return -1;
+  endif;
+
+  SqlXmlLocator = pDsSqlXml.SqlXmlLocator;
+
+  exec sql free locator :SqlXmlLocator;
+
+  OoRObjectFree(s#prog:pInSqlXml);
   
   return 0;      
        

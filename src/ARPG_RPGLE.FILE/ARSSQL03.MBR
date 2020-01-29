@@ -22,6 +22,10 @@ ctl-opt ccsid(*ucs2:13488);
 //---------------------------------------------------------------*
 // global
 //---------------------------------------------------------------*
+dcl-ds DsBlob_t qualified align(*full) template;
+  SqPrcEd likeds(DsSqPrcEd_t);
+  BlobLocator uns(10);
+end-ds;
 
 //---------------------------------------------------------------*
 //  SqlBlobNew - protected
@@ -40,14 +44,264 @@ dcl-proc SqlBlobNew export;
     pInSqlLoc uns(10) const;
   end-pi;
 
+  dcl-s pInBlob int(10);
+  dcl-s pPtBlob pointer inz(*Null);
+  dcl-ds pDsBlob likeds(DsBlob_t) based(pPtBlob); 
+
+  dcl-s BlobLocator sqltype(blob_locator);
+
+  // New Object
+  pInBlob = OoRObjectNew(s#Prog:pPtBlob:%size(DsBlob_t));
+  if pInBlob = -1;
+    return -1;
+  endif;
+
+  clear pDsBlob;
+  pDsBlob.SqPrcEd = pDsSqPrcEd;
+  pDsBlob.BlobLocator = pInSqlLoc;
   
-  return 0;      
+  return pInBlob;      
        
 end-proc SqlBlobNew;
+//---------------------------------------------------------------*
+//  SqlBlobLength 
+//---------------------------------------------------------------*
+//* Retrieves the number of bytes in the BLOB value 
+//* designated by this Blob object.  
+//*
+//* @param pInBlob - Reference of the BLOB object
+//*
+//* @return length of the BLOB in characters
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlBlobLength export;
+  dcl-pi *N int(10);
+    pInBlob int(10) const;
+  end-pi;
+
+  dcl-s pPtBlob pointer inz(*Null);
+  dcl-ds pDsBlob likeds(DsBlob_t) based(pPtBlob); 
+
+  dcl-s pInLength int(10);
+  dcl-s BlobLocator sqltype(blob_locator);
+
+  pPtBlob = OoRObjectGet(s#prog:pInBlob);
+  if pPtBlob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  BlobLocator = pDsBlob.BlobLocator;
+
+  exec sql values (length(:BlobLocator)) into :pInLength;
+  if SqlCode <> 0;
+    return 0;
+  endif;  
+  
+  return pInLength;      
+       
+end-proc SqlBlobLength;
+//---------------------------------------------------------------*
+//  SqlBlobGetBytes
+//---------------------------------------------------------------*
+//* Retrieves all or part of the BLOB value that this Blob object  
+//* represents, as an array of bytes. This byte array contains up  
+//* to length consecutive bytes starting at position pos.
+//*
+//* @param pInBlob - Reference of the BLOB object
+//* @param pInPos - the ordinal position of the first byte in the BLOB value to be extracted.
+//*                 The first byte is at position 1
+//* @param pInlength - the number of consecutive bytes to be copied. 
+//*                    The value for length must be 0 or greater
+//*
+//* @return a byte array containing up to length consecutive bytes  
+//*         from the BLOB value designated by this Blob object, 
+//*         starting with the byte at position pos          
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlBlobGetBytes export;
+  dcl-pi *N varchar(32765);
+    pInBlob int(10) const;
+    pInPos  int(10) const;
+    pInlength int(5) const;
+  end-pi;
+
+  dcl-s pPtBlob pointer inz(*Null);
+  dcl-ds pDsBlob likeds(DsBlob_t) based(pPtBlob); 
+
+  dcl-s pAnSubstr char(32765);
+  dcl-s BlobLocator sqltype(Blob_locator);
+
+  pPtBlob = OoRObjectGet(s#prog:pInBlob);
+  if pPtBlob = *Null;
+    // TODO message
+    return '';
+  endif;
+
+  BlobLocator = pDsBlob.BlobLocator;
+
+  exec sql values (substr(:BlobLocator, :pInPos, :pInlength)) into :pAnSubstr;
+  if SqlCode <> 0;
+    return '';
+  endif;  
+  
+  return %subst(pAnSubstr:1:pInlength);      
+       
+end-proc SqlBlobGetBytes;
+//---------------------------------------------------------------*
+//  SqlBlobPosition 
+//---------------------------------------------------------------*
+//* Retrieves the byte position at which the specified byte array 
+//* pattern begins within the BLOB value that this Blob object 
+//* represents. The search for pattern begins at position start.
+//*
+//* @param pInBlob - Reference of the BLOB object
+//* @param pAnSearchstr - the substring for which to search
+//* @param pInStart - the position at which to begin searching.
+//*                   the first position is 1
+//*
+//* @return the position at which the Blob object appears or  
+//* @return -1 if it is not present; the first position is 1         
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlBlobPosition export;
+  dcl-pi *N int(10);
+    pInBlob int(10) const;
+    pAnSearchstr varchar(32765) const;
+    pInStart     int(10) const;
+  end-pi;
+
+  dcl-s pPtBlob pointer inz(*Null);
+  dcl-ds pDsBlob likeds(DsBlob_t) based(pPtBlob); 
+
+  dcl-s pAnSearchchar char(32765);
+  dcl-s pInSearchLen int(10);
+  dcl-s pInPosition int(10);
+  dcl-s BlobLocator sqltype(Blob_locator);
+
+  pPtBlob = OoRObjectGet(s#prog:pInBlob);
+  if pPtBlob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  BlobLocator = pDsBlob.BlobLocator;
+  pAnSearchchar = pAnSearchstr;
+  pInSearchLen  = %len(pAnSearchstr);
+  
+  exec sql values (posstr(:BlobLocator
+                         , substr(:pAnSearchchar, 1, :pInSearchLen)
+                         )
+                  ) into :pInPosition;
+                          
+  if SqlCode <> 0;
+    return -1;
+  endif;  
+  
+  return pInPosition;      
+       
+end-proc SqlBlobPosition;
+//---------------------------------------------------------------*
+//  SqlBlobWriteToFile
+//---------------------------------------------------------------*
+//* Writes the SQL BLOB value to a file.  
+//*
+//* @param pInBlob - Reference of the Blob object
+//* @param searchstr - the substring for which to search
+//* @param pInStart - the position at which to begin searching
+//*
+//* @return > 0 the position at which the substring appears 
+//* @return 0 - if it is not present  
+//* @return -1 - error         
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlBlobWriteToFile export;
+  dcl-pi *N int(10);       
+    pInBlob int(10) const;
+    pAnFileName varchar(1024) const;
+  end-pi;
+
+  dcl-s pPtBlob pointer inz(*Null);
+  dcl-ds pDsBlob likeds(DsBlob_t) based(pPtBlob); 
+
+  dcl-s SqlFile sqltype(blob_file);
+  dcl-s BlobLocator sqltype(blob_locator);
+
+  pPtBlob = OoRObjectGet(s#prog:pInBlob);
+  if pPtBlob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  BlobLocator = pDsBlob.BlobLocator;
+  
+  SqlFile_name = pAnFileName;
+  SqlFile_nl = %len(SqlFile);
+  SqlFile_fo = SQFOVR;
+  
+  exec sql values (:BlobLocator) into :SqlFile;
+                          
+  if SqlCode <> 0;
+    return -1;
+  endif;  
+  
+  IfsSetFileCcsid()pAnFileName:CCSID_BINARY);  
+  
+  return 0;      
+
+end-proc SqlBlobWriteToFile;
+//---------------------------------------------------------------*
+//  SqlBlobGetSqlLocator
+//---------------------------------------------------------------*
+//* Returns the SQL BLOB locator. 
+//*
+//* @param pInBlob - Reference of the BLOB object
+//*
+//* @return > 0 Blob locator 
+//* @return -1 - error         
+//*
+//* @diag messageCode to be defined
+//*
+//* @Author S.Allbach
+//---------------------------------------------------------------*
+dcl-proc SqlBlobGetSqlLocator export;
+  dcl-pi *N uns(10);       
+    pInBlob int(10) const;
+    pAnFileName varchar(1024) const;
+  end-pi;
+
+  dcl-s pPtBlob pointer inz(*Null);
+  dcl-ds pDsBlob likeds(DsBlob_t) based(pPtBlob); 
+
+  dcl-s BlobLocator sqltype(blob_locator);
+
+  pPtBlob = OoRObjectGet(s#prog:pInBlob);
+  if pPtBlob = *Null;
+    // TODO message
+    return -1;
+  endif;
+
+  return pDsBlob.BlobLocator;
+  
+end-proc SqlBlobGetSqlLocator;
 //---------------------------------------------------------------*
 //  SqlBlobFree 
 //---------------------------------------------------------------*
 //* This method frees the Blob object and releases the resources that it holds.  
+//*
+//* @param pInBlob - Reference of the BLOB object
 //*
 //* @return 0
 //*
@@ -60,8 +314,21 @@ dcl-proc SqlBlobFree export;
     pInBlob int(10) const;
   end-pi;
 
-  ///dcl-s bloblocator sqltype(blob_locator);
-  ///exec sql free locator :bloblocator;
+  dcl-s pPtBlob pointer inz(*Null);
+  dcl-ds pDsBlob likeds(DsBlob_t) based(pPtBlob); 
+
+  dcl-s BlobLocator sqltype(blob_locator);
+
+  pPtBlob = OoRObjectGet(s#prog:pInBlob);
+  if pPtBlob = *Null;
+    return -1;
+  endif;
+
+  BlobLocator = pDsBlob.BlobLocator;
+
+  exec sql free locator :BlobLocator;
+
+  OoRObjectFree(s#prog:pInBlob);
   
   return 0;      
        

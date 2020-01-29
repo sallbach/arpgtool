@@ -319,6 +319,38 @@ dcl-pr SqlPreparedStatementSetLong int(10) extproc(*dclcase);
 end-pr;
 
 //---------------------------------------------------------------*
+//  SqlPreparedStatementSetBlob
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetBlob int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pInBlob int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetClob
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetClob int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pInClob int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetDbClob
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetDbClob int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pInDbClob int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
+//  SqlPreparedStatementSetSqlXml
+//---------------------------------------------------------------*
+dcl-pr SqlPreparedStatementSetSqlXml int(10) extproc(*dclcase);
+  pInPrepStm int(10) const;
+  pInSqlXml int(10) value;
+end-pr;
+
+//---------------------------------------------------------------*
 //  SqlPreparedStatementFree
 //---------------------------------------------------------------*
 dcl-pr SqlPreparedStatementFree int(10) extproc(*dclcase);
@@ -637,6 +669,46 @@ dcl-pr SqlBlobFree int(10) extproc(*dclcase);
 end-pr;
 
 //---------------------------------------------------------------*   
+//  SqlClobLength
+//---------------------------------------------------------------*   
+dcl-pr SqlBlobLength int(10) extproc(*dclcase);
+  pInBlob int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlBlobGetBytes
+//---------------------------------------------------------------*   
+dcl-pr SqlBlobGetBytes varchar(32765) extproc(*dclcase);
+  pInBlob int(10) const;
+  pInPos  int(10) const;
+  pInlength int(5) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlBlobPosition
+//---------------------------------------------------------------*   
+dcl-pr SqlBlobPosition int(10) extproc(*dclcase);
+  pInBlob int(10) const;
+  pAnSearchstr varchar(32765) const;
+  pInStart     int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlBlobWriteToFile
+//---------------------------------------------------------------*   
+dcl-pr SqlBlobWriteToFile int(10) extproc(*dclcase);
+  pInBlob int(10) const;
+  pAnFileName varchar(1024) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlBlobGetSqlLocator
+//---------------------------------------------------------------*   
+dcl-pr SqlBlobGetSqlLocator uns(10) extproc(*dclcase);
+  pInBlob int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
 //  SqlClobNew - for internal use only !                                                       
 //---------------------------------------------------------------*   
 dcl-pr SqlClobNew int(10) extproc(*dclcase);
@@ -681,12 +753,15 @@ end-pr;
 //---------------------------------------------------------------*   
 dcl-pr SqlClobWriteToFile int(10) extproc(*dclcase);
   pInClob int(10) const;
-  pAnFileName varchar(255) const;
+  pAnFileName varchar(1024) const;
 end-pr;
 
-
-
-
+//---------------------------------------------------------------*   
+//  SqlClobGetSqlLocator
+//---------------------------------------------------------------*   
+dcl-pr SqlClobGetSqlLocator uns(10) extproc(*dclcase);
+  pInClob int(10) const;
+end-pr;
 
 //---------------------------------------------------------------*   
 //  SqlDbClobNew - for internal use only !                                                       
@@ -700,9 +775,48 @@ end-pr;
 //  SqlDbClobFree
 //---------------------------------------------------------------*   
 dcl-pr SqlDbClobFree int(10) extproc(*dclcase);
-  pInDbClob int(10) const;
+  pInClob int(10) const;
 end-pr;
 
+//---------------------------------------------------------------*   
+//  SqlDbClobLength
+//---------------------------------------------------------------*   
+dcl-pr SqlClobLength int(10) extproc(*dclcase);
+  pInClob int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlDbClobGetSubstring
+//---------------------------------------------------------------*   
+dcl-pr SqlDbClobGetSubstring varchar(32765) extproc(*dclcase);
+  pInClob int(10) const;
+  pInPos  int(10) const;
+  pInlength int(5) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlDbClobPosition
+//---------------------------------------------------------------*   
+dcl-pr SqlDbClobPosition int(10) extproc(*dclcase);
+  pInDbClob int(10) const;
+  pAnSearchstr varchar(32765) const;
+  pInStart     int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlDbClobWriteToFile
+//---------------------------------------------------------------*   
+dcl-pr SqlDbClobWriteToFile int(10) extproc(*dclcase);
+  pInDbClob int(10) const;
+  pAnFileName varchar(1024) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlDbClobGetSqlLocator
+//---------------------------------------------------------------*   
+dcl-pr SqlDbClobGetSqlLocator uns(10) extproc(*dclcase);
+  pInDbClob int(10) const;
+end-pr;
 
 //---------------------------------------------------------------*   
 //  SqlSqlXmlNew - for internal use only !                                                       
@@ -717,6 +831,13 @@ end-pr;
 //---------------------------------------------------------------*   
 dcl-pr SqlSqlXmlFree int(10) extproc(*dclcase);
   pInXml int(10) const;
+end-pr;
+
+//---------------------------------------------------------------*   
+//  SqlSqlXmlGetSqlLocator
+//---------------------------------------------------------------*   
+dcl-pr SqlSqlXmlGetSqlLocator uns(10) extproc(*dclcase);
+  pInDbClob int(10) const;
 end-pr;
 
 /ENDIF
