@@ -669,7 +669,7 @@ dcl-pr SqlBlobFree int(10) extproc(*dclcase);
 end-pr;
 
 //---------------------------------------------------------------*   
-//  SqlClobLength
+//  SqlBlobLength
 //---------------------------------------------------------------*   
 dcl-pr SqlBlobLength int(10) extproc(*dclcase);
   pInBlob int(10) const;
@@ -781,7 +781,7 @@ end-pr;
 //---------------------------------------------------------------*   
 //  SqlDbClobLength
 //---------------------------------------------------------------*   
-dcl-pr SqlClobLength int(10) extproc(*dclcase);
+dcl-pr SqlDbClobLength int(10) extproc(*dclcase);
   pInClob int(10) const;
 end-pr;
 

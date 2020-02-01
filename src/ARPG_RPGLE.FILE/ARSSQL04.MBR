@@ -8,6 +8,7 @@ ctl-opt ccsid(*ucs2:13488);
 /COPY ARPG_H,ARCSYSR
 /COPY ARPG_H,ARCSQLR
 /COPY ARPG_H,ARCOORR
+/COPY ARPG_H,ARCIFSR
 /COPY ARPG_H,ARCSYSR
 /COPY ARPG_H,ARCFCNTL
 
@@ -257,7 +258,7 @@ dcl-proc SqlClobWriteToFile export;
     return -1;
   endif;  
   
-  IfsSetFileCcsid()pAnFileName:pDsClob.Ccsid); 
+  IfsSetFileCcsid(pAnFileName:pDsClob.Ccsid); 
   
   return 0;      
 
@@ -279,7 +280,6 @@ end-proc SqlClobWriteToFile;
 dcl-proc SqlClobGetSqlLocator export;
   dcl-pi *N uns(10);       
     pInClob int(10) const;
-    pAnFileName varchar(1024) const;
   end-pi;
 
   dcl-s pPtClob pointer inz(*Null);

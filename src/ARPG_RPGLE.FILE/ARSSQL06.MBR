@@ -63,7 +63,7 @@ dcl-proc SqlSqlXmlNew export;
   
   return pInSqlXml;      
        
-end-proc SqlSqlXmlbNew;
+end-proc SqlSqlXmlNew;
 //---------------------------------------------------------------*
 //  SqlSqlXmlGetSqlLocator
 //---------------------------------------------------------------*
@@ -85,7 +85,6 @@ dcl-proc SqlSqlXmlGetSqlLocator export;
 
   dcl-ds pDsSqlXml likeds(DsSqlXml_t) based(pPtSqlXml); 
 
-  dcl-s SqlFile sqltype(SqlXml_file);
   dcl-s SqlXmlLocator sqltype(xml_locator);
 
   pPtSqlXml = OoRObjectGet(s#prog:pInSqlXml);

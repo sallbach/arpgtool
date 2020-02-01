@@ -108,12 +108,12 @@
      /*-----------------------------------------------------------------------*/
      /* ARSSQL05 - DbClob                                                     */
      /*-----------------------------------------------------------------------*/
-             EXPORT     SYMBOL('SqlDbBlobLength')                 
-             EXPORT     SYMBOL('SqlDbBlobPosition')                 
-             EXPORT     SYMBOL('SqlDbBlobGetString')                 
-             EXPORT     SYMBOL('SqlDbBlobWriteToFile')         
-             EXPORT     SYMBOL('SqlDbBlobGetSqlLocator')        
-             EXPORT     SYMBOL('SqlDbBlobFree')                 
+             EXPORT     SYMBOL('SqlDbClobLength')                 
+             EXPORT     SYMBOL('SqlDbClobPosition')                 
+             EXPORT     SYMBOL('SqlDbClobGetSubstring')                 
+             EXPORT     SYMBOL('SqlDbClobWriteToFile')         
+             EXPORT     SYMBOL('SqlDbClobGetSqlLocator')        
+             EXPORT     SYMBOL('SqlDbClobFree')                 
 
      /*-----------------------------------------------------------------------*/
      /* ARSSQL06 - SqlXml                                                     */

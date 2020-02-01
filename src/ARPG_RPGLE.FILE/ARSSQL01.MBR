@@ -387,6 +387,8 @@ dcl-proc SqlPreparedStatementSetParameter;
   dcl-s pPtSqlVar pointer;
   dcl-ds pDsSqlVar likeds(SqlVar) based(pPtSqlVar);
 
+  dcl-s pInSqlInd int(5) based(pDsSqlVar.SqlInd);
+
   pPtPrepStm = OoRObjectGet(s#prog:pInPrepStm);
   if pPtPrepStm = *Null;
     // todo message
@@ -408,11 +410,12 @@ dcl-proc SqlPreparedStatementSetParameter;
   clear pDsSqlVar;
   pDsSqlVar.SqlType = PInType + 1; // nullable
   pDsSqlVar.SqlLen = PInLen;
-  pDsSqlVar.SqlInd = -1;
+  pDsSqlVar.SqlInd = %alloc(%size(pInSqlInd));
+  pInSqlInd = -1;
   if pPtData <> *Null And PInBytes > 0;
     pDsSqlVar.SqlData = %alloc(PInBytes);
     memcpy(pDsSqlVar.SqlData:pPtData:PInBytes);
-    pDsSqlVar.SqlInd = 0;
+    pInSqlInd = 0;
   endif;
 
   return 0;
@@ -685,23 +688,23 @@ end-proc SqlPreparedStatementSetLong;
 //*
 //* @param pInPrepStm - An object @link #SqlPreparedStatement
 //* @param pInBlob - Blob object @link ARSSQLR.ARSSQL03
-((*
+//*
 //* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
 //* @Author S.Allbach
 //---------------------------------------------------------------*
-dcl-proc SqlSqlPreparedStatementSetBlob export;
+dcl-proc SqlPreparedStatementSetBlob export;
   dcl-pi *N int(10);
     pInPrepStm int(10) const;
-    pInBlob int(20) value;
+    pInBlob int(10) value;
   end-pi;
 
   dcl-s pSqlBlobLocator uns(10);
 
   pSqlBlobLocator = SqlBlobGetSqlLocator(pInBlob);
-  if pInSqlBlobLocator = -1;
+  if pSqlBlobLocator = -1;
     // TODO message
     return -1;
   endif;
@@ -722,23 +725,23 @@ end-proc SqlPreparedStatementSetBlob;
 //*
 //* @param pInPrepStm - An object @link #SqlPreparedStatement
 //* @param pInClob - Clob object @link ARSSQLR.ARSSQL04
-((*
+//*
 //* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
 //* @Author S.Allbach
 //---------------------------------------------------------------*
-dcl-proc SqlSqlPreparedStatementSetClob export;
+dcl-proc SqlPreparedStatementSetClob export;
   dcl-pi *N int(10);
     pInPrepStm int(10) const;
-    pInClob int(20) value;
+    pInClob int(10) value;
   end-pi;
 
   dcl-s pSqlClobLocator uns(10);
 
   pSqlClobLocator = SqlClobGetSqlLocator(pInClob);
-  if pInSqlClobLocator = -1;
+  if pSqlClobLocator = -1;
     // TODO message
     return -1;
   endif;
@@ -753,29 +756,29 @@ dcl-proc SqlSqlPreparedStatementSetClob export;
 
 end-proc SqlPreparedStatementSetClob;
 //---------------------------------------------------------------*
-//  SqlPreparedStatementSetClob
+//  SqlPreparedStatementSetDbClob
 //---------------------------------------------------------------*
 //* Set DbClob parameter. 
 //*
 //* @param pInPrepStm - An object @link #SqlPreparedStatement
 //* @param pInDbClob - DbClob object @link ARSSQLR.ARSSQL05
-((*
+//*
 //* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
 //* @Author S.Allbach
 //---------------------------------------------------------------*
-dcl-proc SqlSqlPreparedStatementSetDbClob export;
+dcl-proc SqlPreparedStatementSetDbClob export;
   dcl-pi *N int(10);
     pInPrepStm int(10) const;
-    pInDbClob int(20) value;
+    pInDbClob int(10) value;
   end-pi;
 
   dcl-s pSqlDbClobLocator uns(10);
 
   pSqlDbClobLocator = SqlDbClobGetSqlLocator(pInDbClob);
-  if pInSqlDbClobLocator = -1;
+  if pSqlDbClobLocator = -1;
     // TODO message
     return -1;
   endif;
@@ -796,22 +799,22 @@ end-proc SqlPreparedStatementSetDbClob;
 //*
 //* @param pInPrepStm - An object @link #SqlPreparedStatement
 //* @param pInSqlXml - SqlXml object @link ARSSQLR.ARSSQL06
-((*
+//*
 //* @return 0 - success else -1
 //*
 //* @diag messageCode to be defined
 //*
 //* @Author S.Allbach
 //---------------------------------------------------------------*
-dcl-proc SqlSqlPreparedStatementSetSqlXml export;
+dcl-proc SqlPreparedStatementSetSqlXml export;
   dcl-pi *N int(10);
     pInPrepStm int(10) const;
-    pInSqlXml int(20) value;
+    pInSqlXml int(10) value;
   end-pi;
 
   dcl-s pSqlXmlLocator uns(10);
 
-  pSqlXmlLocator = SqlSqlXmlGetSqlLocator(pInDbClob);
+  pSqlXmlLocator = SqlSqlXmlGetSqlLocator(pInSqlXml);
   if pSqlXmlLocator = -1;
     // TODO message
     return -1;

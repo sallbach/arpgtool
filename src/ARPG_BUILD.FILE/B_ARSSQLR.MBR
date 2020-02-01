@@ -45,8 +45,8 @@
                                    &LIBOBJ/ARSSQL05 +                         
                                    &LIBOBJ/ARSSQL06) +                         
                             SRCFILE(&LIBSRC/ARPG_LNK) TEXT('Sql +    
-                            functions') BNDSRVPGM((ARSOORR) (ARSCALR)) +       
-                            OPTION(&RSLVREF)                         
+                            functions') BNDSRVPGM((ARSOORR) (ARSCALR) +       
+                            (ARSIFSR)) OPTION(&RSLVREF)                         
              ENDDO
                           
 /* Only build testcases if RPGUnit exists */
