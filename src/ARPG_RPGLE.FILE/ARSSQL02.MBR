@@ -1901,31 +1901,31 @@ dcl-proc SqlFillSqlVar;
     when gDsSqlVar.SqlType = SQL_TYPE_BLOB;
       gDsSqlVar.SqlType = SQL_TYPE_BLOB_LOCATOR;
       gDsSqlVar.SqlTypeOrig = SQL_TYPE_BLOB_LOCATOR + %rem(gDsSqlVar.SqlTypeOrig:2);
-      gDsSqlVar.SqlLen = %size(BlobLocator); 
-      gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen; 
+      gDsSqlVar.SqlLen = pDsSqlVar2.SqlLongL; 
+      gDsSqlVar.SqlBytes = %size(BlobLocator); 
       pDsSqlVar.SqlType = gDsSqlVar.SqlTypeOrig;
-      pDsSqlVar.SqlLen = gDsSqlVar.SqlLen;
-      pDsSqlVar2.SqlLongL = 0;
+      ///////pDsSqlVar.SqlLen = gDsSqlVar.SqlBytes;
+      ///////pDsSqlVar2.SqlLongL = 0;
            
     // CLOB as locator object
     when gDsSqlVar.SqlType = SQL_TYPE_CLOB;           
       gDsSqlVar.SqlType = SQL_TYPE_CLOB_LOCATOR;
       gDsSqlVar.SqlTypeOrig = SQL_TYPE_CLOB_LOCATOR + %rem(gDsSqlVar.SqlTypeOrig:2);
-      gDsSqlVar.SqlLen = %size(BlobLocator); 
-      gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen; 
+      gDsSqlVar.SqlLen = pDsSqlVar2.SqlLongL; 
+      gDsSqlVar.SqlBytes = %size(BlobLocator); 
       pDsSqlVar.SqlType = gDsSqlVar.SqlTypeOrig;
-      pDsSqlVar.SqlLen = gDsSqlVar.SqlLen;
-      pDsSqlVar2.SqlLongL = 0;
+      //////pDsSqlVar.SqlLen = gDsSqlVar.SqlBytes;
+      //////pDsSqlVar2.SqlLongL = 0;
            
     // DBCLOB as locator object
     when gDsSqlVar.SqlType = SQL_TYPE_DBCLOB;
       gDsSqlVar.SqlType = SQL_TYPE_DBCLOB_LOCATOR;
       gDsSqlVar.SqlTypeOrig = SQL_TYPE_DBCLOB_LOCATOR + %rem(gDsSqlVar.SqlTypeOrig:2);
-      gDsSqlVar.SqlLen = %size(BlobLocator); 
-      gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen; 
+      gDsSqlVar.SqlLen = pDsSqlVar2.SqlLongL; 
+      gDsSqlVar.SqlBytes = %size(BlobLocator); 
       pDsSqlVar.SqlType = gDsSqlVar.SqlTypeOrig;
-      pDsSqlVar.SqlLen = gDsSqlVar.SqlLen;
-      pDsSqlVar2.SqlLongL = 0;
+      ///////pDsSqlVar.SqlLen = gDsSqlVar.SqlBytes;
+      ///////pDsSqlVar2.SqlLongL = 0;
       
     // XML as locator object
     when gDsSqlVar.SqlType = SQL_TYPE_XML;
@@ -1934,8 +1934,8 @@ dcl-proc SqlFillSqlVar;
       gDsSqlVar.SqlLen = %size(BlobLocator); 
       gDsSqlVar.SqlBytes = gDsSqlVar.SqlLen; 
       pDsSqlVar.SqlType = gDsSqlVar.SqlTypeOrig;
-      pDsSqlVar.SqlLen = gDsSqlVar.SqlLen;
-      pDsSqlVar2.SqlLongL = 0;
+      ////pDsSqlVar.SqlLen = gDsSqlVar.SqlLen;
+      ////pDsSqlVar2.SqlLongL = 0;
       
   endsl;
   

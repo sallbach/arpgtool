@@ -86,7 +86,7 @@ dcl-proc test_Sql_PreparedStatement export;
   dcl-s pInResultSet int(10);
   dcl-s i int(10);
 
-  dcl-c TEST_COLS 10;
+  dcl-c TEST_COLS 11;
   dcl-c TEST_ROWS 15;
 
   PInConnection = SqlConnection();
@@ -105,6 +105,7 @@ dcl-proc test_Sql_PreparedStatement export;
 	               ',F_DATE FOR COLUMN S_DATE DATE ' +     
 	               ',F_TIME FOR COLUMN S_TIME TIME ' + 
 	               ',F_TIMESTAMP FOR COLUMN S_TIMES TIMESTAMP ' +   
+                   ',F_VARCHARUTF8 FOR COLUMN S_VCHAR8 VARCHAR (64 ) CCSID 1208 ' +
 	               ' )')
           );    
   
@@ -121,6 +122,7 @@ dcl-proc test_Sql_PreparedStatement export;
 	               ',F_DATE is ''lbl_f_date'' ' +     
 	               ',F_TIME is ''lbl_f_time'' ' + 
 	               ',F_TIMESTAMP is ''lbl_f_timestamp'' ' +    
+                   ',F_VARCHARUTF8 is ''lbl_f_varchar_utf8'' ' +
 	               ' )')
           );    
 
@@ -137,6 +139,7 @@ dcl-proc test_Sql_PreparedStatement export;
 	               ',F_DATE text is ''txt_f_date'' ' +     
 	               ',F_TIME text is ''txt_f_time'' ' + 
 	               ',F_TIMESTAMP text is ''txt_f_timestamp'' ' +
+                   ',F_VARCHARUTF8 text is ''lbl_f_varchar_utf8'' ' +
 	               ' )')
           );    
           
@@ -151,8 +154,10 @@ dcl-proc test_Sql_PreparedStatement export;
   pInPreparedSt = SqlConnectionPrepareStatement(PInConnection
                     :'Insert into Qtemp/TSTARSSQLF -
                        (F_CHAR, F_VARCHAR, F_INT, F_BIG, F_SMALL, - 
-                        F_PACK, F_NUM, F_DATE, F_TIME, F_TIMESTAMP) -
-                       Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) -
+                        F_PACK, F_NUM, F_DATE, F_TIME, F_TIMESTAMP, -
+                        F_VARCHARUTF8 -
+                       ) -
+                       Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) -
                      '
                     );
   assert(pInPreparedSt > 0:'Prepared insert fail');
@@ -171,6 +176,7 @@ dcl-proc test_Sql_PreparedStatement export;
     iEqual(0:SqlPreparedStatementSetTimeStamp(pInPreparedSt
                                       :z'2018-10-01-01.00.00.000000'
                                        + %days(i) + %minutes(i)));                 
+    iEqual(0:SqlPreparedStatementSetString(pInPreparedSt:'varchar8 äöü ' + %char(i)));                 
     iEqual(0:SqlPreparedStatementExecuteUpdate(pInPreparedSt));
   endfor;
   
@@ -215,6 +221,8 @@ dcl-proc test_Sql_PreparedStatement export;
           :%char(SqlResultSetGetTime(pInResultSet:9)));                 
     aEqual(%char(z'2018-10-01-01.00.00.000000' + %days(i) + %minutes(i))
           :%char(SqlResultSetGetTimeStamp(pInResultSet:10)));
+    aEqual('varchar8 äöü ' + %char(i)
+          :SqlResultSetGetString(pInResultSet:11));                 
   enddo;
   
   iEqual(TEST_ROWS:i);
@@ -233,6 +241,7 @@ dcl-proc test_Sql_Lob export;
   dcl-s i int(10);
   dcl-s PAnStr varchar(1024);
   dcl-s pInClob int(10);
+  dcl-s pInDbClob int(10);
   dcl-s pInLength int(10);
 
   PInConnection = SqlConnection();
@@ -241,23 +250,34 @@ dcl-proc test_Sql_Lob export;
   SqlConnectionSetCommitControl(PInConnection:SQL_COMMIT_CONTROL_CHG);
 
   pInResultSet = SqlConnectionExecuteQuery(PInConnection:
-    'select ''Däne'' fld1varchar, -                            
-       cast(''Däne'' as dbclob(4)) fld2dbclob, -          
-       cast(''Däne'' as clob(4)) fld3clob, -           
-       cast(''Däne'' as clob(4) ccsid 1208) fld4clob1208, - 
-       cast(''Däne'' as blob(4)) fld5blob -
+    'select ''abc123 äöüß1'' fld1varchar, -                            
+       cast(''abc123 äöüß2'' as dbclob(20)) fld2dbclob, -          
+       cast(''abc123 äöüß3'' as clob(20)) fld3clob, -           
+       cast(''abc123 äöüß4'' as clob(20) ccsid 1208) fld4clob1208, - 
+       cast(''abc123 äöüß5'' as blob(20)) fld5blob -
      from qsqptabl');                                     
 
   dow SqlResultSetNext(pInResultSet);
-    pAnStr = SqlResultSetGetString(pInResultSet:1);
-    pAnStr = SqlResultSetGetString(pInResultSet:2);
+
+    aEqual('abc123 äöüß1'
+          :SqlResultSetGetString(pInResultSet:1));                 
+
+    pInDbClob = SqlResultSetGetDbClob(pInResultSet:2);
+    pInLength = SqlDbClobLength(pInDbClob);
+    iEqual(12:pInLength);                            
+    aEqual('abc123 äöüß2'
+          :SqlDbClobGetSubString(pInDbClob:1:pInLength));                 
+    SqlDbClobFree(pInDbClob);
     
     pInClob = SqlResultSetGetClob(pInResultSet:3);
     pInLength = SqlClobLength(pInClob);
-    pAnStr = SqlClobGetSubString(pInClob:1:pInLength);
+    iEqual(12:pInLength);                            
+    aEqual('abc123 äöüß3'
+          :SqlClobGetSubString(pInClob:1:pInLength));                 
+    SqlClobFree(pInClob);
     
-    pAnStr = SqlResultSetGetString(pInResultSet:4);
-    pAnStr = SqlResultSetGetString(pInResultSet:5);
+    //pAnStr = SqlResultSetGetString(pInResultSet:4);
+    //pAnStr = SqlResultSetGetString(pInResultSet:5);
   enddo;  
   
   //iEqual(0:SqlPreparedStatementFree(pInPreparedSt));
