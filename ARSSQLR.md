@@ -32,19 +32,19 @@ Example reading a table twice.
 	pInPreparedSt = SqlPreparedStatement('Select b, a from table1');
 		
 	inResultSet = SqlPreparedStatementExecuteQuery(pInPreparedSt);
-	pInAIdx = SqlRsFindColumn(inResultSet:'a');
-	dow SqlRsNext(pInResultSet);
-		pAnA = SqlRsGetString(inResultSet:pInAIdx);
+	pInAIdx = SqlResultSetFindColumn(inResultSet:'a');
+	dow SqlResultSetNext(pInResultSet);
+		pAnA = SqlResultSetGetString(inResultSet:pInAIdx);
 	enddo;
-	SqlRsClose(pInResultSet);
+	SqlResultSetClose(pInResultSet);
 
     // execute again
 	inResultSet = SqlPreparedStatementExecuteQuery(pInPreparedSt);
-	pInBIdx = SqlRsFindColumn(inResultSet:'b');
-	dow SqlRsNext(pInResultSet);
-		pNuB = SqlRsGetDecimal(inResultSet:pInBIdx); 
+	pInBIdx = SqlResultSetFindColumn(inResultSet:'b');
+	dow SqlResultSetNext(pInResultSet);
+		pNuB = SqlResultSetGetDecimal(inResultSet:pInBIdx); 
 	enddo;
-	SqlRsClose(pInResultSet);    	
+	SqlResultSetClose(pInResultSet);    	
 	
 	// close and free all resources 
 	SqlPreparedStatementClose(pInPreparedSt);
